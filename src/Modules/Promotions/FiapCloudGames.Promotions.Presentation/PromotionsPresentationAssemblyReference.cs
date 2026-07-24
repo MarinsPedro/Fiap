@@ -1,0 +1,3 @@
+namespace FiapCloudGames.Promotions.Presentation;
+
+public sealed class PromotionsPresentationAssemblyReference;

@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\FiapCloudGames.Identity.Domain\FiapCloudGames.Identity.Domain.csproj" />
+    <ProjectReference Include="..\FiapCloudGames.Identity.Contracts\FiapCloudGames.Identity.Contracts.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+</Project>

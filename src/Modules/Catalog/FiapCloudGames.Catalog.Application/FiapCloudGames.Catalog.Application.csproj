@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\FiapCloudGames.Catalog.Domain\FiapCloudGames.Catalog.Domain.csproj" />
+    <ProjectReference Include="..\FiapCloudGames.Catalog.Contracts\FiapCloudGames.Catalog.Contracts.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+</Project>

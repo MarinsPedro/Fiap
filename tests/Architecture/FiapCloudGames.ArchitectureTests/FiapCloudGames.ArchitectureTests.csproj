@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <ProjectReference Include="..\..\..\src\Modules\Identity\FiapCloudGames.Identity.Domain\FiapCloudGames.Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Identity\FiapCloudGames.Identity.Application\FiapCloudGames.Identity.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Identity\FiapCloudGames.Identity.Infrastructure\FiapCloudGames.Identity.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Identity\FiapCloudGames.Identity.Presentation\FiapCloudGames.Identity.Presentation.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Catalog\FiapCloudGames.Catalog.Domain\FiapCloudGames.Catalog.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Catalog\FiapCloudGames.Catalog.Application\FiapCloudGames.Catalog.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Catalog\FiapCloudGames.Catalog.Infrastructure\FiapCloudGames.Catalog.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Catalog\FiapCloudGames.Catalog.Presentation\FiapCloudGames.Catalog.Presentation.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Library\FiapCloudGames.Library.Domain\FiapCloudGames.Library.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Library\FiapCloudGames.Library.Application\FiapCloudGames.Library.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Library\FiapCloudGames.Library.Infrastructure\FiapCloudGames.Library.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Library\FiapCloudGames.Library.Presentation\FiapCloudGames.Library.Presentation.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Promotions\FiapCloudGames.Promotions.Domain\FiapCloudGames.Promotions.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Promotions\FiapCloudGames.Promotions.Application\FiapCloudGames.Promotions.Application.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Promotions\FiapCloudGames.Promotions.Infrastructure\FiapCloudGames.Promotions.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Promotions\FiapCloudGames.Promotions.Presentation\FiapCloudGames.Promotions.Presentation.csproj" />
+    <ProjectReference Include="..\..\..\src\Database\FiapCloudGames.Database.Migrations\FiapCloudGames.Database.Migrations.csproj" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NetArchTest.Rules" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>

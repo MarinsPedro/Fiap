@@ -1,0 +1,122 @@
+# Troubleshooting
+
+## SDK incompatível
+
+**Sintoma:** `NETSDK1045` ou framework `net10.0` não reconhecido.  
+**Diagnóstico:** execute `dotnet --version` e `dotnet --list-sdks`.  
+**Correção:** instale um SDK .NET 10 compatível; a versão usada na validação está
+registrada no README raiz.
+
+## Restore falha
+
+**Sintoma:** pacotes não encontrados, erro de feed ou certificado.  
+**Diagnóstico:** execute
+`dotnet restore FiapCloudGames.sln --configfile NuGet.Config`.  
+**Correção:** valide acesso ao feed, proxy/certificado e o `NuGet.Config`; não
+remova versões sem verificar compatibilidade.
+
+## Porta 5432 ou 8080 ocupada
+
+**Sintoma:** o container não publica a porta.  
+**Diagnóstico:** use `docker compose ps` e verifique processos locais que já usam
+a porta.  
+**Correção:** pare o processo conflitante ou altere explicitamente o mapeamento no
+`docker-compose.yml`.
+
+## PostgreSQL não fica saudável
+
+**Sintoma:** `migrator` não inicia.  
+**Diagnóstico:** `docker compose logs database`.  
+**Correção:** confira `POSTGRES_PASSWORD`, espaço em disco e permissões do volume.
+Se decidir apagar o banco local, `docker compose down --volumes` é destrutivo.
+
+## Conexão com banco recusada
+
+**Sintoma:** endpoints de negócio falham, embora `/health` responda.  
+**Diagnóstico:** confira `ConnectionStrings__Database`, host e porta a partir do
+mesmo ambiente da API.  
+**Correção:** fora do Compose use `localhost`; dentro do Compose o host é
+`database`.
+
+## Migrator falha
+
+**Sintoma:** o serviço `migrator` termina com código diferente de zero.  
+**Diagnóstico:** `docker compose logs migrator`.  
+**Correção:** valide connection string, permissões, ordem/estado das migrations e
+as três variáveis `ADMIN_*`. Não edite manualmente a tabela de versionamento.
+
+## Migration pendente
+
+**Sintoma:** erro de tabela/coluna inexistente.  
+**Diagnóstico:** compare a versão implantada do código com as migrations
+executadas e inspecione o log do migrador.  
+**Correção:** execute o migrador compatível antes da API; não use `dotnet ef
+database update`.
+
+## JWT não configurado
+
+**Sintoma:** a API não inicia ou informa chave inválida.  
+**Diagnóstico:** confira se `Jwt__Key` existe e possui ao menos 32 caracteres.  
+**Correção:** forneça um segredo válido pelo ambiente, sem imprimi-lo no log.
+
+## 401 Unauthorized
+
+**Causas comuns:** token ausente, inválido, expirado, issuer/audience diferentes,
+usuário inativo ou login incorreto.  
+**Correção:** gere novo token em `/api/auth/login` e use
+`Authorization: Bearer <token>`.
+
+## 403 Forbidden
+
+**Causa:** o token é válido, mas o papel não atende ao endpoint.  
+**Correção:** use uma conta `Administrator` apenas para rotas administrativas; o
+seed é feito pelo migrador.
+
+## 404 Not Found
+
+**Causa:** rota incorreta ou recurso inexistente/inativo.  
+**Correção:** confirme método, rota e ID. A listagem de catálogo só mostra jogos
+ativos.
+
+## 409 Conflict
+
+A API não mapeia atualmente exceções para 409. Se um cliente receber esse status,
+verifique proxy ou infraestrutura intermediária. Conflitos de negócio conhecidos
+tendem a virar 422; violações de banco não tratadas podem virar 500.
+
+## 422 Unprocessable Entity
+
+**Causa:** operação bem formada viola uma regra, como aquisição duplicada, jogo
+inativo ou período de promoção inválido.  
+**Correção:** leia `detail`, confira o estado atual e corrija a operação.
+
+## 500 Internal Server Error
+
+**Diagnóstico:** capture o `traceId` da resposta e procure o mesmo contexto nos
+logs.  
+**Correção:** trate a causa; não envie connection strings, tokens ou senhas em
+chamados.
+
+## CORS
+
+**Sintoma:** navegador bloqueia a chamada, mas ferramentas HTTP funcionam.  
+**Diagnóstico:** compare a origem exata com `Cors:AllowedOrigins`.  
+**Correção:** configure a origem autorizada por ambiente; não use abertura ampla
+sem revisão de segurança.
+
+## OpenAPI não aparece
+
+O JSON OpenAPI só é habilitado em `Development`. O Compose usa `Production`.
+Execute a API localmente com `ASPNETCORE_ENVIRONMENT=Development` e consulte a
+rota indicada pelo ASP.NET Core para o documento.
+
+## `/health` responde, mas a API de negócio falha
+
+O check atual mede apenas o processo. Verifique PostgreSQL, migrations,
+configuração e logs.
+
+## Testes de integração passam sem banco
+
+Esse é o comportamento atual: os testes inspecionam o host e metadados, sem abrir
+PostgreSQL. Consulte [testes de integração](../testing/integration-tests.md).
+

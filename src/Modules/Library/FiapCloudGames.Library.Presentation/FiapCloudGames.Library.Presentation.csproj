@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\FiapCloudGames.Library.Application\FiapCloudGames.Library.Application.csproj" />
+  </ItemGroup>
+</Project>
