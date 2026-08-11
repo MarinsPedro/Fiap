@@ -29,7 +29,8 @@ var promotion = Promotion.Create(
     25m,
     now.AddHours(-1),
     now.AddHours(1),
-    [gameId]);
+    [gameId],
+    now.AddHours(-2));
 ```
 
 Datas fixas tornam o caso repetível. Evite usar `UtcNow` quando o instante fizer
@@ -46,6 +47,5 @@ Quando houver teste PostgreSQL:
 5. limpe banco/volume;
 6. nunca reutilize o banco de desenvolvimento.
 
-`TODO: criar builders somente quando a repetição justificar a abstração e definir
-uma interface de relógio para regras temporais.`
-
+`TODO: criar builders somente quando a repetição justificar a abstração e usar
+um TimeProvider controlado nos futuros testes de Application.`

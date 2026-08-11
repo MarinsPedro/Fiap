@@ -1,4 +1,8 @@
-using FiapCloudGames.Catalog.Application.Games;
+using FiapCloudGames.Catalog.Application.Features.Games.CreateGame;
+using FiapCloudGames.Catalog.Application.Features.Games.GetGame;
+using FiapCloudGames.Catalog.Application.Features.Games.ListGames;
+using FiapCloudGames.Catalog.Application.Features.Games.UpdateGame;
+using FiapCloudGames.Catalog.Application.Integrations;
 using FiapCloudGames.Catalog.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 

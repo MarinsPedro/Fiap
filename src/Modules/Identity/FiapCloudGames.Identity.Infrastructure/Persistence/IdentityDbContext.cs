@@ -1,4 +1,4 @@
-using FiapCloudGames.Identity.Application.Abstractions;
+using FiapCloudGames.Identity.Application.Abstractions.Persistence;
 using FiapCloudGames.Identity.Domain.Entities;
 using FiapCloudGames.Identity.Domain.Enums;
 using FiapCloudGames.Identity.Domain.ValueObjects;

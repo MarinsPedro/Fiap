@@ -12,6 +12,7 @@ internal static class AdminSeeder
     public static async Task SeedAsync(
         string connectionString,
         IConfiguration configuration,
+        TimeProvider clock,
         CancellationToken cancellationToken)
     {
         var email = configuration["Admin:Email"];
@@ -48,7 +49,9 @@ internal static class AdminSeeder
         command.Parameters.AddWithValue("name", name);
         command.Parameters.AddWithValue("email", address.Address.Trim().ToLowerInvariant());
         command.Parameters.AddWithValue("password_hash", Hash(password));
-        command.Parameters.AddWithValue("created_at_utc", DateTimeOffset.UtcNow);
+        command.Parameters.AddWithValue(
+            "created_at_utc",
+            clock.GetUtcNow());
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 

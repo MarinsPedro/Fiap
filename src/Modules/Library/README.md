@@ -2,18 +2,23 @@
 
 ## Propósito e responsabilidades
 
-Library representa a coleção adquirida por um usuário e registra um snapshot do
-jogo, preço, promoção e instante da aquisição.
+Library representa a coleção adquirida por um usuário e registra o identificador
+do jogo e um snapshot do preço, promoção e instante da aquisição. O título não é
+persistido: ele é consultado no Catalog ao montar a resposta.
 
 ## Camadas
 
 | Projeto | Responsabilidade |
 |---|---|
-| `FiapCloudGames.Library.Domain` | `GameLibrary`, `LibraryGame` e prevenção de duplicidade |
-| `FiapCloudGames.Library.Application` | consulta e aquisição |
-| `FiapCloudGames.Library.Contracts` | summaries, `ILibraryModule` e evento declarado |
-| `FiapCloudGames.Library.Infrastructure` | EF Core, repositório e unidade de trabalho |
-| `FiapCloudGames.Library.Presentation` | `LibraryController` |
+| `FiapCloudGames.Library.Domain` | agregado `GameLibrary`, `LibraryGame` e `AcquisitionPrice` |
+| `FiapCloudGames.Library.Application` | `UserLibrary/` com aquisição/consulta e `Abstractions/` com `ILibraryQueries` e `LibraryGameReadModel` |
+| `FiapCloudGames.Library.Contracts` | arquivos separados para `GetUserLibraryQuery`, snapshots e `ILibraryModule` |
+| `FiapCloudGames.Library.Infrastructure` | EF Core, repositório, query e unidade de trabalho |
+| `FiapCloudGames.Library.Presentation` | `Features/UserLibrary/` com Responses, mapping e `LibraryController` |
+
+Casos de uso atuais: `AcquireGameService` e `GetLibraryService`, ambos com
+`ExecuteAsync`. `LibraryModule` adapta o resultado da Application para os
+Snapshots públicos internos.
 
 ## Endpoints
 
@@ -35,8 +40,7 @@ Application depende de:
 - `IPromotionsModule` para cotar desconto.
 
 Essas dependências usam exclusivamente projetos Contracts, regra protegida por
-teste de arquitetura. `GameAddedToLibraryIntegrationEvent` está declarado, mas
-não é publicado.
+teste de arquitetura. Não há evento de integração implementado.
 
 ## Regras principais
 
@@ -59,6 +63,5 @@ dotnet test tests/Unit/FiapCloudGames.Library.UnitTests
 
 - `TODO: definir pagamento, idempotência e compensação.`
 - `TODO: definir concorrência para aquisições simultâneas.`
-- `TODO: implementar publicação do evento de aquisição.`
+- `TODO: definir se a aquisição precisa de integração assíncrona e outbox.`
 - `TODO: adicionar GET do item ou corrigir o Location da criação.`
-

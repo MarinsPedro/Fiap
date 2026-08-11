@@ -5,14 +5,18 @@ fronteiras executáveis.
 
 ## Regras atuais
 
-1. Cada um dos quatro assemblies Domain não pode depender de ASP.NET Core,
-   Entity Framework Core ou Infrastructure.
-2. Library.Application não pode depender de Application ou Infrastructure dos
-   demais módulos; a comunicação deve ocorrer por Contracts.
-3. O assembly de migrations não pode referenciar assemblies dos módulos.
-
-Como a primeira regra é uma teoria executada para quatro assemblies, são seis
-execuções no total.
+1. Domain não depende de frameworks nem das camadas externas.
+2. Application não depende de Infrastructure ou Presentation.
+3. Services da Application não devolvem tipos de Contracts.
+4. Infrastructure não depende de Presentation.
+5. Presentation não referencia Contracts diretamente.
+6. Actions não devolvem tipos de Application ou Contracts.
+7. Contracts não depende de implementações, Domain ou frameworks.
+8. Tipos de Contracts são `Query`, `Snapshot` ou interfaces `I*Module`.
+9. As quatro raízes não têm construtores públicos.
+10. Entidades de domínio não expõem setters públicos.
+11. Library.Application usa apenas Contracts dos demais módulos.
+12. Migrations pode referenciar Infrastructure, mas não Presentation.
 
 ```powershell
 dotnet test tests/Architecture/FiapCloudGames.ArchitectureTests
@@ -28,11 +32,6 @@ dotnet test tests/Architecture/FiapCloudGames.ArchitectureTests
 
 ## Lacunas
 
-- Não há teste impedindo referência direta entre todas as combinações de módulos.
-- Não há regra para garantir a direção completa Domain → Application →
-  Infrastructure/API.
-- Não há regra para convenções de controllers, handlers ou repositórios.
-
-`TODO: ampliar a matriz de dependências permitidas sem bloquear referências
-legítimas a Contracts.`
-
+- não há regra estrutural para nomes de repositories;
+- a matriz de referências de projeto ainda pode ser complementada por análise
+  direta dos `.csproj`.

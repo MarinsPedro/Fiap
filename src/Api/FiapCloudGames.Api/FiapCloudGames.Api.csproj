@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <UserSecretsId>1920279f-3a0f-45df-b14c-b253c6ae86a0</UserSecretsId>
   </PropertyGroup>
@@ -6,6 +6,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\FiapCloudGames.Application.Common\FiapCloudGames.Application.Common.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\FiapCloudGames.Domain.Common\FiapCloudGames.Domain.Common.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\FiapCloudGames.Identity.Presentation\FiapCloudGames.Identity.Presentation.csproj" />
     <ProjectReference Include="..\..\Modules\Identity\FiapCloudGames.Identity.Infrastructure\FiapCloudGames.Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Modules\Catalog\FiapCloudGames.Catalog.Presentation\FiapCloudGames.Catalog.Presentation.csproj" />

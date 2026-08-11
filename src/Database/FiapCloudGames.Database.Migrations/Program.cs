@@ -1,5 +1,9 @@
+using FiapCloudGames.Catalog.Infrastructure.Persistence;
 using FiapCloudGames.Database.Migrations;
-using FluentMigrator.Runner;
+using FiapCloudGames.Identity.Infrastructure.Persistence;
+using FiapCloudGames.Library.Infrastructure.Persistence;
+using FiapCloudGames.Promotions.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,8 +15,7 @@ var builder = Host.CreateApplicationBuilder(
         ContentRootPath = AppContext.BaseDirectory
     });
 
-var connectionString =
-    builder.Configuration.GetConnectionString("Database");
+var connectionString = builder.Configuration.GetConnectionString("Database");
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
@@ -20,23 +23,53 @@ if (string.IsNullOrWhiteSpace(connectionString))
         "A connection string 'Database' não foi configurada.");
 }
 
-builder.Services
-    .AddFluentMigratorCore()
-    .ConfigureRunner(runner => runner
-        .AddPostgres()
-        .WithGlobalConnectionString(connectionString)
-        .ScanIn(typeof(Program).Assembly).For.Migrations())
-    .AddLogging(logging =>
-        logging.AddFluentMigratorConsole());
+await MigrationSchemaInitializer.EnsureInfraSchemaAsync(
+    connectionString,
+    CancellationToken.None);
+
+builder.Services.AddDbContext<IdentityDbContext>(options =>
+    MigrationDbContextOptions.ConfigureIdentity(options, connectionString));
+
+builder.Services.AddDbContext<CatalogDbContext>(options =>
+    MigrationDbContextOptions.ConfigureCatalog(options, connectionString));
+
+builder.Services.AddDbContext<PromotionsDbContext>(options =>
+    MigrationDbContextOptions.ConfigurePromotions(options, connectionString));
+
+builder.Services.AddDbContext<LibraryDbContext>(options =>
+    MigrationDbContextOptions.ConfigureLibrary(options, connectionString));
+builder.Services.AddSingleton(TimeProvider.System);
 
 using var host = builder.Build();
 using var scope = host.Services.CreateScope();
 
-scope.ServiceProvider
-    .GetRequiredService<IMigrationRunner>()
-    .MigrateUp();
+await MigrateAsync<IdentityDbContext>(
+    scope.ServiceProvider,
+    CancellationToken.None);
+
+await MigrateAsync<CatalogDbContext>(
+    scope.ServiceProvider,
+    CancellationToken.None);
+
+await MigrateAsync<PromotionsDbContext>(
+    scope.ServiceProvider,
+    CancellationToken.None);
+
+await MigrateAsync<LibraryDbContext>(
+    scope.ServiceProvider,
+    CancellationToken.None);
 
 await AdminSeeder.SeedAsync(
     connectionString,
     builder.Configuration,
+    scope.ServiceProvider.GetRequiredService<TimeProvider>(),
     CancellationToken.None);
+
+static async Task MigrateAsync<TContext>(
+    IServiceProvider serviceProvider,
+    CancellationToken cancellationToken)
+    where TContext : DbContext
+{
+    var dbContext = serviceProvider.GetRequiredService<TContext>();
+    await dbContext.Database.MigrateAsync(cancellationToken);
+}

@@ -10,7 +10,10 @@ Library precisa consultar usuário, jogo e promoção. Promotions precisa consul
 
 ## Decisão
 
-Expor interfaces e DTOs em projetos `Contracts`. Application consumidora referencia somente esses projetos. IDs representam relações entre domínios; não há foreign keys entre módulos.
+Expor interfaces, Queries e Snapshots imutáveis em projetos `Contracts`.
+Application consumidora referencia somente esses projetos. Services internos não
+devolvem Contracts; a fachada converte seu Result para Snapshot. IDs representam
+relações entre domínios e não há foreign keys entre módulos.
 
 ## Consequências
 
@@ -18,7 +21,7 @@ Expor interfaces e DTOs em projetos `Contracts`. Application consumidora referen
 - implementações podem ser substituídas mantendo a interface;
 - DTOs públicos precisam de evolução compatível;
 - chamadas atuais são síncronas e compartilham o processo;
-- tipos de evento declarados ainda não possuem transporte.
+- não há tipos de evento, transporte ou outbox implementados.
 
 ## Alternativas consideradas
 

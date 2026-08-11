@@ -5,5 +5,7 @@ namespace FiapCloudGames.Library.Domain.Repositories;
 public interface IGameLibraryRepository
 {
     Task AddAsync(GameLibrary library, CancellationToken cancellationToken);
-    Task<GameLibrary?> GetByUserAsync(Guid userId, bool trackChanges, CancellationToken cancellationToken);
+    Task<GameLibrary?> GetByUserAsync(
+        Guid userId,
+        CancellationToken cancellationToken);
 }

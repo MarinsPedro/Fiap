@@ -55,7 +55,9 @@ $env:Jwt__Issuer = "FiapCloudGames"
 $env:Jwt__Audience = "FiapCloudGames.Client"
 ```
 
-`Jwt__Issuer` e `Jwt__Audience` possuem fallback no código, mas mantê-los explícitos reduz ambiguidade.
+O código possui fallback apenas quando as chaves não existem. Como o
+`appsettings.json` base declara ambas com string vazia, configure valores não
+vazios explicitamente na execução local.
 
 Opcional para CORS:
 
@@ -87,8 +89,10 @@ Valide em outro terminal:
 
 ```powershell
 Invoke-WebRequest https://localhost:7080/health
-Invoke-WebRequest https://localhost:7080/openapi/v1.json
+Invoke-WebRequest https://localhost:7080/swagger/v1/swagger.json
 ```
+
+A Swagger UI fica em `https://localhost:7080/swagger/index.html`.
 
 ## User Secrets
 

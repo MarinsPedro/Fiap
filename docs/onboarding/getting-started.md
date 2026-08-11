@@ -105,11 +105,12 @@ O Compose configura Production e não expõe OpenAPI. Para Development, mantenha
 Com o perfil `https`:
 
 ```text
-https://localhost:7080/openapi/v1.json
+https://localhost:7080/swagger/v1/swagger.json
+https://localhost:7080/swagger/index.html
 https://localhost:7080/health
 ```
 
-Não há interface Swagger UI, somente JSON.
+O primeiro endereço é o JSON OpenAPI; o segundo é a Swagger UI.
 
 ## 7. Fazer login
 

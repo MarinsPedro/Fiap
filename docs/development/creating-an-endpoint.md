@@ -28,72 +28,110 @@ Para Catalog:
 src/Modules/Catalog/
 ├── FiapCloudGames.Catalog.Domain
 ├── FiapCloudGames.Catalog.Contracts
-├── FiapCloudGames.Catalog.Application
+├── FiapCloudGames.Catalog.Application/
+│   └── Games/
 ├── FiapCloudGames.Catalog.Infrastructure
-└── FiapCloudGames.Catalog.Presentation
+└── FiapCloudGames.Catalog.Presentation/
+    └── Features/Games/
 ```
+
+Mantenha um tipo principal por arquivo. No fluxo atual, `CreateGameInput`,
+`CreateGameService`, `GameResult` e `GameApplicationMappings` ficam em
+Application/Games; Request, Response, mapping HTTP e Controller ficam em
+Presentation/Features/Games.
 
 ## 3. Criar ou alterar a entidade
 
-O endpoint de criação usa `Game.Create`, e a atualização usa `Game.Update`.
+O endpoint de criação usa `Game.Create`, e a atualização usa
+`Game.ChangeDetails`.
 
 ```csharp
 public static Game Create(
     string title,
     string description,
     string category,
-    decimal basePrice) =>
-    new(Guid.NewGuid(), title, description, category, basePrice);
+    decimal basePrice,
+    DateTimeOffset createdAtUtc) =>
+    new(
+        Guid.NewGuid(),
+        title,
+        description,
+        category,
+        basePrice,
+        createdAtUtc);
 
-public void Update(
+public void ChangeDetails(
     string title,
     string description,
     string category,
     decimal basePrice)
 {
-    ArgumentException.ThrowIfNullOrWhiteSpace(title);
-    ArgumentException.ThrowIfNullOrWhiteSpace(category);
+    Title = NormalizeTitle(title);
+    Description = NormalizeDescription(description);
+    Category = NormalizeCategory(category);
+    BasePrice = GamePrice.Create(basePrice);
+}
 
-    var normalizedTitle = title.Trim();
-    if (normalizedTitle.Length is < 2 or > 160)
+private static string NormalizeTitle(string? title)
+{
+    if (string.IsNullOrWhiteSpace(title))
     {
-        throw new InvalidOperationException(
-            "O título deve ter entre 2 e 160 caracteres.");
+        throw new DomainRuleViolationException(
+            "O título é obrigatório.");
     }
 
-    if (basePrice < 0)
+    var normalized = title.Trim();
+    if (normalized.Length is
+        < MinimumTitleLength or > MaximumTitleLength)
     {
-        throw new InvalidOperationException(
-            "O preço base não pode ser negativo.");
+        throw new DomainRuleViolationException(
+            "O tamanho do título é inválido.");
     }
 
-    Title = normalizedTitle;
-    Description = description?.Trim() ?? string.Empty;
-    Category = category.Trim();
-    BasePrice = decimal.Round(
-        basePrice,
-        2,
-        MidpointRounding.ToEven);
+    return normalized;
 }
 ```
 
 Regra: mantenha invariantes dentro da entidade quando definem estado válido.
 
-## 4. Criar DTO HTTP de entrada
+## 4. Criar Request e Response HTTP
 
 Requests pertencem a Presentation. O record existente é:
 
 ```csharp
-public sealed record GameRequest(
+using System.ComponentModel.DataAnnotations;
+
+public sealed record CreateGameRequest(
+    [Required, StringLength(160, MinimumLength = 2)]
     string Title,
+
+    [StringLength(4000)]
     string Description,
+
+    [Required, StringLength(80)]
     string Category,
+
+    [Range(0, double.MaxValue)]
     decimal BasePrice);
 ```
 
-Não reutilize entidade de Domain como body HTTP.
+As anotações antecipam erros simples como resposta `400`. Não reutilize entidade
+de Domain como body HTTP e mantenha no domínio as invariantes necessárias para
+impedir a criação de estado inválido fora do endpoint.
 
-## 5. Criar input/output da Application
+Responses também pertencem a Presentation:
+
+```csharp
+public sealed record GameResponse(
+    Guid Id,
+    string Title,
+    string Description,
+    string Category,
+    decimal BasePrice,
+    bool IsActive);
+```
+
+## 5. Criar Input e Result da Application
 
 O input existente:
 
@@ -105,10 +143,10 @@ public sealed record CreateGameInput(
     decimal BasePrice);
 ```
 
-O output usado pelo endpoint é o contrato público:
+O Result representa a saída do caso de uso sem semântica HTTP:
 
 ```csharp
-public sealed record GameSummary(
+public sealed record GameResult(
     Guid Id,
     string Title,
     string Description,
@@ -117,14 +155,15 @@ public sealed record GameSummary(
     bool IsActive);
 ```
 
-Use Contracts quando outro módulo também precisa do DTO. Para um output exclusivamente interno, siga os records da Application.
+Não devolva `GameResponse` ou `GameSnapshot` pelo service. Presentation converte
+o Result para Response; a fachada do módulo converte o Result para Snapshot.
 
 ## 6. Command, Query, Handler ou Service
 
 Estado atual:
 
 - não existem Commands;
-- não existem Queries;
+- não existem Queries/Handlers de CQRS na Application;
 - não existem Handlers;
 - casos de uso são classes `*Service` com `ExecuteAsync`.
 
@@ -135,14 +174,14 @@ Consulta existente:
 ```csharp
 public sealed class GetGameService(IGameRepository games)
 {
-    public async Task<GameSummary?> ExecuteAsync(
+    public async Task<GameResult?> ExecuteAsync(
         Guid id,
         CancellationToken cancellationToken)
     {
         var game = await games.GetAsync(id, cancellationToken);
         return game is null
             ? null
-            : CatalogMappings.ToSummary(game);
+            : GameApplicationMappings.ToResult(game);
     }
 }
 ```
@@ -152,9 +191,10 @@ Alteração existente:
 ```csharp
 public sealed class CreateGameService(
     IGameRepository games,
-    ICatalogUnitOfWork unitOfWork)
+    ICatalogUnitOfWork unitOfWork,
+    TimeProvider clock)
 {
-    public async Task<GameSummary> ExecuteAsync(
+    public async Task<GameResult> ExecuteAsync(
         CreateGameInput input,
         CancellationToken cancellationToken)
     {
@@ -162,11 +202,12 @@ public sealed class CreateGameService(
             input.Title,
             input.Description,
             input.Category,
-            input.BasePrice);
+            input.BasePrice,
+            clock.GetUtcNow());
 
         await games.AddAsync(game, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
-        return CatalogMappings.ToSummary(game);
+        return GameApplicationMappings.ToResult(game);
     }
 }
 ```
@@ -178,10 +219,14 @@ Estado atual:
 - `[ApiController]` executa validação/model binding do ASP.NET Core;
 - alguns checks de entrada ficam no service;
 - invariantes ficam no Domain;
-- limites físicos ficam no mapping/migration;
+- limites persistidos também são invariantes do Domain;
 - não há classes `*Validator` nem pacote FluentValidation.
 
-Para Game, título/preço são validados no Domain. Categoria e descrição possuem limites no banco que ainda não são espelhados integralmente no Domain.
+Para `Game`, título, descrição, categoria e preço são protegidos no Domain. A
+Presentation antecipa limites simples por Data Annotations e pode retornar todos
+os erros de `ModelState`. A Application valida somente regras próprias do caso
+de uso, como a política de senha no cadastro; uma violação que alcançar o Domain
+é traduzida para 422.
 
 ```text
 TODO: confirmar com a equipe se validators dedicados serão adotados.
@@ -252,6 +297,7 @@ modelBuilder.Entity<Game>(builder =>
         .IsRequired();
     builder.Property(game => game.BasePrice)
         .HasColumnName("base_price")
+        .HasConversion(priceConverter)
         .HasPrecision(12, 2)
         .IsRequired();
 });
@@ -261,55 +307,39 @@ Se a mudança não altera schema, nenhuma migration é necessária.
 
 ## 11. Criar migration
 
-Migrations não são geradas por `dotnet ef`. Crie uma classe no projeto central:
+Migrations são geradas pelo EF Core no projeto central:
 
 ```text
 src/Database/FiapCloudGames.Database.Migrations/Migrations/
 ```
 
-Modelo para uma alteração futura, claramente não existente hoje:
+Restaure a ferramenta local:
 
-```csharp
-using FluentMigrator;
-
-namespace FiapCloudGames.Database.Migrations.Migrations;
-
-[Migration(AAAAMMDDNNNN)]
-public sealed class AddGamePublisher : Migration
-{
-    public override void Up()
-    {
-        Alter.Table("games")
-            .InSchema("catalog")
-            .AddColumn("publisher")
-            .AsString(120)
-            .Nullable();
-    }
-
-    public override void Down()
-    {
-        Delete.Column("publisher")
-            .FromTable("games")
-            .InSchema("catalog");
-    }
-}
+```powershell
+dotnet tool restore
+$env:ConnectionStrings__Database = "Host=localhost;Port=5432;Database=fiap_cloud_games;Username=postgres;Password=<senha-local>"
 ```
 
-Ao usar o modelo:
+Depois de alterar o mapping de Catalog, gere a migration:
 
-1. escolha identificador único e crescente;
-2. atualize entidade, mapping e DTOs;
-3. preserve compatibilidade de deploy;
-4. valide contra PostgreSQL;
-5. documente rollback.
+```powershell
+dotnet tool run dotnet-ef migrations add AddGamePublisher `
+  --context CatalogDbContext `
+  --project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
+  --startup-project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
+  --output-dir Migrations/Catalog
+```
 
-Aplicação:
+Revise os arquivos `Up`, `Down` e o snapshot gerados. Para aplicar todos os
+contextos:
 
 ```powershell
 dotnet run --project src/Database/FiapCloudGames.Database.Migrations
 ```
 
-O entry point atual não expõe rollback. Veja [Migrations](database-migrations.md).
+Use a pasta `Migrations/Identity`, `Migrations/Promotions` ou
+`Migrations/Library` quando a alteração pertencer a outro contexto. Veja
+[EF Core Migrations](database-migrations.md).
 
 ## 12. Criar o Controller e a rota
 
@@ -318,16 +348,18 @@ Consulta:
 ```csharp
 [AllowAnonymous]
 [HttpGet("{id:guid}")]
-public async Task<ActionResult<GameSummary>> Get(
+public async Task<ActionResult<GameResponse>> Get(
     Guid id,
     [FromServices] GetGameService service,
     CancellationToken cancellationToken)
 {
-    var game = await service.ExecuteAsync(
+    var result = await service.ExecuteAsync(
         id,
         cancellationToken);
 
-    return game is null ? NotFound() : Ok(game);
+    return result is null
+        ? NotFound()
+        : Ok(result.ToResponse());
 }
 ```
 
@@ -336,23 +368,21 @@ Alteração:
 ```csharp
 [Authorize(Roles = "Administrator")]
 [HttpPost]
-public async Task<ActionResult<GameSummary>> Create(
-    GameRequest request,
+public async Task<ActionResult<GameResponse>> Create(
+    CreateGameRequest request,
     [FromServices] CreateGameService service,
     CancellationToken cancellationToken)
 {
-    var game = await service.ExecuteAsync(
-        new CreateGameInput(
-            request.Title,
-            request.Description,
-            request.Category,
-            request.BasePrice),
+    var result = await service.ExecuteAsync(
+        request.ToInput(),
         cancellationToken);
+
+    var response = result.ToResponse();
 
     return CreatedAtAction(
         nameof(Get),
-        new { id = game.Id },
-        game);
+        new { id = response.Id },
+        response);
 }
 ```
 
@@ -394,7 +424,9 @@ Um novo módulo Presentation também exige `AddApplicationPart` na API.
 | consulta válida | 200 |
 | jogo não encontrado na consulta | 404 direto do MVC |
 | ID inexistente na atualização | 404 Problem Details |
-| entrada inválida | 400 ou 422, conforme exceção |
+| campo/formato inválido | 400 Problem Details |
+| regra de negócio não processável | 422 Problem Details |
+| conflito de estado/duplicidade | 409 Problem Details |
 | sem token em rota admin | 401 |
 | role incorreta | 403 |
 | erro inesperado | 500 |
@@ -403,7 +435,10 @@ Não use 409 na documentação de uma action sem implementar exceção/mapeament
 
 ## 15. Logs
 
-O padrão atual não injeta `ILogger` nos services/Controllers. O middleware registra exceções 4xx lançadas como warning e 5xx como error.
+O padrão atual não injeta `ILogger` nos services/Controllers. O middleware
+registra falhas funcionais em `Information` e falhas 500 em `Error`. A
+configuração base eleva a categoria do middleware para `Warning`, portanto os
+eventos funcionais ficam suprimidos por padrão.
 
 ```text
 TODO: política de logs de negócio não identificada.
@@ -419,12 +454,20 @@ Teste real de regra:
 [Fact]
 public void CreateShouldRejectNegativePrice()
 {
-    Assert.Throws<InvalidOperationException>(() =>
+    var createdAtUtc = new DateTimeOffset(
+        2026, 1, 10, 12, 0, 0, TimeSpan.Zero);
+
+    var exception = Assert.Throws<DomainRuleViolationException>(() =>
         Game.Create(
             "Cloud Quest",
             "Aventura",
             "RPG",
-            -0.01m));
+            -0.01m,
+            createdAtUtc));
+
+    Assert.Equal(
+        "O preço base não pode ser negativo.",
+        exception.Message);
 }
 ```
 
@@ -439,24 +482,29 @@ public sealed class FiapCloudGamesApiFactory
     : WebApplicationFactory<Program>
 ```
 
-Ela valida somente `/health` e não substitui os `DbContext`. Uma chamada a endpoint de dados tentará usar a connection string de teste em `localhost`.
+Ela cobre `/health`, validação MVC, respostas 401/404 e o middleware de exceções,
+mas não substitui os `DbContext`. Uma chamada válida que alcance persistência
+tentará usar a connection string de teste em `localhost`.
 
 ```text
 TODO: definir infraestrutura de PostgreSQL real/Testcontainers e limpeza de dados antes de adicionar testes de endpoint com persistência.
 ```
 
-Não documente um teste autenticado como executável até essa infraestrutura existir.
+Não documente um fluxo autenticado com persistência como executável até essa
+infraestrutura existir.
 
 ## 18. OpenAPI
 
-Controllers/records são descobertos automaticamente. Depois da alteração:
+Controllers e seus contratos são descobertos pelo MVC/Application Parts. Depois
+da alteração:
 
 ```powershell
 dotnet run --project src/Api/FiapCloudGames.Api --launch-profile https
-Invoke-WebRequest https://localhost:7080/openapi/v1.json
+Invoke-WebRequest https://localhost:7080/swagger/v1/swagger.json
 ```
 
-Procure a rota e confirme método, request, response e requisito de autorização. Não há Swagger UI nem anotações de descrição.
+Procure a rota e confirme método, request, response e requisito de autorização.
+O Swagger UI é exposto em `Development`.
 
 ## 19. Chamada manual
 

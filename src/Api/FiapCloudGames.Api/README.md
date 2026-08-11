@@ -34,7 +34,8 @@ Perfis locais:
 
 - `http://localhost:5080`;
 - `https://localhost:7080`;
-- OpenAPI em `/openapi/v1.json` somente em Development.
+- OpenAPI em `/swagger/v1/swagger.json` somente em Development;
+- Swagger UI em `/swagger/index.html` somente em Development.
 
 ## Configurações
 
@@ -47,15 +48,16 @@ segredos reais nos arquivos `appsettings`.
 dotnet test tests/Integration/FiapCloudGames.Api.IntegrationTests
 ```
 
-O teste atual cobre apenas `/health`, sem conexão ao PostgreSQL.
+Os testes cobrem `/health`, validação MVC, respostas vazias 401/404 e o
+mapeamento do middleware de exceções, sem conexão ao PostgreSQL. Fluxos de
+negócio com persistência ainda não são exercitados via HTTP.
 
 ## Limitações
 
 - health check não verifica o banco;
-- não há Swagger UI, versionamento ou rate limiting;
+- não há versionamento ou rate limiting;
 - não há observabilidade além de logs/health;
 - `TODO: adicionar testes HTTP dos fluxos autenticados e de negócio.`
 
 Documentação da API: [visão geral](../../../docs/api/overview.md) e
 [endpoints](../../../docs/api/endpoints.md).
-

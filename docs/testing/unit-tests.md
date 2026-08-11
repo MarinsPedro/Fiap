@@ -9,9 +9,9 @@ Cada domínio possui um projeto xUnit:
 - `FiapCloudGames.Promotions.UnitTests`;
 - `FiapCloudGames.Library.UnitTests`.
 
-Os oito casos atuais verificam normalização de e-mail e dinheiro, mudança de
-estado, rejeição de preço/período inválido, cálculo de desconto, prevenção de
-duplicidade e snapshot de aquisição.
+Os 17 casos atuais verificam normalização de e-mail, nomes e dinheiro, limites
+persistidos, mudança de estado, rejeição de preço/período inválido, cálculo de
+desconto, prevenção de duplicidade e snapshot de aquisição.
 
 ## Padrão atual
 
@@ -22,8 +22,16 @@ dependência externa:
 [Fact]
 public void CreateShouldRejectNegativePrice()
 {
-    Assert.Throws<InvalidOperationException>(() =>
-        Game.Create("Cloud Quest", "Aventura", "RPG", -0.01m));
+    var createdAtUtc = new DateTimeOffset(
+        2026, 1, 10, 12, 0, 0, TimeSpan.Zero);
+
+    Assert.Throws<DomainRuleViolationException>(() =>
+        Game.Create(
+            "Cloud Quest",
+            "Aventura",
+            "RPG",
+            -0.01m,
+            createdAtUtc));
 }
 ```
 
@@ -44,11 +52,20 @@ Modelo conceitual:
 
 ```csharp
 // Exemplo futuro: adapte aos contratos reais antes de adicionar ao projeto.
+var createdAtUtc = new DateTimeOffset(
+    2026, 1, 10, 12, 0, 0, TimeSpan.Zero);
 var repository = new FakeGameRepository(existingGame: null);
-var unitOfWork = new SpyUnitOfWork();
-var service = new GameService(repository, unitOfWork);
+var unitOfWork = new SpyCatalogUnitOfWork();
+var clock = new FixedTimeProvider(createdAtUtc);
+var service = new CreateGameService(repository, unitOfWork, clock);
 
-var created = await service.CreateAsync(request, CancellationToken.None);
+var created = await service.ExecuteAsync(
+    new CreateGameInput(
+        "Cloud Quest",
+        "Aventura",
+        "RPG",
+        99.90m),
+    CancellationToken.None);
 
 Assert.Equal("Cloud Quest", created.Title);
 Assert.Equal(1, repository.AddCalls);
@@ -57,8 +74,10 @@ Assert.Equal(1, unitOfWork.SaveChangesCalls);
 
 Para a falha, configure o fake com um registro existente, confira a exceção
 esperada e confirme que `AddCalls` e `SaveChangesCalls` continuam em zero. O
-snippet é deliberadamente ilustrativo: `FakeGameRepository`, `SpyUnitOfWork` e a
-assinatura mostrada não existem hoje.
+snippet é deliberadamente ilustrativo: `FakeGameRepository`,
+`SpyCatalogUnitOfWork` e `FixedTimeProvider` não existem hoje. Os nomes
+`CreateGameService`, `CreateGameInput` e `ExecuteAsync` correspondem à API atual
+da Application.
 
 ## Boas práticas
 
@@ -70,4 +89,3 @@ assinatura mostrada não existem hoje.
 
 `TODO: adicionar testes unitários para serviços Application e token/senha, com
 fakes ou estratégia de mocks aprovada.`
-

@@ -31,7 +31,7 @@ Não existe processamento de pagamento, carrinho, refresh token, mensageria ou f
 | Entity Framework Core | 10.0.10 | Mapeamento e acesso a dados por módulo | projetos `Infrastructure` |
 | Npgsql EF Core | 10.0.3 | Provider PostgreSQL | projetos `Infrastructure` |
 | PostgreSQL | imagem 17-alpine | Banco relacional | `docker-compose.yml` |
-| FluentMigrator | 8.0.1 | Criação e evolução centralizada do banco | projeto `Database.Migrations` |
+| EF Core Migrations | 10.0.10 | Criação e evolução centralizada do banco | projeto `Database.Migrations` |
 | JWT Bearer | 10.0.10 | Autenticação e validação de token | módulo Identity |
 | Microsoft OpenAPI | 2.11.0 | Geração da especificação | API |
 | xUnit | 2.9.3 | Testes automatizados | projetos em `tests` |
@@ -62,9 +62,21 @@ flowchart LR
     Migrator["Database.Migrations"] --> Db
 ```
 
-Cada módulo possui `Domain`, `Contracts`, `Application`, `Infrastructure` e `Presentation`. Chamadas entre módulos usam apenas interfaces e DTOs de `Contracts`. Os registros de eventos existem nos contratos, mas não há dispatcher, broker, publicação ou consumo implementado.
+Cada módulo possui `Domain`, `Contracts`, `Application`, `Infrastructure` e
+`Presentation`. Chamadas entre módulos usam apenas interfaces e DTOs de
+`Contracts`. `Domain.Common` contém a exceção transversal de violação de
+invariante; `Application.Common` concentra unidade de trabalho e erros
+semânticos da aplicação. Application e Presentation organizam cada feature em
+arquivos separados para services, inputs/results, requests/responses e
+mapeamentos. Não há eventos de integração, dispatcher, broker, publicação ou
+consumo implementado.
 
-Detalhes: [visão arquitetural](docs/architecture/overview.md), [módulos](docs/architecture/modules.md), [camadas](docs/architecture/layers.md) e [fluxo de requisição](docs/architecture/request-flow.md).
+Detalhes: [visão arquitetural](docs/architecture/overview.md),
+[modelo de domínio](docs/architecture/domain-model.md),
+[objetos e contratos por fronteira](docs/architecture/data-contracts.md),
+[módulos](docs/architecture/modules.md),
+[camadas](docs/architecture/layers.md) e
+[fluxo de requisição](docs/architecture/request-flow.md).
 
 ## Início rápido com Docker
 
@@ -120,7 +132,8 @@ Resultado esperado:
 - `GET http://localhost:8080/health` responde `Healthy`;
 - o migrador termina com código zero antes de a API iniciar.
 
-No Compose, `ASPNETCORE_ENVIRONMENT=Production`; por isso `/openapi/v1.json` **não** é exposto nessa execução.
+No Compose, `ASPNETCORE_ENVIRONMENT=Production`; por isso o JSON do Swagger e a
+interface Swagger UI **não** são expostos nessa execução.
 
 ## Execução local da API e OpenAPI
 
@@ -157,10 +170,11 @@ URLs do perfil `https`:
 
 - API HTTPS: `https://localhost:7080`;
 - API HTTP: `http://localhost:5080`;
-- OpenAPI em Development: `https://localhost:7080/openapi/v1.json`;
+- OpenAPI em Development: `https://localhost:7080/swagger/v1/swagger.json`;
+- Swagger UI em Development: `https://localhost:7080/swagger/index.html`;
 - health check: `https://localhost:7080/health`.
 
-O repositório gera somente a especificação OpenAPI JSON; não há Swagger UI configurado.
+Em `Development`, o host expõe a especificação OpenAPI e o Swagger UI.
 
 ## Autenticar
 
@@ -209,6 +223,9 @@ O [índice central](docs/README.md) organiza os guias por perfil. Atalhos:
 FiapCloudGames.sln
 src/
 ├── Api/FiapCloudGames.Api
+├── BuildingBlocks/
+│   ├── FiapCloudGames.Domain.Common
+│   └── FiapCloudGames.Application.Common
 ├── Database/FiapCloudGames.Database.Migrations
 └── Modules/
     ├── Identity
@@ -233,7 +250,8 @@ docs/
 
 - o health check não verifica PostgreSQL;
 - os testes de integração não sobem um PostgreSQL real;
-- o migrador executa apenas `MigrateUp()` e não oferece comando de rollback;
+- o executável do migrador aplica apenas migrations pendentes; rollback é feito
+  explicitamente com `dotnet ef database update` por contexto;
 - não há CI/CD, registro de imagens ou alvo de deploy;
 - logs usam os providers padrão do ASP.NET Core; não há métricas, tracing ou APM;
 - não há versionamento, paginação, filtro público ou ordenação configurável na API;

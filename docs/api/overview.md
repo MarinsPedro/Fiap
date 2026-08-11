@@ -19,11 +19,12 @@ sobrescritas por `ASPNETCORE_URLS`.
 Em `Development`:
 
 ```text
-GET /openapi/v1.json
+GET /swagger/v1/swagger.json
+GET /swagger/index.html
 ```
 
-Não há Swagger UI. O Compose usa `Production`, então não publica o documento
-OpenAPI.
+O primeiro endereço retorna o documento OpenAPI; o segundo abre a Swagger UI.
+O Compose usa `Production`, então não publica nenhum dos dois.
 
 ## Recursos
 
@@ -46,4 +47,3 @@ Consulte a [lista completa de endpoints](endpoints.md).
 
 Não há versionamento, paginação, rate limiting, idempotency key ou mecanismo
 global de filtros/ordenação.
-

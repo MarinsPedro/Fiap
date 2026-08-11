@@ -14,8 +14,8 @@ as anteriores. Variáveis hierárquicas usam `__`, por exemplo
 |---|---|---:|---|
 | `ConnectionStrings:Database` | API e migrador | sim | conexão PostgreSQL |
 | `Jwt:Key` | API | sim | segredo com ao menos 32 caracteres |
-| `Jwt:Issuer` | API | não | possui valor padrão no código/configuração |
-| `Jwt:Audience` | API | não | possui valor padrão no código/configuração |
+| `Jwt:Issuer` | API | recomendada | `appsettings.json` contém string vazia; configure valor não vazio |
+| `Jwt:Audience` | API | recomendada | `appsettings.json` contém string vazia; configure valor não vazio |
 | `Cors:AllowedOrigins` | API | não | lista de origens; política configurada pela API |
 | `Logging:LogLevel:*` | API | não | níveis padrão do logging .NET |
 | `AllowedHosts` | API | não | filtro de hosts do ASP.NET Core |
@@ -50,7 +50,7 @@ docker compose up --build
   tokens.
 - Prefira um secret store do provedor de implantação.
 - Restrinja acesso aos segredos e defina rotação.
-- O repositório não possui `UserSecretsId` nem integração com um cofre.
+- O migrador possui `UserSecretsId`; a API não. Não há integração com um cofre.
 
 `TODO: selecionar o gerenciador de segredos e documentar criação, rotação e
 revogação por ambiente.`
@@ -59,7 +59,12 @@ revogação por ambiente.`
 
 O Compose executa a API em `Production`; por isso o documento OpenAPI não fica
 exposto nesse fluxo. A execução local com `ASPNETCORE_ENVIRONMENT=Development`
-habilita o JSON OpenAPI.
+habilita `/swagger/v1/swagger.json` e a Swagger UI em
+`/swagger/index.html`.
+
+O código usa valores de fallback para issuer e audience apenas se as chaves não
+existirem. Como o arquivo base declara essas chaves com string vazia, execuções
+fora do Compose devem informar `Jwt__Issuer` e `Jwt__Audience` explicitamente.
 
 Não existem arquivos ou contratos formais para staging/produção, nem matriz de
 valores por ambiente.

@@ -4,6 +4,8 @@
 
 ```mermaid
 flowchart TD
+    Domain --> DomainCommon[\"Domain.Common\"]
+    Application --> ApplicationCommon[\"Application.Common\"]
     Presentation --> Application
     Application --> Domain
     Application --> Contracts
@@ -38,7 +40,10 @@ Não existem outras referências entre módulos nos `.csproj`.
 
 ## Migrations
 
-`FiapCloudGames.Database.Migrations` não possui `ProjectReference` para módulos. O teste `MigrationsShouldNotReferenceModules` protege essa regra.
+`FiapCloudGames.Database.Migrations` referencia os projetos Infrastructure de
+Identity, Catalog, Promotions e Library para reutilizar os quatro `DbContext`.
+Ele não referencia Presentation. O teste
+`MigrationsShouldNotReferenceModulePresentation` protege essa fronteira.
 
 ## Regras automatizadas e lacunas
 
@@ -46,7 +51,7 @@ Testes atuais verificam:
 
 - Domain sem ASP.NET Core, EF Core ou Infrastructure;
 - Library.Application sem Application/Infrastructure de outros módulos;
-- migrador sem dependências de módulos.
+- migrador sem dependência de Presentation dos módulos.
 
 Não há teste específico para todas as combinações, como Presentation → Infrastructure ou Application → Infrastructure em cada módulo.
 

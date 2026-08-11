@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\FiapCloudGames.Application.Common\FiapCloudGames.Application.Common.csproj" />
     <ProjectReference Include="..\FiapCloudGames.Library.Domain\FiapCloudGames.Library.Domain.csproj" />
     <ProjectReference Include="..\FiapCloudGames.Library.Contracts\FiapCloudGames.Library.Contracts.csproj" />
     <ProjectReference Include="..\..\Identity\FiapCloudGames.Identity.Contracts\FiapCloudGames.Identity.Contracts.csproj" />

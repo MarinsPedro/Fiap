@@ -3,12 +3,23 @@
 ## API
 
 `FiapCloudGames.Api.IntegrationTests` usa
-`WebApplicationFactory<Program>`, configura o ambiente `Testing` e chama
-`GET /health`. A factory fornece connection string e JWT de teste apenas para
-satisfazer a inicialização.
+`FiapCloudGamesApiFactory`, derivada de `WebApplicationFactory<Program>`, e
+configura o ambiente `Testing`. A factory fornece connection string, issuer,
+audience e chave JWT de teste apenas para satisfazer a inicialização.
+
+Os 18 casos atuais cobrem:
+
+- `GET /health`;
+- JSON inválido e Data Annotations convertidos em
+  `ValidationProblemDetails`;
+- respostas vazias 401 e 404 completadas por `UseStatusCodePages`;
+- todas as categorias de `AppException`;
+- `DomainRuleViolationException` como 422;
+- exceções técnicas como 500 sanitizado;
+- validação estruturada e cancelamento iniciado pelo cliente.
 
 O health check atual não consulta o banco, portanto essa suíte passa mesmo sem
-PostgreSQL.
+PostgreSQL. Os requests exercitados não alcançam persistência com dados válidos.
 
 ```powershell
 dotnet test tests/Integration/FiapCloudGames.Api.IntegrationTests
@@ -24,8 +35,10 @@ provedor Npgsql e inspeciona o modelo EF. Ele confirma o mapeamento:
 - `library.game_libraries` e `library.library_games`;
 - `promotions.promotions` e `promotions.promotion_games`.
 
-Nenhuma conexão é aberta. O teste não valida SQL, constraints, índices, migration
-ou comportamento do PostgreSQL.
+Outro teste configura os contexts como o executável central e confirma que cada
+um descobre sua migration EF inicial e que o modelo não possui mudanças
+pendentes em relação aos snapshots. Nenhuma conexão é aberta. A suíte ainda não
+valida SQL executado, constraints ou comportamento real do PostgreSQL.
 
 ```powershell
 dotnet test tests/Integration/FiapCloudGames.Database.IntegrationTests
@@ -34,9 +47,11 @@ dotnet test tests/Integration/FiapCloudGames.Database.IntegrationTests
 ## Lacunas prioritárias
 
 - subir PostgreSQL isolado para a suíte;
-- aplicar todas as migrations FluentMigrator;
-- executar cadastro, login, administração, promoção e aquisição via HTTP;
-- cobrir 400, 401, 403, 404, 422 e conflitos de concorrência;
+- aplicar e reverter todas as migrations EF Core;
+- executar cadastro, login, administração, promoção e aquisição via HTTP com
+  persistência real;
+- cobrir autorização 403, tokens válidos/expirados e conflitos reais de
+  persistência/concorrência;
 - garantir limpeza e isolamento entre casos;
 - comparar o modelo EF com o schema migrado;
 - verificar que dados de um teste não vazam para outro.
@@ -52,4 +67,3 @@ acima.`
 - Não dependa da ordem dos testes.
 - Remova dados/recursos temporários ao final.
 - Mantenha credenciais de teste fora do repositório quando não forem placeholders.
-

@@ -38,12 +38,13 @@ Não reescreva silenciosamente uma decisão aceita. Atualize consequências meno
 | ADR | Status | Tema |
 |---|---|---|
 | [0001](ADR-0001-modular-monolith.md) | Aceito | Monólito modular |
-| [0002](ADR-0002-centralized-migrations.md) | Aceito | Migrations centralizadas |
+| [0002](ADR-0002-centralized-migrations.md) | Substituído | Migrations centralizadas com FluentMigrator |
 | [0003](ADR-0003-module-communication.md) | Aceito | Comunicação por Contracts |
 | [0004](ADR-0004-application-parts.md) | Aceito | Controllers via Application Parts |
 | [0005](ADR-0005-identity-authentication.md) | Aceito | Autenticação no módulo Identity |
 | [0006](ADR-0006-problem-details.md) | Aceito | Tratamento global com Problem Details |
 | [0007](ADR-0007-development-openapi.md) | Aceito | OpenAPI somente em Development |
+| [0008](ADR-0008-ef-core-centralized-migrations.md) | Aceito | EF Core Migrations centralizadas |
 
 ## Template
 

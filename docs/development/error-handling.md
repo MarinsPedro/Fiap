@@ -1,60 +1,101 @@
 # Tratamento de erros
 
-## Pipeline
+## Estrutura
 
-`ExceptionHandlingMiddleware` envolve o pipeline da API, registra falhas e converte
-exceções conhecidas em respostas HTTP. O corpo segue o formato Problem Details
-com `status`, `title`, `detail` e `instance`; o writer padrão também pode
-acrescentar extensões de diagnóstico, como `traceId`.
+Toda falha funcional da camada Application usa uma única exceção:
 
-Exemplo ilustrativo:
+```text
+FiapCloudGames.Application.Common
+└── Exceptions
+    ├── AppErrorCategory.cs
+    └── AppException.cs
+```
+
+`AppErrorCategory` contém somente categorias HTTP estáveis. Uma nova regra de
+negócio utiliza uma categoria existente e não exige outra exceção, código ou
+alteração no middleware.
+
+| Categoria | Status | Código |
+|---|---:|---|
+| `Validation` | 400 | `validation_error` |
+| `Authentication` | 401 | `authentication_error` |
+| `Forbidden` | 403 | `forbidden` |
+| `NotFound` | 404 | `not_found` |
+| `Conflict` | 409 | `conflict` |
+| `BusinessRule` | 422 | `business_rule_violation` |
+
+Exemplos:
+
+```csharp
+throw AppException.NotFound(
+    "O jogo informado não foi encontrado.");
+
+throw AppException.BusinessRule(
+    "A promoção não pode ser aplicada a um jogo inativo.");
+```
+
+## Validação estruturada
+
+`AppException.Validation(errors)` recebe várias mensagens por campo. A mesma
+exceção também pode representar uma validação simples com
+`AppException.Validation(message)`.
+
+Quando `Errors` possui itens, o middleware produz `ValidationProblemDetails`:
 
 ```json
 {
-  "status": 404,
-  "title": "Recurso não encontrado",
-  "detail": "Jogo não encontrado.",
-  "instance": "/api/games/11111111-1111-1111-1111-111111111111",
-  "traceId": "00-..."
+  "title": "Um ou mais dados são inválidos",
+  "status": 400,
+  "detail": "Um ou mais dados informados são inválidos.",
+  "instance": "/api/games",
+  "code": "validation_error",
+  "traceId": "00-...",
+  "errors": {
+    "title": [
+      "O título é obrigatório."
+    ],
+    "basePrice": [
+      "O preço não pode ser negativo."
+    ]
+  }
 }
 ```
 
-## Mapeamento atual
+Erros automáticos de JSON e `ModelState` usam o mesmo código e formato.
 
-| Exceção | Status | Uso esperado |
-|---|---:|---|
-| `UnauthorizedAccessException` | 401 | autenticação recusada pela aplicação |
-| `KeyNotFoundException` | 404 | recurso não encontrado |
-| `ArgumentException` | 400 | entrada inválida |
-| `InvalidOperationException` | 422 | regra de negócio não satisfeita |
-| qualquer outra | 500 | falha inesperada |
+## Middleware
 
-O middleware não possui mapeamento para `409 Conflict`. Conflitos de unicidade que
-escapem da validação da aplicação podem resultar em 500.
+`ExceptionHandlingMiddleware` conhece apenas:
 
-## Actions que retornam diretamente
+```text
+DomainRuleViolationException → 422 domain_rule_violation
+AppException                 → categoria convertida em HTTP
+Exception                    → 500 sanitizado
+```
 
-Controllers também podem usar resultados como `NotFound()`, `Unauthorized()` e o
-middleware de autorização pode gerar `401`/`403`. Essas respostas não
-necessariamente carregam o mesmo Problem Details do middleware.
+Cancelamentos iniciados pelo cliente não são convertidos em 500. Antes de
+escrever uma falha, o middleware limpa a resposta ainda não iniciada.
 
-## Orientações
+Exceções genéricas como `InvalidOperationException`, `KeyNotFoundException`,
+`ArgumentException` e `UnauthorizedAccessException` não recebem significado
+funcional e permanecem como 500.
 
-- Lance exceções de domínio/aplicação que já tenham tradução conhecida.
-- Não inclua senha, token, connection string ou dados pessoais no texto da
-  exceção.
-- Use 400 para formato/argumento, 404 para ausência e 422 para uma operação bem
-  formada que viola a regra atual.
-- Registre contexto técnico no log, mas devolva uma mensagem segura ao cliente.
-- Não capture uma exceção apenas para lançá-la novamente sem acrescentar contexto.
+Falhas funcionais são registradas em nível Information, sem stack trace. Falhas
+500 são registradas em Error com a exceção completa, mas o cliente recebe apenas
+`Ocorreu um erro interno inesperado.`.
 
-## Lacunas
+O campo opcional `type` não utiliza URLs próprias fictícias; quando presente,
+fica sob responsabilidade do writer padrão do ASP.NET Core.
 
-- `TODO: padronizar respostas produzidas diretamente pelos controllers e pela
-  autenticação.`
-- `TODO: definir catálogo estável de códigos de erro.`
-- `TODO: mapear violações de unicidade e concorrência para 409 quando aplicável.`
-- `TODO: revisar a exposição de mensagens internas em respostas 500.`
+## Limite arquitetural
+
+`AppException` pertence à Application. Entidades do domínio não dependem de
+`Application.Common`; suas invariantes internas continuam usando validação
+própria e lançam `DomainRuleViolationException`. A API traduz essa exceção em
+`422 Unprocessable Entity` sem conhecer regras específicas dos módulos.
+
+`UseStatusCodePages` complementa respostas vazias produzidas por challenge,
+forbid e rota inexistente.
 
 Consulte também [Erros da API](../api/errors.md) e
-[Logging e monitoramento](../operations/logging-monitoring.md).
+[Validação](validation.md).

@@ -10,7 +10,7 @@ Cliente
 → Authorization
 → OpenAPI, health check ou Controller
 → Application Service
-→ Domain/Contracts
+→ Domain ou Contracts
 → Repository
 → DbContext/Npgsql
 → PostgreSQL
@@ -34,14 +34,18 @@ sequenceDiagram
     Client->>Controller: POST /api/library/games/{gameId} + Bearer
     Controller->>Controller: lê NameIdentifier
     Controller->>App: ExecuteAsync(userId, gameId, token)
-    App->>Identity: GetUserAsync
-    App->>Catalog: GetGameAsync
-    App->>Repo: GetByUserAsync(trackChanges: true)
-    App->>Promo: GetPriceAsync
-    App->>App: GameLibrary.AddGame
+    App->>Identity: GetUserAsync(GetUserQuery)
+    Identity-->>App: UserSnapshot
+    App->>Catalog: GetGameAsync(GetGameQuery)
+    Catalog-->>App: GameSnapshot
+    App->>Repo: GetByUserAsync
+    App->>Promo: GetPriceAsync(GetPriceQuoteQuery)
+    Promo-->>App: PriceQuoteSnapshot
+    App->>App: GameLibrary.AcquireGame
     App->>Db: SaveChangesAsync
-    App-->>Controller: LibraryItemSummary
-    Controller-->>Client: 201 Created
+    App-->>Controller: LibraryItemResult
+    Controller->>Controller: mapeia para LibraryItemResponse
+    Controller-->>Client: 201 Created + Response
 ```
 
 | Etapa | Função |
@@ -52,7 +56,8 @@ sequenceDiagram
 | Controller | lê rota/body/claims, chama service e define status |
 | Application | coordena módulos e persistência |
 | Domain | aplica invariantes |
-| Repository | monta consultas EF e tracking |
+| Repository | carrega e persiste raízes de agregado |
+| Query port | executa projeções somente leitura sem tracking |
 | Unit of Work | chama `DbContext.SaveChangesAsync` |
 | Middleware de exceções | converte exceções conhecidas em Problem Details |
 

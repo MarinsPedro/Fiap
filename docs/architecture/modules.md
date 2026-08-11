@@ -8,7 +8,7 @@ Objetivo: manter usuários, credenciais, autenticação e papéis.
 |---|---|
 | Entidade/value object | `User`, `Email`, `UserRole` |
 | Casos de uso | `CreateUserService`, `LoginService`, `GetUserService`, `DeactivateUserService` |
-| Fachada pública | `IIdentityModule.GetUserAsync` |
+| Fachada pública | `GetUserQuery` → `IIdentityModule` → `UserSnapshot` |
 | Endpoints | cadastro, login, próprio perfil, consulta administrativa, desativação |
 | Persistência | `IdentityDbContext`, schema `identity`, tabela `users` |
 | Dependências externas | EF Core, Npgsql, JWT Bearer |
@@ -25,9 +25,8 @@ Regras principais:
 - usuário inativo não autentica;
 - primeiro `Administrator` pode ser criado pelo migrador.
 
-Evento declarado: `UserDeactivatedIntegrationEvent`.
-
-Estado atual: o evento não é emitido nem consumido.
+`User` é a raiz do agregado e `Email` impede a criação de um e-mail inválido.
+O instante de criação é fornecido explicitamente pelo relógio da aplicação.
 
 ## Catalog
 
@@ -36,8 +35,8 @@ Objetivo: manter o cadastro consultável de jogos.
 | Item | Implementação |
 |---|---|
 | Entidade | `Game` |
-| Casos de uso | criar, atualizar, obter e listar |
-| Fachada pública | `ICatalogModule.GetGameAsync` |
+| Casos de uso | `CreateGameService`, `UpdateGameService`, `GetGameService`, `ListGamesService` |
+| Fachada pública | `GetGameQuery` → `ICatalogModule` → `GameSnapshot` |
 | Endpoints | listagem/detalhe públicos; criação/atualização administrativas |
 | Persistência | `CatalogDbContext`, schema `catalog`, tabela `games` |
 | Dependências externas | EF Core e Npgsql |
@@ -48,15 +47,14 @@ Regras principais:
 
 - título possui 2 a 160 caracteres;
 - categoria é obrigatória;
+- categoria possui no máximo 80 caracteres;
+- descrição possui no máximo 4.000 caracteres;
 - preço base não pode ser negativo e é arredondado para duas casas;
 - jogos novos iniciam ativos;
 - listagem pública retorna somente ativos e ordena por título.
 
-Risco: o mapping limita categoria a 80 e descrição a 4.000 caracteres, mas o Domain não valida esses limites antes do banco.
-
-Evento declarado: `GameDeactivatedIntegrationEvent`.
-
-Estado atual: o evento não é emitido nem consumido.
+`GamePrice` representa preço base e o ciclo de vida usa as operações
+`Activate` e `Deactivate`.
 
 ## Promotions
 
@@ -65,8 +63,8 @@ Objetivo: manter promoções por período e calcular o preço vigente.
 | Item | Implementação |
 |---|---|
 | Agregado | `Promotion` com `PromotionGame` |
-| Casos de uso | criar, listar ativas, encerrar e cotar preço |
-| Fachada pública | `IPromotionsModule.GetPriceAsync` |
+| Casos de uso | `CreatePromotionService`, `ListActivePromotionsService`, `EndPromotionService`, `GetPromotionalPriceService` |
+| Fachada pública | `GetPriceQuoteQuery` → `IPromotionsModule` → `PriceQuoteSnapshot` |
 | Dependência entre módulos | `Catalog.Contracts` |
 | Endpoints | listagem pública; criação/encerramento administrativos |
 | Persistência | `PromotionsDbContext`, tabelas `promotions.promotions` e `promotions.promotion_games` |
@@ -83,9 +81,8 @@ Regras principais:
 - se houver mais de uma promoção vigente, o repository escolhe o maior desconto;
 - preço final é arredondado para duas casas.
 
-Evento declarado: `PromotionStartedIntegrationEvent`.
-
-Estado atual: o evento não é emitido nem consumido. Não há regra que impeça promoções sobrepostas.
+`DiscountPercentage` representa o desconto e impede percentuais inválidos. Não
+há regra que impeça promoções sobrepostas.
 
 ## Library
 
@@ -94,8 +91,8 @@ Objetivo: registrar jogos adquiridos e consultar a biblioteca do usuário autent
 | Item | Implementação |
 |---|---|
 | Agregado | `GameLibrary` com `LibraryGame` |
-| Casos de uso | adquirir jogo e consultar biblioteca |
-| Fachada pública | `ILibraryModule.GetLibraryAsync` |
+| Casos de uso | `AcquireGameService`, `GetLibraryService` |
+| Fachada pública | `GetUserLibraryQuery` → `ILibraryModule` → `UserLibrarySnapshot` |
 | Dependências entre módulos | Identity, Catalog e Promotions Contracts |
 | Endpoints | consulta e aquisição autenticadas |
 | Persistência | `LibraryDbContext`, `library.game_libraries` e `library.library_games` |
@@ -111,9 +108,9 @@ Regras principais:
 - consulta ordena aquisições da mais recente para a mais antiga;
 - jogo ausente no catálogo é exibido como `Jogo indisponível`.
 
-Evento declarado: `GameAddedToLibraryIntegrationEvent`.
-
-Estado atual: o evento não é emitido nem consumido. Não há integração com pagamento; adquirir significa registrar diretamente na biblioteca.
+O repository carrega somente o agregado para escrita; `ILibraryQueries` atende
+a leitura sem tracking. Não há integração com pagamento: adquirir significa
+registrar diretamente na biblioteca.
 
 ## API principal
 

@@ -2,9 +2,9 @@
 
 ## Propósito
 
-Executável FluentMigrator responsável por criar e evoluir os schemas `identity`,
-`catalog`, `promotions` e `library`. Ele é independente dos assemblies dos
-módulos, uma fronteira verificada pelos testes de arquitetura.
+Executável central de EF Core Migrations para os schemas `identity`, `catalog`,
+`promotions` e `library`. O projeto referencia os quatro `Infrastructure` e usa
+seus `DbContext` e mappings como fonte do modelo.
 
 ## Execução
 
@@ -13,32 +13,71 @@ $env:ConnectionStrings__Database = "Host=localhost;Port=5432;Database=fiap_cloud
 dotnet run --project src/Database/FiapCloudGames.Database.Migrations
 ```
 
-Para criar o administrador inicial, informe também `Admin__Email` e
-`Admin__Password`; `Admin__Name` é opcional.
+O processo aplica migrations pendentes, em ordem:
 
-No Compose, o migrador roda depois do health check do PostgreSQL e antes da API:
+1. `IdentityDbContext`;
+2. `CatalogDbContext`;
+3. `PromotionsDbContext`;
+4. `LibraryDbContext`;
+5. seed opcional do administrador.
 
-```powershell
-docker compose up --build
-```
+Para o seed, informe `Admin__Email` e `Admin__Password`; `Admin__Name` é
+opcional.
 
 ## Organização
 
-- `Migrations/`: classes FluentMigrator com `Up` e `Down`;
-- `Seeding/`: criação opcional do administrador;
-- `Program.cs`: configuração, `MigrateUp` e seed.
+- `Migrations/Identity`: migration e snapshot de Identity;
+- `Migrations/Catalog`: migration e snapshot de Catalog;
+- `Migrations/Promotions`: migration e snapshot de Promotions;
+- `Migrations/Library`: migration e snapshot de Library;
+- `IdentityDbContextFactory.cs`, `CatalogDbContextFactory.cs`,
+  `PromotionsDbContextFactory.cs` e `LibraryDbContextFactory.cs`: criação dos
+  contexts pelo `dotnet-ef`;
+- `DesignTimeConnectionString.cs`: leitura obrigatória de
+  `ConnectionStrings__Database` em design-time;
+- `MigrationDbContextOptions.cs`: assembly, schema `infra` e tabelas de histórico;
+- `MigrationSchemaInitializer.cs`: cria `infra` antes de aplicar migrations;
+- `Program.cs`: `Database.MigrateAsync()` e seed;
+- `AdminSeeder.cs`: administrador inicial idempotente.
+
+Cada contexto usa sua própria tabela `infra.__EFMigrationsHistory_<Contexto>`.
+
+## Gerar uma migration
+
+```powershell
+dotnet tool restore
+$env:ConnectionStrings__Database = "Host=localhost;Port=5432;Database=fiap_cloud_games;Username=postgres;Password=<senha-local>"
+dotnet tool run dotnet-ef migrations add AddGamePublisher `
+  --context CatalogDbContext `
+  --project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
+  --startup-project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
+  --output-dir Migrations/Catalog
+```
+
+Troque contexto e pasta conforme o módulo. Não edite o snapshot manualmente.
+As factories não possuem connection string fictícia de fallback; o comando
+falha se `ConnectionStrings__Database` estiver ausente.
 
 ## Segurança
 
-Connection string, senha do administrador e qualquer outro segredo devem vir do
-ambiente/secret store. Não os registre nem os versione.
+O `appsettings.json` não contém connection string. Use variável de ambiente,
+User Secrets ou secret store:
 
-## Limitações
+```powershell
+dotnet user-secrets set `
+  --project src/Database/FiapCloudGames.Database.Migrations `
+  "ConnectionStrings:Database" `
+  "<connection-string-local>"
+```
 
-- o entrypoint não expõe rollback;
-- a suíte não aplica migrations em um PostgreSQL real;
-- não há lock operacional, backup ou pipeline de implantação;
-- `TODO: adicionar validação de schema real e rollback controlado.`
+Uma credencial anteriormente exposta em arquivo versionado deve ser rotacionada
+no provedor correspondente.
 
-Guia completo: [migrations](../../../docs/development/database-migrations.md).
+## Testes e limitações
 
+- os testes validam mapping e descoberta das quatro migrations;
+- o repositório ainda não aplica migrations em PostgreSQL efêmero durante testes;
+- o executável aplica somente migrations pendentes;
+- rollback é feito explicitamente com `dotnet-ef database update` por contexto.
+
+Guia completo: [EF Core Migrations](../../../docs/development/database-migrations.md).

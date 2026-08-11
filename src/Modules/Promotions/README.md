@@ -9,11 +9,15 @@ encerra campanhas e calcula o melhor preço vigente.
 
 | Projeto | Responsabilidade |
 |---|---|
-| `FiapCloudGames.Promotions.Domain` | `Promotion`, `PromotionGame` e regras de desconto |
-| `FiapCloudGames.Promotions.Application` | criar, listar, encerrar e cotar preço |
-| `FiapCloudGames.Promotions.Contracts` | summaries, `IPromotionsModule` e evento declarado |
+| `FiapCloudGames.Promotions.Domain` | agregado `Promotion`, `PromotionGame` e `DiscountPercentage` |
+| `FiapCloudGames.Promotions.Application` | `Promotions/` para campanhas e `Pricing/` para cotação |
+| `FiapCloudGames.Promotions.Contracts` | arquivos separados para `GetPriceQuoteQuery`, `PriceQuoteSnapshot` e `IPromotionsModule` |
 | `FiapCloudGames.Promotions.Infrastructure` | EF Core, repositório e unidade de trabalho |
-| `FiapCloudGames.Promotions.Presentation` | `PromotionsController` |
+| `FiapCloudGames.Promotions.Presentation` | `Features/Promotions/` com Request, Response, mapping e `PromotionsController` |
+
+Casos de uso atuais: `CreatePromotionService`,
+`ListActivePromotionsService`, `EndPromotionService` e
+`GetPromotionalPriceService`, todos com `ExecuteAsync`.
 
 ## Endpoints
 
@@ -29,8 +33,9 @@ encerra campanhas e calcula o melhor preço vigente.
 ## Integrações
 
 Application referencia apenas `FiapCloudGames.Catalog.Contracts` para validar os
-jogos. Expõe `IPromotionsModule`, consumido por Library para cotação. O
-`PromotionStartedIntegrationEvent` está declarado, porém não é publicado.
+jogos. Expõe `IPromotionsModule`, consumido por Library para cotação. Não há
+vazamento de `Promotion` ou `PriceQuoteResult`; o consumidor recebe um
+`PriceQuoteSnapshot`. Não há evento de integração implementado.
 
 ## Regras principais
 
@@ -51,6 +56,5 @@ dotnet test tests/Unit/FiapCloudGames.Promotions.UnitTests
 ## Evolução
 
 - `TODO: definir política para sobreposição e alteração de campanhas.`
-- `TODO: implementar publicação do evento de início.`
+- `TODO: definir se o início precisa de integração assíncrona e outbox.`
 - `TODO: adicionar consulta individual ou corrigir o Location da criação.`
-

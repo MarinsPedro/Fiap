@@ -43,9 +43,10 @@ mais de uma réplica ou atualização gradual.
 
 ## Rollback
 
-Não existe comando de rollback no migrador nem estratégia de rollback de
-aplicação definida. As migrations possuem `Down`, mas o executável atual chama
-somente `MigrateUp`.
+O executável aplica somente migrations pendentes. O EF Core permite voltar um
+contexto com `dotnet tool run dotnet-ef database update <migration> --context
+<DbContext>`, mas o repositório ainda não possui automação ou estratégia
+operacional aprovada para isso.
 
 `TODO: definir versionamento, backup/restore, matriz de compatibilidade e
 procedimento testado de rollback.`
@@ -61,4 +62,3 @@ procedimento testado de rollback.`
 - observabilidade e alertas;
 - CI/CD, registry e política de versões;
 - teste de carga e análise de segurança.
-

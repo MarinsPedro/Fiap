@@ -1,17 +1,21 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using FiapCloudGames.Identity.Application.Abstractions;
+using FiapCloudGames.Identity.Application.Abstractions.Security;
 using FiapCloudGames.Identity.Domain.Entities;
 using Microsoft.IdentityModel.Tokens;
 
 namespace FiapCloudGames.Identity.Infrastructure.Authentication;
 
-internal sealed class JwtTokenGenerator(string issuer, string audience, string key) : ITokenGenerator
+internal sealed class JwtTokenGenerator(
+    string issuer,
+    string audience,
+    string key,
+    TimeProvider clock) : ITokenGenerator
 {
     public GeneratedToken Generate(User user)
     {
-        var issuedAt = DateTimeOffset.UtcNow;
+        var issuedAt = clock.GetUtcNow();
         var expiresAt = issuedAt.AddHours(2);
         var claims = new[]
         {

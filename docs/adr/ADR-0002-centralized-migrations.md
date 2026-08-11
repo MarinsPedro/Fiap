@@ -2,7 +2,8 @@
 
 ## Status
 
-Aceito.
+Substituído por
+[ADR-0008](ADR-0008-ef-core-centralized-migrations.md).
 
 ## Contexto
 
@@ -21,4 +22,5 @@ Usar `FiapCloudGames.Database.Migrations`, console FluentMigrator sem referênci
 
 ## Alternativas consideradas
 
-EF Core Migrations não é usado. Não há documento com comparação formal entre as ferramentas.
+EF Core Migrations não era usado nesta decisão original. A substituição e sua
+motivação estão registradas no ADR-0008.

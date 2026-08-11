@@ -1,5 +1,5 @@
 using FiapCloudGames.Catalog.Application;
-using FiapCloudGames.Catalog.Application.Abstractions;
+using FiapCloudGames.Catalog.Application.Abstractions.Persistence;
 using FiapCloudGames.Catalog.Domain.Repositories;
 using FiapCloudGames.Catalog.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;

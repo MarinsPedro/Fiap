@@ -12,7 +12,7 @@
 - [ ] Executei `dotnet test`.
 - [ ] Subi PostgreSQL, migrador e API.
 - [ ] Recebi `Healthy` em `/health`.
-- [ ] Acessei `/openapi/v1.json` em Development.
+- [ ] Acessei `/swagger/v1/swagger.json` e a Swagger UI em Development.
 - [ ] Fiz login e usei um Bearer token.
 
 ## Primeira semana

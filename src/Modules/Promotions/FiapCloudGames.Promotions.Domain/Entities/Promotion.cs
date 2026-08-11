@@ -1,10 +1,15 @@
+using FiapCloudGames.Domain.Common;
+using FiapCloudGames.Promotions.Domain.ValueObjects;
+
 namespace FiapCloudGames.Promotions.Domain.Entities;
 
 public sealed class Promotion
 {
     private readonly List<PromotionGame> _games = [];
 
-    private Promotion() { }
+    private Promotion()
+    {
+    }
 
     private Promotion(
         Guid id,
@@ -12,30 +17,26 @@ public sealed class Promotion
         decimal discountPercent,
         DateTimeOffset startsAtUtc,
         DateTimeOffset endsAtUtc,
-        IEnumerable<Guid> gameIds)
+        IEnumerable<Guid> gameIds,
+        DateTimeOffset createdAtUtc)
     {
         Id = id;
         Name = ValidateName(name);
-        DiscountPercent = ValidateDiscount(discountPercent);
-        ValidatePeriod(startsAtUtc, endsAtUtc);
-        StartsAtUtc = startsAtUtc;
-        EndsAtUtc = endsAtUtc;
-        CreatedAtUtc = DateTimeOffset.UtcNow;
+        DiscountPercent = DiscountPercentage.Create(
+            discountPercent);
 
-        foreach (var gameId in gameIds.Distinct())
-        {
-            _games.Add(new PromotionGame(id, gameId));
-        }
+        StartsAtUtc = ValidateStartsAt(startsAtUtc);
+        EndsAtUtc = ValidateEndsAt(endsAtUtc);
+        CreatedAtUtc = ValidateCreatedAt(createdAtUtc);
 
-        if (_games.Count == 0)
-        {
-            throw new InvalidOperationException("A promoção deve possuir pelo menos um jogo.");
-        }
+        EnsureValidPeriod();
+        AddGames(id, gameIds);
     }
 
     public Guid Id { get; private set; }
     public string Name { get; private set; } = string.Empty;
-    public decimal DiscountPercent { get; private set; }
+    public DiscountPercentage DiscountPercent { get; private set; } =
+        null!;
     public DateTimeOffset StartsAtUtc { get; private set; }
     public DateTimeOffset EndsAtUtc { get; private set; }
     public DateTimeOffset? EndedAtUtc { get; private set; }
@@ -47,16 +48,27 @@ public sealed class Promotion
         decimal discountPercent,
         DateTimeOffset startsAtUtc,
         DateTimeOffset endsAtUtc,
-        IEnumerable<Guid> gameIds) =>
-        new(Guid.NewGuid(), name, discountPercent, startsAtUtc, endsAtUtc, gameIds);
+        IEnumerable<Guid> gameIds,
+        DateTimeOffset createdAtUtc) =>
+        new(
+            Guid.NewGuid(),
+            name,
+            discountPercent,
+            startsAtUtc,
+            endsAtUtc,
+            gameIds,
+            createdAtUtc);
 
     public bool IsActiveAt(DateTimeOffset instant) =>
-        EndedAtUtc is null && StartsAtUtc <= instant && instant < EndsAtUtc;
+        EndedAtUtc is null &&
+        StartsAtUtc <= instant &&
+        instant < EndsAtUtc;
 
-    public bool Includes(Guid gameId) => _games.Any(item => item.GameId == gameId);
+    public bool Includes(Guid gameId) =>
+        _games.Any(item => item.GameId == gameId);
 
     public decimal ApplyTo(decimal basePrice) =>
-        decimal.Round(basePrice * (1 - (DiscountPercent / 100m)), 2, MidpointRounding.ToEven);
+        DiscountPercent.ApplyTo(basePrice);
 
     public void End(DateTimeOffset instant)
     {
@@ -65,50 +77,110 @@ public sealed class Promotion
             return;
         }
 
-        EndedAtUtc = instant;
-    }
-
-    private static string ValidateName(string name)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var trimmed = name.Trim();
-        if (trimmed.Length is < 2 or > 120)
+        var endedAtUtc = ValidateEndedAt(instant);
+        if (endedAtUtc < CreatedAtUtc)
         {
-            throw new InvalidOperationException("O nome da promoção deve ter entre 2 e 120 caracteres.");
+            throw new DomainRuleViolationException(
+                "A promoção não pode terminar antes de ser criada.");
         }
 
-        return trimmed;
+        EndedAtUtc = endedAtUtc;
     }
 
-    private static decimal ValidateDiscount(decimal discount)
+    private static string ValidateName(string? name) =>
+        name?.Trim() is { Length: >= 2 and <= 120 } normalized
+            ? normalized
+            : throw new DomainRuleViolationException(
+                "O nome da promoção deve ter entre 2 e 120 caracteres.");
+
+    private static DateTimeOffset ValidateStartsAt(
+        DateTimeOffset startsAtUtc)
     {
-        if (discount is <= 0 or > 100)
+        if (startsAtUtc == default ||
+            startsAtUtc.Offset != TimeSpan.Zero)
         {
-            throw new InvalidOperationException("O desconto deve ser maior que zero e menor ou igual a 100%.");
+            throw new DomainRuleViolationException(
+                "O início da promoção deve estar em UTC.");
         }
 
-        return decimal.Round(discount, 2, MidpointRounding.ToEven);
+        return startsAtUtc;
     }
 
-    private static void ValidatePeriod(DateTimeOffset startsAtUtc, DateTimeOffset endsAtUtc)
+    private static DateTimeOffset ValidateEndsAt(
+        DateTimeOffset endsAtUtc)
     {
-        if (endsAtUtc <= startsAtUtc)
+        if (endsAtUtc == default ||
+            endsAtUtc.Offset != TimeSpan.Zero)
         {
-            throw new InvalidOperationException("O fim da promoção deve ser posterior ao início.");
+            throw new DomainRuleViolationException(
+                "O fim da promoção deve estar em UTC.");
+        }
+
+        return endsAtUtc;
+    }
+
+    private static DateTimeOffset ValidateCreatedAt(
+        DateTimeOffset createdAtUtc)
+    {
+        if (createdAtUtc == default ||
+            createdAtUtc.Offset != TimeSpan.Zero)
+        {
+            throw new DomainRuleViolationException(
+                "A data de criação da promoção deve estar em UTC.");
+        }
+
+        return createdAtUtc;
+    }
+
+    private static DateTimeOffset ValidateEndedAt(
+        DateTimeOffset endedAtUtc)
+    {
+        if (endedAtUtc == default ||
+            endedAtUtc.Offset != TimeSpan.Zero)
+        {
+            throw new DomainRuleViolationException(
+                "A data de encerramento deve estar em UTC.");
+        }
+
+        return endedAtUtc;
+    }
+
+    private void EnsureValidPeriod()
+    {
+        if (EndsAtUtc <= StartsAtUtc)
+        {
+            throw new DomainRuleViolationException(
+                "O fim da promoção deve ser posterior ao início.");
         }
     }
-}
 
-public sealed class PromotionGame
-{
-    private PromotionGame() { }
-
-    internal PromotionGame(Guid promotionId, Guid gameId)
+    private void AddGames(
+        Guid promotionId,
+        IEnumerable<Guid>? gameIds)
     {
-        PromotionId = promotionId;
-        GameId = gameId;
+        if (gameIds is null)
+        {
+            throw GamesRequired();
+        }
+
+        foreach (var gameId in gameIds.Distinct())
+        {
+            if (gameId == Guid.Empty)
+            {
+                throw new DomainRuleViolationException(
+                    "Todos os identificadores de jogo devem ser válidos.");
+            }
+
+            _games.Add(new PromotionGame(promotionId, gameId));
+        }
+
+        if (_games.Count == 0)
+        {
+            throw GamesRequired();
+        }
     }
 
-    public Guid PromotionId { get; private set; }
-    public Guid GameId { get; private set; }
+    private static DomainRuleViolationException GamesRequired() =>
+        new(
+            "A promoção deve possuir pelo menos um jogo.");
 }

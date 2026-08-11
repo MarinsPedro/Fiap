@@ -60,7 +60,8 @@ Verifique também:
 
 - a funcionalidade está no módulo correto;
 - Domain não ganhou dependência de framework;
-- um mapeamento EF alterado possui migration FluentMigrator equivalente;
+- um mapeamento EF alterado possui migration EF Core e snapshot equivalentes no
+  projeto central;
 - requests, responses e status estão documentados;
 - nenhum token, senha, connection string real ou `.env` foi adicionado;
 - os links Markdown alterados resolvem;

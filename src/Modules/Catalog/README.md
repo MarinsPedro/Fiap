@@ -9,11 +9,14 @@ base e estado ativo.
 
 | Projeto | Responsabilidade |
 |---|---|
-| `FiapCloudGames.Catalog.Domain` | entidade `Game` e repositório de domínio |
-| `FiapCloudGames.Catalog.Application` | criar, atualizar, listar e consultar |
-| `FiapCloudGames.Catalog.Contracts` | `GameSummary`, `ICatalogModule` e evento declarado |
+| `FiapCloudGames.Catalog.Domain` | agregado `Game`, `GamePrice` e repositório |
+| `FiapCloudGames.Catalog.Application` | `Games/` com create, update, get, list, mappings e `CatalogModule` |
+| `FiapCloudGames.Catalog.Contracts` | arquivos separados para `GetGameQuery`, `GameSnapshot` e `ICatalogModule` |
 | `FiapCloudGames.Catalog.Infrastructure` | EF Core, repositório e unidade de trabalho |
-| `FiapCloudGames.Catalog.Presentation` | `GamesController` |
+| `FiapCloudGames.Catalog.Presentation` | `Features/Games/` com Request, Response, mapping e `GamesController` |
+
+Casos de uso atuais: `CreateGameService`, `UpdateGameService`,
+`GetGameService` e `ListGamesService`, todos com `ExecuteAsync`.
 
 ## Endpoints
 
@@ -29,13 +32,14 @@ base e estado ativo.
 ## Integrações
 
 Expõe `ICatalogModule`. Promotions usa o contrato para validar jogos e Library o
-usa durante a aquisição. `GameDeactivatedIntegrationEvent` está declarado, mas
-não existe publicação ou consumidor.
+usa durante a aquisição. Consumidores recebem `GameSnapshot`, nunca `Game` ou
+`GameResult`. Não há evento de integração implementado.
 
 ## Regras principais
 
 - título entre 2 e 160 caracteres;
-- categoria obrigatória;
+- categoria obrigatória com até 80 caracteres;
+- descrição com até 4.000 caracteres;
 - preço não negativo e arredondado em duas casas;
 - novo jogo ativo;
 - listagem pública de ativos ordenada por título.
@@ -51,6 +55,4 @@ dotnet test tests/Unit/FiapCloudGames.Catalog.UnitTests
 ## Evolução
 
 - `TODO: definir moeda, paginação e busca.`
-- `TODO: implementar publicação de desativação.`
-- `TODO: alinhar limites de strings entre domínio, API e banco.`
-
+- `TODO: definir se a desativação precisa de integração assíncrona e outbox.`

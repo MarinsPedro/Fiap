@@ -13,6 +13,8 @@ Este é o índice central. Os documentos descrevem somente o estado comprovado p
 ## Para entender o sistema
 
 - [Visão geral da arquitetura](architecture/overview.md)
+- [Modelo de domínio](architecture/domain-model.md)
+- [Objetos e contratos por fronteira](architecture/data-contracts.md)
 - [Módulos](architecture/modules.md)
 - [Camadas](architecture/layers.md)
 - [Dependências](architecture/dependencies.md)

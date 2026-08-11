@@ -23,26 +23,35 @@ FiapCloudGames.<Modulo>.Presentation
 
 `FiapCloudGames.Api` referencia Presentation e Infrastructure para compor o processo. Controllers de assemblies externos são descobertos por `AddApplicationPart`.
 
+Dentro de Application e Presentation, o código é agrupado por feature; em
+Contracts, cada contrato ocupa seu próprio arquivo. Services, Inputs, Results,
+Requests, Responses, Queries, Snapshots e mappings não ficam reunidos em
+arquivos monolíticos de casos de uso ou contratos.
+
 ## Responsabilidades
 
 | Parte | Responsabilidade real |
 |---|---|
 | API | composition root, pipeline HTTP, CORS, OpenAPI, health check, autenticação/autorização |
-| Presentation | Controllers, rotas, request records, status HTTP e leitura de claims |
-| Application | serviços de caso de uso, inputs/outputs, coordenação de repositories e módulos |
+| Presentation | Controllers, Requests, Responses, mappings HTTP, rotas, status e claims |
+| Application | services, Inputs, Results e coordenação de repositories e módulos |
 | Domain | entidades, value objects, invariantes e interfaces de repository |
-| Contracts | DTOs, fachadas públicas e tipos de eventos de integração |
+| Contracts | Queries, Snapshots e fachadas públicas entre módulos |
 | Infrastructure | EF Core, Npgsql, repositories, JWT, hash e registros de DI |
 | Migrator | schema, tabelas, índices, constraints e seed do primeiro administrador |
 | Tests | comportamento de Domain, host HTTP, mappings e dependências |
 
-Não há Shared Kernel ou Building Blocks.
+Há dois Building Blocks mínimos: `Domain.Common`, com
+`DomainRuleViolationException`; e `Application.Common`, com `IUnitOfWork`,
+`AppException` e `AppErrorCategory`. Eles não contêm marcador de agregado,
+guard clauses ou entidades de negócio compartilhadas.
 
 ## Fronteiras
 
 Identity e Catalog não dependem de outros módulos. Promotions consulta Catalog via `ICatalogModule`. Library consulta Identity, Catalog e Promotions via suas interfaces em `Contracts`.
 
-Os records de eventos de integração existem, porém nenhum serviço os instancia, publica, persiste ou consome. Portanto, o estado atual da comunicação é inteiramente síncrono e em memória.
+A comunicação atual é inteiramente síncrona e em memória. Não existem eventos
+de integração, publicação, persistência ou consumo.
 
 ## Dados
 
@@ -56,18 +65,21 @@ Não há foreign keys entre módulos. IDs de outro domínio são armazenados com
 - orquestração pertence à Application;
 - consulta EF e integração técnica pertencem à Infrastructure;
 - rota e status HTTP pertencem à Presentation;
-- DTO usado por outro módulo pertence a Contracts;
+- entrada entre módulos é uma Query e a saída imutável é um Snapshot em Contracts;
+- relógio entra por `TimeProvider` e o instante UTC é passado ao Domain;
 - configuração do processo pertence à API;
 - mudança estrutural pertence ao migrador central.
 
-Veja [Camadas](layers.md), [Dependências](dependencies.md) e [Criar um endpoint](../development/creating-an-endpoint.md).
+Veja [Modelo de domínio](domain-model.md),
+[Objetos e contratos](data-contracts.md), [Camadas](layers.md),
+[Dependências](dependencies.md) e
+[Criar um endpoint](../development/creating-an-endpoint.md).
 
 ## Limitações atuais
 
 - não há mensageria, outbox ou transação distribuída;
 - cada `SaveChangesAsync` confirma somente um contexto;
 - não há cache, retry, circuit breaker ou timeout de integração interna;
-- tempo é obtido diretamente por `DateTimeOffset.UtcNow`;
 - não há abstração de usuário atual na Application; Presentation extrai a claim;
 - não há API versioning.
 

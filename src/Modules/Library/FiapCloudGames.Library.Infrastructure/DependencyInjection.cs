@@ -1,5 +1,6 @@
 using FiapCloudGames.Library.Application;
-using FiapCloudGames.Library.Application.Abstractions;
+using FiapCloudGames.Library.Application.Abstractions.Persistence;
+using FiapCloudGames.Library.Application.Abstractions.Queries;
 using FiapCloudGames.Library.Domain.Repositories;
 using FiapCloudGames.Library.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,7 @@ public static class DependencyInjection
         services.AddLibraryApplication();
         services.AddDbContext<LibraryDbContext>(options => options.UseNpgsql(connectionString));
         services.AddScoped<IGameLibraryRepository, GameLibraryRepository>();
+        services.AddScoped<ILibraryQueries, LibraryQueries>();
         services.AddScoped<ILibraryUnitOfWork>(provider => provider.GetRequiredService<LibraryDbContext>());
         return services;
     }

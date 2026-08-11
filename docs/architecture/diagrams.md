@@ -69,7 +69,10 @@ flowchart TD
     Connection --> CatalogDb["CatalogDbContext<br/>catalog"]
     Connection --> PromotionsDb["PromotionsDbContext<br/>promotions"]
     Connection --> LibraryDb["LibraryDbContext<br/>library"]
-    Migrator["FluentMigrator"] --> PostgreSQL[("PostgreSQL")]
+    Migrator["EF Core Migrations"] --> IdentityDb
+    Migrator --> CatalogDb
+    Migrator --> PromotionsDb
+    Migrator --> LibraryDb
     IdentityDb --> PostgreSQL
     CatalogDb --> PostgreSQL
     PromotionsDb --> PostgreSQL
@@ -99,7 +102,7 @@ flowchart TD
     Contract --> App["Application Service"]
     App --> Repo["Repository se necessário"]
     Repo --> Mapping["Mapping EF"]
-    Mapping --> Migration["Migration FluentMigrator"]
+    Mapping --> Migration["Migration EF Core + snapshot"]
     Migration --> Controller["Action no Controller"]
     Controller --> DI["Registro na DI"]
     DI --> Tests["Testes"]

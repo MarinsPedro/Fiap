@@ -14,7 +14,8 @@ tests/Unit/FiapCloudGames.Catalog.UnitTests/GameTests.cs
 src/Modules/Catalog/README.md
 ```
 
-Leia `Game.Update`: `title.Trim()` e `category.Trim()` já existem.
+Leia `Game.ChangeDetails`: a normalização e os limites já são invariantes do
+agregado.
 
 ## 2. Criar o teste
 
@@ -25,7 +26,14 @@ Adicione a `GameTests`:
 public void CreateShouldTrimTitleAndCategory()
 {
     // Arrange e Act
-    var game = Game.Create("  Cloud Quest  ", "Aventura", "  RPG  ", 99.90m);
+    var createdAtUtc = new DateTimeOffset(
+        2026, 1, 10, 12, 0, 0, TimeSpan.Zero);
+    var game = Game.Create(
+        "  Cloud Quest  ",
+        "Aventura",
+        "  RPG  ",
+        99.90m,
+        createdAtUtc);
 
     // Assert
     Assert.Equal("Cloud Quest", game.Title);

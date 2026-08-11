@@ -5,7 +5,7 @@
 | Decisão | Evidência | ADR |
 |---|---|---|
 | monólito modular | solution e único host HTTP | [ADR-0001](../adr/ADR-0001-modular-monolith.md) |
-| migrations centralizadas | projeto independente FluentMigrator | [ADR-0002](../adr/ADR-0002-centralized-migrations.md) |
+| EF Core Migrations centralizadas | migrador referencia os quatro Infrastructure | [ADR-0008](../adr/ADR-0008-ef-core-centralized-migrations.md) |
 | comunicação por Contracts | referências entre projetos | [ADR-0003](../adr/ADR-0003-module-communication.md) |
 | Controllers por Application Parts | `Program.cs` | [ADR-0004](../adr/ADR-0004-application-parts.md) |
 | autenticação em Identity | DI e infraestrutura JWT | [ADR-0005](../adr/ADR-0005-identity-authentication.md) |
@@ -14,11 +14,12 @@
 
 ## Riscos observáveis
 
-- eventos existem sem transporte, publisher, consumer ou outbox;
+- não existem eventos, transporte, publisher, consumer ou outbox;
 - verificações entre módulos possuem janela de concorrência;
 - `DbUpdateException` e exceções Npgsql não recebem mapeamento específico;
 - `/health` não verifica PostgreSQL;
-- o entry point do migrador oferece somente `MigrateUp`;
+- o entry point aplica somente migrations pendentes; rollback exige `dotnet-ef`
+  e seleção explícita do contexto;
 - testes não validam SQL/migrations contra PostgreSQL real;
 - listagens não paginam e rotas não possuem versão;
 - `Location` da criação de promoção aponta para rota sem GET correspondente.

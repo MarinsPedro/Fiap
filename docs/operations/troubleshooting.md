@@ -50,8 +50,12 @@ as três variáveis `ADMIN_*`. Não edite manualmente a tabela de versionamento.
 **Sintoma:** erro de tabela/coluna inexistente.  
 **Diagnóstico:** compare a versão implantada do código com as migrations
 executadas e inspecione o log do migrador.  
-**Correção:** execute o migrador compatível antes da API; não use `dotnet ef
-database update`.
+**Correção:** execute o migrador compatível antes da API. Para manutenção isolada,
+use `dotnet tool run dotnet-ef database update` com o `--context` correto.
+
+Se um comando `dotnet-ef` informar que `ConnectionStrings:Database` não foi
+encontrada, defina `ConnectionStrings__Database` antes de executá-lo. As quatro
+factories de design-time exigem essa configuração e não possuem fallback.
 
 ## JWT não configurado
 
@@ -80,14 +84,17 @@ ativos.
 
 ## 409 Conflict
 
-A API não mapeia atualmente exceções para 409. Se um cliente receber esse status,
-verifique proxy ou infraestrutura intermediária. Conflitos de negócio conhecidos
-tendem a virar 422; violações de banco não tratadas podem virar 500.
+`AppException.Conflict` é mapeada para 409. Os casos atuais incluem e-mail já
+cadastrado e tentativa de adquirir novamente um jogo da mesma biblioteca. Leia
+`detail` e atualize a operação ou o estado consultado. Uma violação de unicidade
+que ocorrer diretamente no banco, por exemplo em uma corrida entre requests,
+ainda não recebe tratamento específico e pode resultar em 500.
 
 ## 422 Unprocessable Entity
 
-**Causa:** operação bem formada viola uma regra, como aquisição duplicada, jogo
-inativo ou período de promoção inválido.  
+**Causa:** operação bem formada viola uma regra, como usuário/jogo inativo ou
+período de promoção inválido. Aquisição duplicada é conflito 409.
+
 **Correção:** leia `detail`, confira o estado atual e corrija a operação.
 
 ## 500 Internal Server Error
@@ -108,7 +115,7 @@ sem revisão de segurança.
 
 O JSON OpenAPI só é habilitado em `Development`. O Compose usa `Production`.
 Execute a API localmente com `ASPNETCORE_ENVIRONMENT=Development` e consulte a
-rota indicada pelo ASP.NET Core para o documento.
+rota `/swagger/v1/swagger.json`; a interface fica em `/swagger/index.html`.
 
 ## `/health` responde, mas a API de negócio falha
 
@@ -119,4 +126,3 @@ configuração e logs.
 
 Esse é o comportamento atual: os testes inspecionam o host e metadados, sem abrir
 PostgreSQL. Consulte [testes de integração](../testing/integration-tests.md).
-

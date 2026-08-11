@@ -1,6 +1,8 @@
-using FiapCloudGames.Library.Application.Abstractions;
+using FiapCloudGames.Library.Application.Abstractions.Persistence;
 using FiapCloudGames.Library.Domain.Entities;
+using FiapCloudGames.Library.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FiapCloudGames.Library.Infrastructure.Persistence;
 
@@ -11,6 +13,11 @@ public sealed class LibraryDbContext(DbContextOptions<LibraryDbContext> options)
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        var priceConverter =
+            new ValueConverter<AcquisitionPrice, decimal>(
+                price => price.Amount,
+                value => AcquisitionPrice.Create(value));
+
         modelBuilder.HasDefaultSchema("library");
         modelBuilder.Entity<GameLibrary>(builder =>
         {
@@ -34,7 +41,11 @@ public sealed class LibraryDbContext(DbContextOptions<LibraryDbContext> options)
             builder.Property(item => item.Id).HasColumnName("id");
             builder.Property(item => item.LibraryId).HasColumnName("library_id").IsRequired();
             builder.Property(item => item.GameId).HasColumnName("game_id").IsRequired();
-            builder.Property(item => item.PricePaid).HasColumnName("price_paid").HasPrecision(12, 2).IsRequired();
+            builder.Property(item => item.PricePaid)
+                .HasColumnName("price_paid")
+                .HasConversion(priceConverter)
+                .HasPrecision(12, 2)
+                .IsRequired();
             builder.Property(item => item.PromotionId).HasColumnName("promotion_id");
             builder.Property(item => item.AcquiredAtUtc).HasColumnName("acquired_at_utc").IsRequired();
             builder.HasIndex(item => new { item.LibraryId, item.GameId }).IsUnique();

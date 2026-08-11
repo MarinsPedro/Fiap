@@ -8,6 +8,7 @@
     <ProjectReference Include="..\..\..\src\Modules\Catalog\FiapCloudGames.Catalog.Infrastructure\FiapCloudGames.Catalog.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Library\FiapCloudGames.Library.Infrastructure\FiapCloudGames.Library.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Promotions\FiapCloudGames.Promotions.Infrastructure\FiapCloudGames.Promotions.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\src\Database\FiapCloudGames.Database.Migrations\FiapCloudGames.Database.Migrations.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="xunit" />

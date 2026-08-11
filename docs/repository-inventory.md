@@ -1,14 +1,16 @@
 # Inventário do repositório
 
-Inventário realizado em 23 de julho de 2026 a partir dos arquivos da solution, projetos, código, testes, configurações e Docker.
+Inventário atualizado em 10 de agosto de 2026 a partir dos arquivos da solution,
+projetos, código, testes, configurações e Docker.
 
 ## Solution
 
-`FiapCloudGames.sln` contém 29 projetos:
+`FiapCloudGames.sln` contém 31 projetos:
 
 | Grupo | Quantidade | Projetos |
 |---|---:|---|
 | API | 1 | `FiapCloudGames.Api` |
+| Building Blocks | 2 | `Domain.Common` e `Application.Common` |
 | Identity | 5 | Domain, Contracts, Application, Infrastructure, Presentation |
 | Catalog | 5 | Domain, Contracts, Application, Infrastructure, Presentation |
 | Library | 5 | Domain, Contracts, Application, Infrastructure, Presentation |
@@ -18,7 +20,8 @@ Inventário realizado em 23 de julho de 2026 a partir dos arquivos da solution, 
 | Testes de integração | 2 | API e compatibilidade de mappings |
 | Testes de arquitetura | 1 | regras com NetArchTest |
 
-Não foi encontrado Shared Kernel, Building Blocks, frontend, worker, message consumer ou segunda API.
+Não foi encontrado frontend, worker, message consumer ou segunda API. Os
+Building Blocks não compartilham entidades de negócio.
 
 ## Pontos de entrada
 
@@ -32,7 +35,10 @@ Não foi encontrado Shared Kernel, Building Blocks, frontend, worker, message co
 - quatro `DbContext`: `IdentityDbContext`, `CatalogDbContext`, `LibraryDbContext` e `PromotionsDbContext`;
 - schemas `identity`, `catalog`, `library` e `promotions`;
 - seis tabelas de domínio;
-- uma migration inicial `[Migration(202607220001)]`;
+- quatro migrations EF Core iniciais e quatro snapshots, um conjunto por
+  `DbContext`;
+- quatro tabelas independentes de histórico EF;
+- o migrador referencia os quatro projetos Infrastructure;
 - seed opcional/idempotente de administrador via `AdminSeeder`;
 - repositories internos e interfaces no Domain;
 - Unit of Work representada pelo próprio `DbContext`.
@@ -40,21 +46,23 @@ Não foi encontrado Shared Kernel, Building Blocks, frontend, worker, message co
 ## API e segurança
 
 - Controllers carregados com MVC Application Parts;
+- Application e Presentation organizadas por feature, com um tipo principal por
+  arquivo para services, contratos e mappings;
 - 14 endpoints de controllers e um health check;
 - JWT HS256 com validade de duas horas;
 - roles `User` e `Administrator`;
 - PBKDF2-SHA256, 100.000 iterações, salt de 16 bytes e hash de 32 bytes;
-- OpenAPI JSON somente em `Development`;
+- OpenAPI e Swagger UI somente em `Development`;
 - CORS baseado em `Cors:AllowedOrigins`;
 - middleware global para exceções e `ProblemDetails`.
 
 ## Testes encontrados
 
-- oito casos unitários de Domain;
-- um teste de host/health check com `WebApplicationFactory<Program>`;
-- um teste de compatibilidade de schemas/tabelas EF sem conexão real;
-- seis execuções de regras arquiteturais (quatro assemblies Domain e duas regras adicionais);
-- total atual: 16 casos.
+- 17 casos unitários de Domain;
+- 18 casos de integração da API/middleware/host;
+- três testes de banco sem conexão real: mappings, descoberta e sincronismo das migrations;
+- 36 execuções de regras arquiteturais;
+- total atual: 74 casos.
 
 Não foram encontrados mocks, builders, snapshots, cobertura configurada, Testcontainers ou PostgreSQL real nos testes.
 
@@ -62,7 +70,8 @@ Não foram encontrados mocks, builders, snapshots, cobertura configurada, Testco
 
 Integração externa confirmada: PostgreSQL por Npgsql.
 
-As chamadas Identity/Catalog/Promotions feitas por Library são integrações internas e síncronas em memória por `Contracts`. Os tipos de eventos de integração estão declarados, mas não são publicados nem consumidos.
+As chamadas Identity/Catalog/Promotions feitas por Library são integrações
+internas e síncronas em memória por `Contracts`. Não há eventos de integração.
 
 ## Documentação anterior consolidada
 
@@ -88,11 +97,8 @@ TODO: política de versionamento e release não identificada.
 ## Riscos técnicos observáveis
 
 - health check não consulta banco;
-- eventos de integração são apenas contratos;
 - não há concorrência otimista nem tratamento específico de violação de unicidade;
 - erros de persistência inesperados resultam em HTTP 500;
-- status 409 não é produzido pelo middleware atual;
 - `Location` de criação de promoção aponta para uma rota sem GET correspondente;
-- limites de `description` e `category` existem no mapping, mas não no Domain;
 - não há transação única entre módulos nem outbox;
 - testes de integração não validam migrations contra PostgreSQL real.

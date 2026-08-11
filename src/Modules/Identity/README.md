@@ -10,10 +10,13 @@ credenciais, hash de senha, emissão de JWT e papéis.
 | Projeto | Responsabilidade |
 |---|---|
 | `FiapCloudGames.Identity.Domain` | `User`, `Email`, papel e repositório de domínio |
-| `FiapCloudGames.Identity.Application` | casos de uso e portas de senha/token/unidade de trabalho |
-| `FiapCloudGames.Identity.Contracts` | `UserSummary`, `IIdentityModule` e evento declarado |
+| `FiapCloudGames.Identity.Application` | `Authentication/`, `Users/` e `Abstractions/` com tipos separados por responsabilidade |
+| `FiapCloudGames.Identity.Contracts` | arquivos separados para `GetUserQuery`, `UserSnapshot` e `IIdentityModule` |
 | `FiapCloudGames.Identity.Infrastructure` | EF Core, repositório, PBKDF2 e JWT |
-| `FiapCloudGames.Identity.Presentation` | controllers de usuários e autenticação |
+| `FiapCloudGames.Identity.Presentation` | `Features/Authentication/` e `Features/Users/` com contratos HTTP, mappings e controllers |
+
+Casos de uso atuais: `CreateUserService`, `LoginService`, `GetUserService` e
+`DeactivateUserService`, todos com `ExecuteAsync`.
 
 ## Endpoints
 
@@ -33,8 +36,7 @@ acessa tabelas de outro schema.
 ## Integrações
 
 Expõe `IIdentityModule` para consulta interna por contrato. Library consome esse
-contrato. `UserDeactivatedIntegrationEvent` está declarado, mas não é publicado
-nem consumido.
+contrato e recebe somente `UserSnapshot`. Não há evento de integração implementado.
 
 ## Regras principais
 
@@ -57,6 +59,5 @@ dotnet test tests/Unit/FiapCloudGames.Identity.UnitTests
 ## Evolução
 
 - `TODO: definir recuperação de senha, confirmação de e-mail e MFA.`
-- `TODO: implementar publicação do evento de inativação.`
+- `TODO: definir se a inativação precisa de integração assíncrona e outbox.`
 - `TODO: definir refresh/revogação e rotação de JWT.`
-

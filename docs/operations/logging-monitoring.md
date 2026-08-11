@@ -9,7 +9,9 @@ A API usa o logging padrão do ASP.NET Core. Em configuração base:
 
 Em Development, comandos do Entity Framework Core são registrados em
 `Information`. O middleware global registra exceções antes de produzir Problem
-Details.
+Details: falhas funcionais em `Information` e falhas inesperadas em `Error`. A
+configuração base define a categoria do middleware como `Warning`, portanto os
+eventos funcionais ficam suprimidos por padrão.
 
 Com Compose:
 
@@ -48,4 +50,3 @@ correlacionar uma falha com o pipeline atual.
 
 `TODO: definir plataforma de observabilidade, correlação, métricas, alertas,
 retenção e política de dados sensíveis.`
-

@@ -1,6 +1,8 @@
-using FiapCloudGames.Promotions.Application.Abstractions;
+using FiapCloudGames.Promotions.Application.Abstractions.Persistence;
 using FiapCloudGames.Promotions.Domain.Entities;
+using FiapCloudGames.Promotions.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace FiapCloudGames.Promotions.Infrastructure.Persistence;
 
@@ -11,6 +13,11 @@ public sealed class PromotionsDbContext(DbContextOptions<PromotionsDbContext> op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        var discountConverter =
+            new ValueConverter<DiscountPercentage, decimal>(
+                discount => discount.Value,
+                value => DiscountPercentage.Create(value));
+
         modelBuilder.HasDefaultSchema("promotions");
         modelBuilder.Entity<Promotion>(builder =>
         {
@@ -18,7 +25,11 @@ public sealed class PromotionsDbContext(DbContextOptions<PromotionsDbContext> op
             builder.HasKey(promotion => promotion.Id);
             builder.Property(promotion => promotion.Id).HasColumnName("id");
             builder.Property(promotion => promotion.Name).HasColumnName("name").HasMaxLength(120).IsRequired();
-            builder.Property(promotion => promotion.DiscountPercent).HasColumnName("discount_percent").HasPrecision(5, 2).IsRequired();
+            builder.Property(promotion => promotion.DiscountPercent)
+                .HasColumnName("discount_percent")
+                .HasConversion(discountConverter)
+                .HasPrecision(5, 2)
+                .IsRequired();
             builder.Property(promotion => promotion.StartsAtUtc).HasColumnName("starts_at_utc").IsRequired();
             builder.Property(promotion => promotion.EndsAtUtc).HasColumnName("ends_at_utc").IsRequired();
             builder.Property(promotion => promotion.EndedAtUtc).HasColumnName("ended_at_utc");

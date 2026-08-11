@@ -69,11 +69,11 @@ inválida ou usuário inativo retorna 401.
 
 ### `GET /api/users/me`
 
-Retorna o `UserSummary` associado ao claim de identificador do JWT.
+Retorna um `UserResponse` associado ao claim de identificador do JWT.
 
 ### `GET /api/users/{id}`
 
-Retorna `UserSummary` ou 404. Exige Administrator.
+Retorna `UserResponse` ou 404. Exige Administrator.
 
 ### `DELETE /api/users/{id}`
 
@@ -203,9 +203,8 @@ Retorna a biblioteca do usuário autenticado:
 ### `POST /api/library/games/{gameId}`
 
 Não possui corpo. Verifica usuário, jogo e promoção, registra o snapshot da
-aquisição e retorna `201` com um `LibraryItemSummary`.
+aquisição e retorna `201` com um `LibraryItemResponse`.
 
 Não há pagamento. O `Location` retornado usa
 `/api/library/games/{gameId}`, mas essa rota só aceita POST; não existe GET do item
 individual.
-

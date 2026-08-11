@@ -2,56 +2,65 @@
 
 ## Onde ocorre
 
-O projeto não usa FluentValidation nem uma camada dedicada de validadores. A
-validação atual está distribuída em quatro níveis:
+A validação é distribuída em quatro níveis:
 
-1. `[ApiController]` valida binding e anotações dos contratos HTTP.
-2. Serviços de aplicação validam existência, unicidade e permissões de negócio.
-3. Entidades e value objects protegem invariantes do domínio.
+1. `[ApiController]` e Data Annotations validam binding e contratos HTTP.
+2. Serviços de Application validam regras específicas do caso de uso, como
+   política de senha, existência, autorização e conflitos.
+3. Entidades e value objects protegem invariantes internas sem depender de
+   Application.
 4. Mapeamentos e migrations aplicam limites e constraints no banco.
 
-Uma entrada inválida deve ser rejeitada o mais perto possível de sua fronteira,
-mas toda invariável crítica também precisa ser protegida no domínio ou no banco.
+## Respostas
 
-## Respostas atuais
-
-| Origem | Exceção/resultado | HTTP |
+| Origem | Resultado | HTTP |
 |---|---|---:|
-| Binding de `[ApiController]` | `ModelState` inválido | 400 |
-| Regra expressa como `ArgumentException` | Problem Details | 400 |
-| Recurso ausente (`KeyNotFoundException`) | Problem Details | 404 |
-| Estado de negócio inválido (`InvalidOperationException`) | Problem Details | 422 |
-| Autenticação/autorização | challenge/forbid | 401/403 |
-| Erro não tratado | Problem Details | 500 |
+| JSON ou `ModelState` inválido | `ValidationProblemDetails` | 400 |
+| entrada inválida no caso de uso | `AppException.Validation` | 400 |
+| credenciais inválidas | `AppException.Authentication` | 401 |
+| identidade sem permissão | `AppException.Forbidden` | 403 |
+| recurso ausente | `AppException.NotFound` | 404 |
+| duplicidade/conflito | `AppException.Conflict` | 409 |
+| regra de negócio inválida | `AppException.BusinessRule` | 422 |
+| invariante de domínio violada | `DomainRuleViolationException` | 422 |
+| erro não tratado | Problem Details sanitizado | 500 |
 
-Algumas actions retornam `NotFound`, `Unauthorized` ou `Forbid` diretamente, de
-modo que o formato pode não ser idêntico ao gerado pelo middleware.
+## Vários erros por campo
 
-## Limites a observar
+Validadores devem acumular falhas independentes antes de interromper a
+operação:
 
-Há limites que aparecem no domínio e outros apenas no banco. Por exemplo,
-categoria e descrição do jogo possuem tamanho máximo no mapeamento/migration, mas
-o domínio não aplica todos esses limites. Sem validação antecipada, o erro pode
-aparecer apenas no `SaveChanges`.
+```csharp
+if (errors.Count > 0)
+{
+    throw AppException.Validation(
+        errors.ToDictionary(
+            item => item.Key,
+            item => item.Value.ToArray(),
+            StringComparer.OrdinalIgnoreCase));
+}
+```
 
-`TODO: consolidar os limites dos contratos, domínio e banco e adicionar testes de
-fronteira para cada campo.`
+`AppException.Errors` é somente leitura e `HasErrors` informa se o middleware
+deve produzir `ValidationProblemDetails`.
+
+## Value object `Email`
+
+`Email.Create` protege a invariável do domínio. Para fluxos em que formato
+inválido é esperado, como login, use `Email.TryCreate`.
+
+O endereço é normalizado com `Trim()` e `ToLowerInvariant()`, validado com
+`MailAddress.TryCreate` e limitado a 254 caracteres. Cadastro e login usam o
+mesmo valor normalizado; a unicidade continua garantida pelo banco.
 
 ## Ao adicionar uma validação
 
-- Use mensagens que expliquem o campo e a regra sem expor detalhes internos.
-- Não dependa somente do controller; serviços também podem ser chamados por outra
-  entrada no futuro.
-- Preserve invariantes dentro da entidade/value object.
-- Mantenha constraints para integridade e concorrência.
-- Cubra valor válido, limites e falhas esperadas.
-- Atualize [regras de negócio](business-rules.md) e
-  [erros da API](../api/errors.md).
+- Use chaves em `camelCase` e mensagens claras.
+- Preserve invariantes no domínio e constraints no banco.
+- Use uma das categorias existentes de `AppException`.
+- Não adicione uma categoria para cada regra de negócio.
+- Não converta exceções técnicas em erros do cliente.
+- Cubra categoria, mensagem e erros estruturados nos testes.
 
-## Lacunas
-
-- Não há padrão único de códigos de erro por campo.
-- Não há localização de mensagens.
-- Não há validação assíncrona dedicada.
-- Violações de unicidade do banco não são convertidas em `409 Conflict`.
-
+Veja [tratamento de erros](error-handling.md) e
+[erros da API](../api/errors.md).

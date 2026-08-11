@@ -1,25 +1,62 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Mail;
+using FiapCloudGames.Domain.Common;
 
 namespace FiapCloudGames.Identity.Domain.ValueObjects;
 
-public readonly record struct Email
+public sealed record Email
 {
-    private Email(string value) => Value = value;
+    private Email(string value)
+    {
+        Value = value;
+    }
 
     public string Value { get; }
 
     public static Email Create(string value)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(value);
-        var normalized = value.Trim().ToLowerInvariant();
-
-        if (!MailAddress.TryCreate(normalized, out var address) ||
-            !string.Equals(address.Address, normalized, StringComparison.OrdinalIgnoreCase))
+        if (!TryCreate(value, out var email))
         {
-            throw new ArgumentException("O e-mail informado é inválido.", nameof(value));
+            throw new DomainRuleViolationException(
+                "O e-mail informado é inválido.");
         }
 
-        return new Email(normalized);
+        return email!;
+    }
+
+    public static bool TryCreate(
+        string? value,
+        [NotNullWhen(true)] out Email? email)
+    {
+        email = null;
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var normalized = value
+            .Trim()
+            .ToLowerInvariant();
+
+        if (normalized.Length > 254)
+        {
+            return false;
+        }
+
+        if (!MailAddress.TryCreate(
+                normalized,
+                out var address) ||
+            !string.Equals(
+                address.Address,
+                normalized,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        email = new Email(normalized);
+        return true;
     }
 
     public override string ToString() => Value;

@@ -1,8 +1,7 @@
 # Regras de negócio
 
-Este documento registra apenas regras observáveis no código atual. Limites impostos
-exclusivamente pelo banco também são identificados, pois podem produzir um erro de
-persistência em vez de um erro de domínio.
+Este documento registra apenas regras observáveis no código atual. Limites de
+estado persistido são protegidos pelo Domain e repetidos no mapping do banco.
 
 ## Identity
 
@@ -21,10 +20,10 @@ persistência em vez de um erro de domínio.
 ## Catalog
 
 - O título do jogo deve ter entre 2 e 160 caracteres.
-- A categoria é obrigatória. O banco limita a coluna a 80 caracteres.
+- A categoria é obrigatória e possui até 80 caracteres.
 - O preço não pode ser negativo e é arredondado para duas casas decimais.
 - A descrição é normalizada: espaços externos são removidos e `null` vira texto
-  vazio. O banco limita a coluna a 4.000 caracteres.
+  vazio. O limite é de 4.000 caracteres.
 - Um jogo é criado ativo.
 - A listagem pública retorna somente jogos ativos, em ordem alfabética de título.
 
@@ -36,7 +35,8 @@ persistência em vez de um erro de domínio.
 - O fim da promoção deve ser posterior ao início.
 - Uma promoção deve conter pelo menos um jogo; IDs repetidos são eliminados.
 - No cadastro, todos os jogos informados precisam existir e estar ativos.
-- Uma promoção está ativa quando `StartedAt <= agora < EndsAt` e `EndedAt` é nulo.
+- Uma promoção está ativa quando `StartsAtUtc <= agora < EndsAtUtc` e
+  `EndedAtUtc` é nulo.
 - Encerrar uma promoção já encerrada é uma operação idempotente no domínio.
 - Quando mais de uma promoção ativa alcança um jogo, é aplicado o maior desconto.
 - O preço com desconto é arredondado para duas casas decimais.
@@ -48,17 +48,18 @@ persistência em vez de um erro de domínio.
 - Cada usuário possui uma única biblioteca.
 - O mesmo jogo não pode ser adicionado duas vezes à mesma biblioteca.
 - O preço pago não pode ser negativo e é arredondado para duas casas decimais.
-- Título e preço são gravados como snapshot no item da biblioteca.
+- Preço, promoção e instante são gravados como snapshot no item da biblioteca;
+  o título é consultado no Catalog.
 - Se o título retornado pelo catálogo estiver ausente, a aplicação usa um texto de
   fallback.
 - A aquisição não executa pagamento, reserva, estorno ou integração financeira.
 
 ## Consistência entre módulos
 
-Os módulos consultam contratos de aplicação uns dos outros. Como cada
+Os módulos consultam fachadas e DTOs de `Contracts`. Como cada
 `DbContext` possui sua própria unidade de trabalho, uma operação que toca mais de
-um módulo não possui transação distribuída. Eventos de domínio estão declarados
-em contratos, mas ainda não são publicados.
+um módulo não possui transação distribuída. Não há eventos de integração
+implementados.
 
 `TODO: definir estratégia de consistência, publicação de eventos e compensação para
 operações que atravessem módulos.`
@@ -70,4 +71,3 @@ operações que atravessem módulos.`
 - `TODO: definir política de concorrência para aquisições simultâneas.`
 - `TODO: definir regras de cancelamento, reembolso e pagamento.`
 - `TODO: definir se promoções futuras podem ser alteradas ou removidas.`
-

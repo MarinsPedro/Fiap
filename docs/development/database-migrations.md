@@ -1,83 +1,150 @@
-# Migrations de banco de dados
+# EF Core Migrations
 
 ## Responsabilidade
 
-O projeto `FiapCloudGames.Database.Migrations` é um executável separado. Ele usa
-FluentMigrator para aplicar, em uma única sequência, as mudanças de todos os
-schemas. A API não executa migrations durante a inicialização.
+`FiapCloudGames.Database.Migrations` é o executável central de evolução do banco.
+Ele referencia os projetos Infrastructure dos quatro módulos e contém migrations
+e snapshots separados para:
 
-## Aplicar as migrations
+| Contexto | Pasta | Histórico |
+|---|---|---|
+| `IdentityDbContext` | `Migrations/Identity` | `infra.__EFMigrationsHistory_Identity` |
+| `CatalogDbContext` | `Migrations/Catalog` | `infra.__EFMigrationsHistory_Catalog` |
+| `PromotionsDbContext` | `Migrations/Promotions` | `infra.__EFMigrationsHistory_Promotions` |
+| `LibraryDbContext` | `Migrations/Library` | `infra.__EFMigrationsHistory_Library` |
 
-Com um PostgreSQL acessível:
+As tabelas de histórico ficam no schema técnico `infra`, fora do `public` exposto
+pelo Supabase/PostgREST. As tabelas de domínio continuam nos schemas `identity`,
+`catalog`, `promotions` e `library`.
+
+## Aplicar todas as migrations
+
+Com PostgreSQL acessível:
 
 ```powershell
 $env:ConnectionStrings__Database = "Host=localhost;Port=5432;Database=fiap_cloud_games;Username=postgres;Password=<senha-local>"
 dotnet run --project src/Database/FiapCloudGames.Database.Migrations
 ```
 
-No fluxo com containers:
+Antes de chamar o EF, o executável cria o schema técnico `infra`. Depois, chama
+`Database.MigrateAsync()` sequencialmente para Identity, Catalog, Promotions e
+Library e executa o seed opcional de administrador. A API não aplica migrations
+no startup.
+
+Com containers:
 
 ```powershell
-docker compose up --build migrations
+docker compose up --build
 ```
 
-O Compose espera que o banco fique saudável antes de iniciar o migrador. Quando
-`Admin__Email` e `Admin__Password` são informados juntos, o processo também tenta
-criar o administrador inicial. `Admin__Name` tem valor padrão no código.
+## Ferramenta local
+
+O repositório fixa `dotnet-ef` 10.0.10 em `.config/dotnet-tools.json`:
+
+```powershell
+dotnet tool restore
+dotnet tool run dotnet-ef --version
+```
 
 ## Criar uma migration
 
-Crie uma classe no projeto de migrations e use um número único e crescente:
+1. Altere entidade e mapping no Infrastructure do módulo.
+2. Escolha o `DbContext` correto.
+3. Gere a migration no projeto central.
+4. Revise `Up`, `Down` e o snapshot.
 
-```csharp
-[Migration(202607230001)]
-public sealed class AddExampleColumn : Migration
-{
-    public override void Up()
-    {
-        Alter.Table("games").InSchema("catalog")
-            .AddColumn("example").AsString(100).Nullable();
-    }
+Exemplo para Catalog:
 
-    public override void Down()
-    {
-        Delete.Column("example")
-            .FromTable("games")
-            .InSchema("catalog");
-    }
-}
+```powershell
+dotnet tool run dotnet-ef migrations add AddGamePublisher `
+  --context CatalogDbContext `
+  --project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
+  --startup-project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
+  --output-dir Migrations/Catalog
 ```
 
-O exemplo é um modelo para mudanças futuras; essa coluna não existe no projeto.
-Escolha o identificador conforme a convenção cronológica já usada e nunca
-reutilize um número publicado.
+Pastas por contexto:
+
+| Contexto | `--output-dir` |
+|---|---|
+| `IdentityDbContext` | `Migrations/Identity` |
+| `CatalogDbContext` | `Migrations/Catalog` |
+| `PromotionsDbContext` | `Migrations/Promotions` |
+| `LibraryDbContext` | `Migrations/Library` |
+
+Cada contexto possui uma factory própria:
+
+- `IdentityDbContextFactory.cs`;
+- `CatalogDbContextFactory.cs`;
+- `PromotionsDbContextFactory.cs`;
+- `LibraryDbContextFactory.cs`.
+
+Todas usam `DesignTimeConnectionString.Resolve()`. A variável
+`ConnectionStrings__Database` é obrigatória inclusive para comandos de
+design-time; sem ela o `dotnet-ef` encerra com
+`InvalidOperationException`. Use uma conexão local/de desenvolvimento e nunca
+uma credencial de produção para scaffolding.
+
+## Inspecionar migrations
+
+```powershell
+dotnet tool run dotnet-ef migrations list `
+  --context CatalogDbContext `
+  --project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
+  --startup-project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj
+```
+
+Gere SQL para revisão sem aplicar:
+
+```powershell
+dotnet tool run dotnet-ef migrations script `
+  --context CatalogDbContext `
+  --idempotent `
+  --project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
+  --startup-project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj
+```
+
+## Aplicar ou voltar um contexto
+
+O fluxo normal aplica todos os contextos pelo executável. Para manutenção
+controlada de um contexto:
+
+```powershell
+$env:ConnectionStrings__Database = "<connection-string-do-ambiente>"
+dotnet tool run dotnet-ef database update `
+  --context CatalogDbContext `
+  --project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
+  --startup-project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj
+```
+
+Para rollback, informe a migration de destino. `0` remove todas as migrations
+daquele contexto e é destrutivo:
+
+```powershell
+dotnet tool run dotnet-ef database update 0 `
+  --context CatalogDbContext `
+  --project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
+  --startup-project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj
+```
+
+Faça backup e obtenha aprovação antes de rollback em ambiente compartilhado.
 
 ## Checklist
 
-- O `Up` deixa o banco compatível com o código novo.
-- O `Down` desfaz apenas a mudança daquela migration.
-- Nomes de schema, tabela, coluna, índice e constraint coincidem com os
-  mapeamentos EF.
-- Mudanças destrutivas têm estratégia de preservação ou migração dos dados.
-- A ordem de implantação entre migrador e API está documentada.
-- Testes de mapeamento e build passam.
-
-## Rollback
-
-As classes implementam `Down`, mas o executável atual chama apenas `MigrateUp`.
-Não existe parâmetro ou comando suportado no repositório para rollback.
-
-`TODO: implementar e documentar um comando de rollback controlado, incluindo
-backup, autorização e limite de versão.`
-
-Até isso existir, não improvise rollback em produção. Restaure um backup ou
-aplique uma migration corretiva conforme o procedimento operacional aprovado.
+- Migration e snapshot pertencem ao contexto correto.
+- `Up` e `Down` foram revisados.
+- Schema, nomes, precisão, índices e FKs refletem o mapping.
+- Mudanças destrutivas possuem estratégia de preservação dos dados.
+- SQL idempotente foi revisado quando necessário.
+- Build, testes de mapping e descoberta de migrations passam.
+- A ordem entre migrador e API foi considerada.
+- Nenhuma connection string real foi versionada.
 
 ## Testes
 
-Os testes de integração atuais validam metadados dos mapeamentos EF e não sobem um
-PostgreSQL real nem executam FluentMigrator.
+Os testes confirmam que os quatro contexts descobrem suas migrations
+centralizadas sem abrir conexão. Ainda não existe teste que aplique as migrations
+em PostgreSQL real.
 
-`TODO: adicionar teste efêmero que aplique todas as migrations em PostgreSQL e
-compare o schema com os quatro modelos EF.`
-
+`TODO: adicionar PostgreSQL efêmero que aplique e reverta as migrations dos quatro
+contextos.`

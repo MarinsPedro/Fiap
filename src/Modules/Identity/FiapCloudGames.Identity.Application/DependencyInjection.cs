@@ -1,4 +1,8 @@
-using FiapCloudGames.Identity.Application.Users;
+using FiapCloudGames.Identity.Application.Features.Authentication.Login;
+using FiapCloudGames.Identity.Application.Features.Users.CreateUser;
+using FiapCloudGames.Identity.Application.Features.Users.DeactivateUser;
+using FiapCloudGames.Identity.Application.Features.Users.GetUser;
+using FiapCloudGames.Identity.Application.Integrations;
 using FiapCloudGames.Identity.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 

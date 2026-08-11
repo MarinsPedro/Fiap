@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Using Include="Xunit" />
+    <ProjectReference Include="..\..\..\src\BuildingBlocks\FiapCloudGames.Presentation.Common\FiapCloudGames.Presentation.Common.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Identity\FiapCloudGames.Identity.Domain\FiapCloudGames.Identity.Domain.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Identity\FiapCloudGames.Identity.Application\FiapCloudGames.Identity.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Identity\FiapCloudGames.Identity.Infrastructure\FiapCloudGames.Identity.Infrastructure.csproj" />

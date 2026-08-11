@@ -4,9 +4,9 @@
 
 | Pasta | Projeto | Cobertura atual |
 |---|---|---|
-| `Unit/` | quatro projetos por módulo | oito regras de domínio |
-| `Integration/` | API | inicialização do host e `/health` |
-| `Integration/` | Database | metadados de schema/tabela no modelo EF |
+| `Unit/` | quatro projetos, um por módulo | 17 casos de domínio |
+| `Integration/` | API | 18 casos de host, validação e tratamento de erros |
+| `Integration/` | Database | 3 casos de mappings, snapshots e migrations EF |
 | `Architecture/` | ArchitectureTests | fronteiras de dependência |
 
 ## Executar tudo
@@ -23,8 +23,9 @@ dotnet test FiapCloudGames.sln --no-build --no-restore
 
 ## Importante
 
-Os testes de integração atuais não conectam ao PostgreSQL. Eles não validam
-migrations, constraints, repositórios reais nem fluxos HTTP de negócio.
+Os testes de integração atuais não conectam ao PostgreSQL. Eles descobrem as
+migrations na assembly central, mas não validam sua aplicação, constraints,
+repositórios reais nem fluxos HTTP de negócio.
 
 Consulte:
 
@@ -33,4 +34,3 @@ Consulte:
 - [Integração](../docs/testing/integration-tests.md)
 - [Arquitetura](../docs/testing/architecture-tests.md)
 - [Dados](../docs/testing/test-data.md)
-

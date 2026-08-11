@@ -11,12 +11,10 @@ internal sealed class GameLibraryRepository(LibraryDbContext dbContext) : IGameL
 
     public Task<GameLibrary?> GetByUserAsync(
         Guid userId,
-        bool trackChanges,
         CancellationToken cancellationToken)
-    {
-        var query = dbContext.Libraries.Include(library => library.Games);
-        return trackChanges
-            ? query.SingleOrDefaultAsync(library => library.UserId == userId, cancellationToken)
-            : query.AsNoTracking().SingleOrDefaultAsync(library => library.UserId == userId, cancellationToken);
-    }
+        => dbContext.Libraries
+            .Include(library => library.Games)
+            .SingleOrDefaultAsync(
+                library => library.UserId == userId,
+                cancellationToken);
 }
