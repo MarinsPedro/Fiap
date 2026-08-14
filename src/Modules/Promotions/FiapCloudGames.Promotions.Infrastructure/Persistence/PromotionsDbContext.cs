@@ -23,7 +23,7 @@ public sealed class PromotionsDbContext(DbContextOptions<PromotionsDbContext> op
         {
             builder.ToTable("promotions");
             builder.HasKey(promotion => promotion.Id);
-            builder.Property(promotion => promotion.Id).HasColumnName("id");
+            builder.Property(promotion => promotion.Id).HasColumnName("id").ValueGeneratedNever();
             builder.Property(promotion => promotion.Name).HasColumnName("name").HasMaxLength(120).IsRequired();
             builder.Property(promotion => promotion.DiscountPercent)
                 .HasColumnName("discount_percent")

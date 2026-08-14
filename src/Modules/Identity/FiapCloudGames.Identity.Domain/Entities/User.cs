@@ -25,7 +25,7 @@ public sealed class User
                 "O e-mail do usuário é obrigatório.");
         PasswordHash = ValidatePasswordHash(passwordHash);
 
-        if (!Enum.IsDefined(role))
+        if (role is UserRole.Undefined || !Enum.IsDefined(role))
         {
             throw new DomainRuleViolationException(
                 "O perfil do usuário é inválido.");

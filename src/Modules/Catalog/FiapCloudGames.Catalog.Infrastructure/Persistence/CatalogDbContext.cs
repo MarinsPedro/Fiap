@@ -23,7 +23,7 @@ public sealed class CatalogDbContext(DbContextOptions<CatalogDbContext> options)
         {
             builder.ToTable("games");
             builder.HasKey(game => game.Id);
-            builder.Property(game => game.Id).HasColumnName("id");
+            builder.Property(game => game.Id).HasColumnName("id").ValueGeneratedNever();
             builder.Property(game => game.Title).HasColumnName("title").HasMaxLength(160).IsRequired();
             builder.Property(game => game.Description).HasColumnName("description").HasMaxLength(4000).IsRequired();
             builder.Property(game => game.Category).HasColumnName("category").HasMaxLength(80).IsRequired();

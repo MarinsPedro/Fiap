@@ -23,7 +23,7 @@ public sealed class LibraryDbContext(DbContextOptions<LibraryDbContext> options)
         {
             builder.ToTable("game_libraries");
             builder.HasKey(library => library.Id);
-            builder.Property(library => library.Id).HasColumnName("id");
+            builder.Property(library => library.Id).HasColumnName("id").ValueGeneratedNever();
             builder.Property(library => library.UserId).HasColumnName("user_id").IsRequired();
             builder.Property(library => library.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
             builder.HasIndex(library => library.UserId).IsUnique();
@@ -38,7 +38,7 @@ public sealed class LibraryDbContext(DbContextOptions<LibraryDbContext> options)
         {
             builder.ToTable("library_games");
             builder.HasKey(item => item.Id);
-            builder.Property(item => item.Id).HasColumnName("id");
+            builder.Property(item => item.Id).HasColumnName("id").ValueGeneratedNever();
             builder.Property(item => item.LibraryId).HasColumnName("library_id").IsRequired();
             builder.Property(item => item.GameId).HasColumnName("game_id").IsRequired();
             builder.Property(item => item.PricePaid)
