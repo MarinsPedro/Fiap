@@ -1,7 +1,6 @@
 using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Identity.Application.Abstractions.Persistence;
 using FiapCloudGames.Identity.Application.Abstractions.Security;
-using FiapCloudGames.Identity.Application.Features.Users;
 using FiapCloudGames.Identity.Domain.Entities;
 using FiapCloudGames.Identity.Domain.Repositories;
 using FiapCloudGames.Identity.Domain.ValueObjects;

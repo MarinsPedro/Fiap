@@ -13,6 +13,9 @@ internal sealed class UserRepository(IdentityDbContext dbContext) : IUserReposit
     public Task<bool> ExistsAsync(Email email, CancellationToken cancellationToken) =>
         dbContext.Users.AnyAsync(user => user.Email == email, cancellationToken);
 
+    public Task<bool> ExistsEmailWithDifferentIdAsync(Guid id, Email email, CancellationToken cancellationToken) =>
+        dbContext.Users.AnyAsync(user => user.Id != id && user.Email == email, cancellationToken);
+
     public Task<User?> GetAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Users.SingleOrDefaultAsync(user => user.Id == id, cancellationToken);
 

@@ -1,7 +1,9 @@
 using FiapCloudGames.Identity.Application.Features.Users.CreateUser;
 using FiapCloudGames.Identity.Application.Features.Users.DeactivateUser;
 using FiapCloudGames.Identity.Application.Features.Users.GetUser;
+using FiapCloudGames.Identity.Application.Features.Users.UpdateUser;
 using FiapCloudGames.Identity.Presentation.Features.Users.CreateUser;
+using FiapCloudGames.Identity.Presentation.Features.Users.UpdateUser;
 using FiapCloudGames.Presentation.Common.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,6 +30,26 @@ public sealed class UsersController : ControllerBase
             nameof(GetById),
             new { id = response.Id },
             response);
+    }
+
+    [Authorize]
+    [HttpPut("me")]
+    public async Task<ActionResult<UserResponse>> Update(
+        [FromBody] UpdateUserRequest request,
+        [FromServices] UpdateUserService service,
+        CancellationToken cancellationToken)
+    {
+        if (!User.TryGetUserId(out var id))
+        {
+            return Unauthorized();
+        }
+
+        var result = await service.ExecuteAsync(
+            id,
+            request.ToInput(),
+            cancellationToken);
+
+        return Ok(result.ToResponse());
     }
 
     [Authorize(Roles = "Administrator")]
