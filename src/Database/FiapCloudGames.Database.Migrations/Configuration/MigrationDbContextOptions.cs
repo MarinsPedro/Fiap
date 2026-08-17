@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace FiapCloudGames.Database.Migrations;
+namespace FiapCloudGames.Database.Migrations.Configuration;
 
 public static class MigrationDbContextOptions
 {

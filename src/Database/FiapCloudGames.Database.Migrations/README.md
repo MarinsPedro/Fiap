@@ -30,15 +30,15 @@ opcional.
 - `Migrations/Catalog`: migration e snapshot de Catalog;
 - `Migrations/Promotions`: migration e snapshot de Promotions;
 - `Migrations/Library`: migration e snapshot de Library;
-- `IdentityDbContextFactory.cs`, `CatalogDbContextFactory.cs`,
-  `PromotionsDbContextFactory.cs` e `LibraryDbContextFactory.cs`: criação dos
-  contexts pelo `dotnet-ef`;
-- `DesignTimeConnectionString.cs`: leitura obrigatória de
+- `Factories`: criação dos quatro contexts pelo `dotnet-ef`;
+- `Configuration/DesignTimeConnectionString.cs`: leitura obrigatória de
   `ConnectionStrings__Database` em design-time;
-- `MigrationDbContextOptions.cs`: assembly, schema `infra` e tabelas de histórico;
-- `MigrationSchemaInitializer.cs`: cria `infra` antes de aplicar migrations;
+- `Configuration/MigrationDbContextOptions.cs`: assembly, schema `infra` e
+  tabelas de histórico;
+- `Initialization/MigrationSchemaInitializer.cs`: cria `infra` antes de aplicar
+  migrations;
 - `Program.cs`: `Database.MigrateAsync()` e seed;
-- `AdminSeeder.cs`: administrador inicial idempotente.
+- `Seeding/AdminSeeder.cs`: administrador inicial idempotente.
 
 Cada contexto usa sua própria tabela `infra.__EFMigrationsHistory_<Contexto>`.
 

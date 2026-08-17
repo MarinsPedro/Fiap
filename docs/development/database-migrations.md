@@ -74,12 +74,12 @@ Pastas por contexto:
 
 Cada contexto possui uma factory própria:
 
-- `IdentityDbContextFactory.cs`;
-- `CatalogDbContextFactory.cs`;
-- `PromotionsDbContextFactory.cs`;
-- `LibraryDbContextFactory.cs`.
+- `Factories/IdentityDbContextFactory.cs`;
+- `Factories/CatalogDbContextFactory.cs`;
+- `Factories/PromotionsDbContextFactory.cs`;
+- `Factories/LibraryDbContextFactory.cs`.
 
-Todas usam `DesignTimeConnectionString.Resolve()`. A variável
+Todas usam `Configuration/DesignTimeConnectionString.Resolve()`. A variável
 `ConnectionStrings__Database` é obrigatória inclusive para comandos de
 design-time; sem ela o `dotnet-ef` encerra com
 `InvalidOperationException`. Use uma conexão local/de desenvolvimento e nunca

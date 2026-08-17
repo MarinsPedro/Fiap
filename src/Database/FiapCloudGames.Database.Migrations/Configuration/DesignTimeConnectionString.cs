@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 
-namespace FiapCloudGames.Database.Migrations;
+namespace FiapCloudGames.Database.Migrations.Configuration;
 
 internal static class DesignTimeConnectionString
 {

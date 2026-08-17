@@ -1,5 +1,5 @@
 using FiapCloudGames.Catalog.Infrastructure.Persistence;
-using FiapCloudGames.Database.Migrations;
+using FiapCloudGames.Database.Migrations.Configuration;
 using FiapCloudGames.Identity.Infrastructure.Persistence;
 using FiapCloudGames.Library.Infrastructure.Persistence;
 using FiapCloudGames.Promotions.Infrastructure.Persistence;
