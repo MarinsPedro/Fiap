@@ -1,6 +1,5 @@
 using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Catalog.Application.Abstractions.Persistence;
-using FiapCloudGames.Catalog.Application.Features.Games;
 using FiapCloudGames.Catalog.Domain.Repositories;
 
 namespace FiapCloudGames.Catalog.Application.Features.Games.UpdateGame;

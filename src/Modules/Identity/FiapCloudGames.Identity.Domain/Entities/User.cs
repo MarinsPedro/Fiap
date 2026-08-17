@@ -1,3 +1,4 @@
+using System.Data;
 using FiapCloudGames.Domain.Common;
 using FiapCloudGames.Identity.Domain.Enums;
 using FiapCloudGames.Identity.Domain.ValueObjects;
@@ -6,9 +7,7 @@ namespace FiapCloudGames.Identity.Domain.Entities;
 
 public sealed class User
 {
-    private User()
-    {
-    }
+    private User() { }
 
     private User(
         Guid id,
@@ -20,15 +19,12 @@ public sealed class User
     {
         Id = ValidateId(id);
         ChangeName(name);
-        Email = email ??
-            throw new DomainRuleViolationException(
-                "O e-mail do usuário é obrigatório.");
+        Email = email ?? throw new DomainRuleViolationException("O e-mail do usuário é obrigatório.");
         PasswordHash = ValidatePasswordHash(passwordHash);
 
         if (role is UserRole.Undefined || !Enum.IsDefined(role))
         {
-            throw new DomainRuleViolationException(
-                "O perfil do usuário é inválido.");
+            throw new DomainRuleViolationException("O perfil do usuário é inválido.");
         }
 
         Role = role;
@@ -57,6 +53,14 @@ public sealed class User
             passwordHash,
             role,
             createdAtUtc);
+
+    public void ChangeDetails(
+        string name,
+        Email email)
+    {
+        ChangeName(name);
+        Email = email ?? throw new DomainRuleViolationException("O e-mail do usuário é obrigatório.");
+    }
 
     public void ChangeName(string name)
         => Name = NormalizeName(name);
