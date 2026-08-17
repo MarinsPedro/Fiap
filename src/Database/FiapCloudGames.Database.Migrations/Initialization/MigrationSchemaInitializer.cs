@@ -1,6 +1,6 @@
 using Npgsql;
 
-namespace FiapCloudGames.Database.Migrations;
+namespace FiapCloudGames.Database.Migrations.Initialization;
 
 internal static class MigrationSchemaInitializer
 {

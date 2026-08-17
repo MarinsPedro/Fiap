@@ -1,8 +1,9 @@
+using FiapCloudGames.Database.Migrations.Configuration;
 using FiapCloudGames.Promotions.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace FiapCloudGames.Database.Migrations;
+namespace FiapCloudGames.Database.Migrations.Factories;
 
 public sealed class PromotionsDbContextFactory
     : IDesignTimeDbContextFactory<PromotionsDbContext>
