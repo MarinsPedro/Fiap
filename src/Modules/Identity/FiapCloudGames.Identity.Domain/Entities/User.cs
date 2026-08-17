@@ -58,7 +58,7 @@ public sealed class User
         string name,
         Email email)
     {
-        Name = name;
+        ChangeName(name);
         Email = email ?? throw new DomainRuleViolationException("O e-mail do usuário é obrigatório.");
     }
 
