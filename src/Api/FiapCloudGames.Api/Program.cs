@@ -24,6 +24,45 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
 {
+    var contactSite = "http://www.fiapcloudgame.com.br";
+
+    options.SwaggerDoc(
+           "v1",
+           new OpenApiInfo
+           {
+               Title = "FiapCloudGame.Api",
+               Version = "v1",
+               Description = "Web Api para Fiap Cloud Game.",
+               Contact = new OpenApiContact
+               {
+                   Name = "www.fiapcloudgame.com.br",
+                   Email = "contato@fiapcloudgame.com.br",
+                   Url = new Uri(contactSite)
+               }
+           });
+
+    // Adiciona os comentários XML de todos os assemblies do projeto
+    var assemblies = new[]
+    {
+        typeof(Program).Assembly,
+        typeof(IdentityPresentationAssemblyReference).Assembly,
+        typeof(CatalogPresentationAssemblyReference).Assembly,
+        typeof(LibraryPresentationAssemblyReference).Assembly,
+        typeof(PromotionsPresentationAssemblyReference).Assembly
+    };
+
+    // Adiciona os comentários XML de cada assembly, se o arquivo XML existir
+    foreach (var assembly in assemblies)
+    {
+        var xmlFile = $"{assembly.GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+
+        if (File.Exists(xmlPath))
+        {
+            options.IncludeXmlComments(xmlPath);
+        }
+    }
+
     options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
     {
         Type = SecuritySchemeType.Http,
@@ -118,7 +157,7 @@ if (app.Environment.IsDevelopment())
 app.MapHealthChecks("/health");
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();
 
 static string NormalizeFieldName(string fieldName) =>
     string.IsNullOrWhiteSpace(fieldName) || fieldName.StartsWith('$')

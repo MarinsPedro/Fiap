@@ -9,10 +9,19 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FiapCloudGames.Catalog.Presentation.Features.Games;
 
+/// <summary>
+/// Controlador para manipulação dos dados de jogos.
+/// </summary>
 [ApiController]
 [Route("api/games")]
 public sealed class GamesController : ControllerBase
 {
+    /// <summary>
+    /// Lista todos os jogos ativos.
+    /// </summary>
+    /// <param name="service">Serviço para listar os jogos.</param>
+    /// <param name="cancellationToken">Token de cancelamento.</param>
+    /// <returns>Lista de jogos ativos.</returns>
     [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<IReadOnlyList<GameResponse>>> List(
@@ -26,10 +35,17 @@ public sealed class GamesController : ControllerBase
         return Ok(results.Select(GameResponseMappings.ToResponse));
     }
 
+    /// <summary>
+    /// Obtém os detalhes de um jogo específico pelo seu ID.
+    /// </summary>
+    /// <param name="id">ID do jogo.</param>
+    /// <param name="service">Serviço para obter os detalhes do jogo.</param>
+    /// <param name="cancellationToken">Token de cancelamento.</param>
+    /// <returns>Detalhes do jogo.</returns>
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<GameResponse>> Get(
-        Guid id,
+        [FromRoute] Guid id,
         [FromServices] GetGameService service,
         CancellationToken cancellationToken)
     {
@@ -40,10 +56,17 @@ public sealed class GamesController : ControllerBase
             : Ok(result.ToResponse());
     }
 
+    /// <summary>
+    /// Cria um novo jogo.
+    /// </summary>
+    /// <param name="request">Requisição para criar um novo jogo.</param>
+    /// <param name="service">Serviço para criar um novo jogo.</param>
+    /// <param name="cancellationToken">Token de cancelamento.</param>
+    /// <returns>Detalhes do jogo criado.</returns>
     [Authorize(Roles = "Administrator")]
     [HttpPost]
     public async Task<ActionResult<GameResponse>> Create(
-        CreateGameRequest request,
+        [FromBody] CreateGameRequest request,
         [FromServices] CreateGameService service,
         CancellationToken cancellationToken)
     {
@@ -58,11 +81,19 @@ public sealed class GamesController : ControllerBase
             response);
     }
 
+    /// <summary>
+    /// Atualiza os detalhes de um jogo existente.
+    /// </summary>
+    /// <param name="id">ID do jogo.</param>
+    /// <param name="request">Requisição para atualizar o jogo.</param>
+    /// <param name="service">Serviço para atualizar o jogo.</param>
+    /// <param name="cancellationToken">Token de cancelamento.</param>
+    /// <returns>Detalhes do jogo atualizado.</returns>
     [Authorize(Roles = "Administrator")]
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<GameResponse>> Update(
-        Guid id,
-        UpdateGameRequest request,
+        [FromRoute] Guid id,
+        [FromBody] UpdateGameRequest request,
         [FromServices] UpdateGameService service,
         CancellationToken cancellationToken)
     {
