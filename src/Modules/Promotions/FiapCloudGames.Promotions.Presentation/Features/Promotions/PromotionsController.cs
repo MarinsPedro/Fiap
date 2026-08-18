@@ -4,6 +4,7 @@ using FiapCloudGames.Promotions.Application.Features.Promotions.GetPromotion;
 using FiapCloudGames.Promotions.Application.Features.Promotions.ListActivePromotions;
 using FiapCloudGames.Promotions.Presentation.Features.Promotions.CreatePromotion;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FiapCloudGames.Promotions.Presentation.Features.Promotions;
@@ -23,8 +24,11 @@ public sealed class PromotionsController : ControllerBase
     /// <returns>Uma lista de respostas de promoção.</returns>
     [AllowAnonymous]
     [HttpGet("active")]
-    public async Task<ActionResult<IReadOnlyList<PromotionResponse>>>
-        ListActive([FromServices] ListActivePromotionsService service, CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(PromotionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<IReadOnlyList<PromotionResponse>>> ListActive(
+        [FromServices] ListActivePromotionsService service,
+        CancellationToken cancellationToken)
     {
         var results = await service.ExecuteAsync(cancellationToken);
         return Ok(results.Select(PromotionResponseMappings.ToResponse));
@@ -39,6 +43,10 @@ public sealed class PromotionsController : ControllerBase
     /// <returns>Uma resposta de promoção.</returns>
     [Authorize(Roles = "Administrator")]
     [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(PromotionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<PromotionResponse>> GetById(
         [FromRoute] Guid id,
         [FromServices] GetPromotionService service,
@@ -46,7 +54,7 @@ public sealed class PromotionsController : ControllerBase
     {
         var result = await service.ExecuteAsync(id, cancellationToken);
         return result is null
-            ? NotFound()
+            ? NotFound() //TODO: essa resposta deve ser movida para a camada de service, e aplicar um AppException.NotFound.
             : Ok(result.ToResponse());
     }
 
@@ -59,6 +67,10 @@ public sealed class PromotionsController : ControllerBase
     /// <returns>Uma resposta de promoção.</returns>
     [Authorize(Roles = "Administrator")]
     [HttpPost]
+    [ProducesResponseType(typeof(PromotionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<PromotionResponse>> Create(
         [FromBody] CreatePromotionRequest request,
         [FromServices] CreatePromotionService service,
@@ -82,6 +94,10 @@ public sealed class PromotionsController : ControllerBase
     /// <returns>Uma ação resultante.</returns>
     [Authorize(Roles = "Administrator")]
     [HttpPost("{id:guid}/end")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> End(
         [FromRoute] Guid id,
         [FromServices] EndPromotionService service,

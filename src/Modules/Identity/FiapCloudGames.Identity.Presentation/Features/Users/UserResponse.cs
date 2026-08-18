@@ -1,7 +1,7 @@
 namespace FiapCloudGames.Identity.Presentation.Features.Users;
 
 /// <summary>
-/// Representa a resposta de usuário.
+/// Objeto response para retorno dos dados do usuário da plataforma Fiap Cloud Game.
 /// </summary>
 /// <param name="Id">Identificador do usuário.</param>
 /// <param name="Name">Nome do usuário.</param>

@@ -15,6 +15,7 @@ public sealed class UpdateGameService(
     {
         var game = await games.GetAsync(id, cancellationToken)
             ?? throw AppException.NotFound("Jogo não encontrado.");
+
         game.ChangeDetails(
             input.Title,
             input.Description,

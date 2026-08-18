@@ -2,10 +2,12 @@ using FiapCloudGames.Identity.Application.Features.Users.CreateUser;
 using FiapCloudGames.Identity.Application.Features.Users.DeactivateUser;
 using FiapCloudGames.Identity.Application.Features.Users.GetUser;
 using FiapCloudGames.Identity.Application.Features.Users.UpdateUser;
+using FiapCloudGames.Identity.Presentation.Features.Authentication.Login;
 using FiapCloudGames.Identity.Presentation.Features.Users.CreateUser;
 using FiapCloudGames.Identity.Presentation.Features.Users.UpdateUser;
 using FiapCloudGames.Presentation.Common.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FiapCloudGames.Identity.Presentation.Features.Users;
@@ -26,6 +28,9 @@ public sealed class UsersController : ControllerBase
     /// <returns></returns>
     [AllowAnonymous]
     [HttpPost]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<UserResponse>> Create(
         [FromBody] CreateUserRequest request,
         [FromServices] CreateUserService service,
@@ -51,6 +56,10 @@ public sealed class UsersController : ControllerBase
     /// <returns></returns>
     [Authorize]
     [HttpPut("me")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<UserResponse>> Update(
         [FromBody] UpdateUserRequest request,
         [FromServices] UpdateUserService service,
@@ -78,6 +87,10 @@ public sealed class UsersController : ControllerBase
     /// <returns></returns>
     [Authorize(Roles = "Administrator")]
     [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<UserResponse>> GetById(
         [FromRoute] Guid id,
         [FromServices] GetUserService service,
@@ -86,7 +99,7 @@ public sealed class UsersController : ControllerBase
         var user = await service.ExecuteAsync(id, cancellationToken);
 
         return user is null
-            ? NotFound()
+            ? NotFound()  //TODO: essa resposta deve ser movida para a camada de service, e aplicar um AppException.NotFound.
             : Ok(user.ToResponse());
     }
 
@@ -98,6 +111,10 @@ public sealed class UsersController : ControllerBase
     /// <returns></returns>
     [Authorize]
     [HttpGet("me")]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<UserResponse>> GetCurrent(
         [FromServices] GetUserService service,
         CancellationToken cancellationToken)
@@ -110,7 +127,7 @@ public sealed class UsersController : ControllerBase
         var user = await service.ExecuteAsync(id, cancellationToken);
 
         return user is null
-            ? NotFound()
+            ? NotFound() //TODO: essa resposta deve ser movida para a camada de service, e aplicar um AppException.NotFound.
             : Ok(user.ToResponse());
     }
 
@@ -123,6 +140,10 @@ public sealed class UsersController : ControllerBase
     /// <returns></returns>
     [Authorize(Roles = "Administrator")]
     [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Deactivate(
         [FromRoute] Guid id,
         [FromServices] DeactivateUserService service,

@@ -5,6 +5,7 @@ using FiapCloudGames.Catalog.Application.Features.Games.UpdateGame;
 using FiapCloudGames.Catalog.Presentation.Features.Games.CreateGame;
 using FiapCloudGames.Catalog.Presentation.Features.Games.UpdateGame;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FiapCloudGames.Catalog.Presentation.Features.Games;
@@ -24,14 +25,14 @@ public sealed class GamesController : ControllerBase
     /// <returns>Lista de jogos ativos.</returns>
     [AllowAnonymous]
     [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<GameResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<IReadOnlyList<GameResponse>>> List(
         [FromServices] ListGamesService service,
         CancellationToken cancellationToken)
     {
-        var results = await service.ExecuteAsync(
-            onlyActive: true,
-            cancellationToken);
-
+        var results = await service.ExecuteAsync(onlyActive: true, cancellationToken);
         return Ok(results.Select(GameResponseMappings.ToResponse));
     }
 
@@ -44,6 +45,9 @@ public sealed class GamesController : ControllerBase
     /// <returns>Detalhes do jogo.</returns>
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(GameResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<GameResponse>> Get(
         [FromRoute] Guid id,
         [FromServices] GetGameService service,
@@ -52,7 +56,7 @@ public sealed class GamesController : ControllerBase
         var result = await service.ExecuteAsync(id, cancellationToken);
 
         return result is null
-            ? NotFound()
+            ? NotFound()  //TODO: essa resposta deve ser movida para a camada de service, e aplicar um AppException.NotFound.
             : Ok(result.ToResponse());
     }
 
@@ -65,6 +69,10 @@ public sealed class GamesController : ControllerBase
     /// <returns>Detalhes do jogo criado.</returns>
     [Authorize(Roles = "Administrator")]
     [HttpPost]
+    [ProducesResponseType(typeof(GameResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<GameResponse>> Create(
         [FromBody] CreateGameRequest request,
         [FromServices] CreateGameService service,
@@ -91,6 +99,11 @@ public sealed class GamesController : ControllerBase
     /// <returns>Detalhes do jogo atualizado.</returns>
     [Authorize(Roles = "Administrator")]
     [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(GameResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<GameResponse>> Update(
         [FromRoute] Guid id,
         [FromBody] UpdateGameRequest request,

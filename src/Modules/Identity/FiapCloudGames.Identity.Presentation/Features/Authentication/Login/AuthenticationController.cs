@@ -15,7 +15,7 @@ public sealed class AuthenticationController : ControllerBase
     /// <summary>
     /// Executa a autenticação do usuário na plataforma Fiap Cloud Game.
     /// </summary>
-    /// <param name="request">Objeto request para envio com os dados para autenticação.</param>
+    /// <param name="request">Objeto request para envio do e-mail e password para o procesos de autenticação.</param>
     /// <param name="service">Serviço do tipo LoginService.</param>
     /// <param name="cancellationToken">Token para cancelamento da requisição</param>
     /// <returns></returns>
@@ -24,15 +24,13 @@ public sealed class AuthenticationController : ControllerBase
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<LoginResponse>> Login(
         [FromBody] LoginRequest request,
         [FromServices] LoginService service,
         CancellationToken cancellationToken)
     {
-        var result = await service.ExecuteAsync(
-            request.ToInput(),
-            cancellationToken);
-
+        var result = await service.ExecuteAsync(request.ToInput(), cancellationToken);
         return Ok(result.ToResponse());
     }
 }

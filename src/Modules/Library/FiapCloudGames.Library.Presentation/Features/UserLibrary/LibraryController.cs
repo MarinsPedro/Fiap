@@ -2,6 +2,7 @@ using FiapCloudGames.Library.Application.Features.UserLibrary.AcquireGame;
 using FiapCloudGames.Library.Application.Features.UserLibrary.GetLibrary;
 using FiapCloudGames.Presentation.Common.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FiapCloudGames.Library.Presentation.Features.UserLibrary;
@@ -21,6 +22,10 @@ public sealed class LibraryController : ControllerBase
     /// <param name="cancellationToken">Token de cancelamento</param>
     /// <returns>Retorna a listagem da biblioteca de jogos do usuário.</returns>
     [HttpGet]
+    [Authorize]
+    [ProducesResponseType(typeof(UserLibraryResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<UserLibraryResponse>> Get(
         [FromServices] GetLibraryService service,
         CancellationToken cancellationToken)
@@ -35,13 +40,18 @@ public sealed class LibraryController : ControllerBase
     }
 
     /// <summary>
-    /// Obtém os detalhes do jogo da biblioteca do usuário logado.
+    /// Adiciona um jogo para a biblioteca do usuário logado.
     /// </summary>
     /// <param name="gameId">O ID do jogo.</param>
     /// <param name="service">Serviço do tipo AcquireGameService.</param>
     /// <param name="cancellationToken">Token de cancelamento</param>
-    /// <returns>Retorna os detalhes do jogo da biblioteca do usuário logado.</returns>
+    /// <returns>Retorna os detalhes do jogo adicinado na biblioteca do usuário logado.</returns>
+    [Authorize]
     [HttpPost("games/{gameId:guid}")]
+    [ProducesResponseType(typeof(LibraryItemResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<LibraryItemResponse>> Acquire(
         [FromRoute] Guid gameId,
         [FromServices] AcquireGameService service,
@@ -54,7 +64,6 @@ public sealed class LibraryController : ControllerBase
 
         var result = await service.ExecuteAsync(userId, gameId, cancellationToken);
         var response = result.ToResponse();
-
         return CreatedAtAction(nameof(Get), response);
     }
 }
