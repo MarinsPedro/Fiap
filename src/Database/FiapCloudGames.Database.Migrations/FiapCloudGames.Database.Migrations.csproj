@@ -29,11 +29,4 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Migrations\Identity\" />
-    <Folder Include="Migrations\Catalog\" />
-    <Folder Include="Migrations\Library\" />
-    <Folder Include="Migrations\Promotions\" />
-  </ItemGroup>
-
 </Project>

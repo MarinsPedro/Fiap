@@ -1,7 +1,7 @@
 using System.Reflection;
 using FiapCloudGames.Catalog.Contracts;
 using FiapCloudGames.Catalog.Domain.Entities;
-using FiapCloudGames.Database.Migrations;
+using FiapCloudGames.Database.Migrations.Configuration;
 using FiapCloudGames.Domain.Common;
 using FiapCloudGames.Identity.Contracts;
 using FiapCloudGames.Identity.Domain.Entities;

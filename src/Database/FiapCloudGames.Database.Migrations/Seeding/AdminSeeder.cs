@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 
-namespace FiapCloudGames.Database.Migrations;
+namespace FiapCloudGames.Database.Migrations.Seeding;
 
 internal static class AdminSeeder
 {
