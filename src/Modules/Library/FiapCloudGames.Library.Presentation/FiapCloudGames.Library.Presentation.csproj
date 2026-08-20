@@ -4,4 +4,8 @@
     <ProjectReference Include="..\..\..\BuildingBlocks\FiapCloudGames.Presentation.Common\FiapCloudGames.Presentation.Common.csproj" />
     <ProjectReference Include="..\FiapCloudGames.Library.Application\FiapCloudGames.Library.Application.csproj" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+  </PropertyGroup>
 </Project>

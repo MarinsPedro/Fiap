@@ -1,5 +1,4 @@
-using FiapCloudGames.Promotions.Application.Features.Promotions;
-using FiapCloudGames.Promotions.Domain.Repositories;
+﻿using FiapCloudGames.Promotions.Domain.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace FiapCloudGames.Promotions.Application.Features.Promotions.ListActivePromotions;

@@ -1,4 +1,4 @@
-using FiapCloudGames.Application.Common.Exceptions;
+﻿using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Catalog.Application.Abstractions.Persistence;
 using FiapCloudGames.Catalog.Domain.Repositories;
 using Microsoft.Extensions.Logging;

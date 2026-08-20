@@ -3,4 +3,8 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="..\FiapCloudGames.Catalog.Application\FiapCloudGames.Catalog.Application.csproj" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+  </PropertyGroup>
 </Project>

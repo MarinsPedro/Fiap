@@ -2,6 +2,9 @@ using FiapCloudGames.Catalog.Application.Features.Games;
 
 namespace FiapCloudGames.Catalog.Presentation.Features.Games;
 
+/// <summary>
+/// Classe de mapeamento para conversão de resultados de jogos em respostas de API.
+/// </summary>
 internal static class GameResponseMappings
 {
     public static GameResponse ToResponse(

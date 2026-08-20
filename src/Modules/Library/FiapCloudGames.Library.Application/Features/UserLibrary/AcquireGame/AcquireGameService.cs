@@ -1,8 +1,7 @@
-using FiapCloudGames.Application.Common.Exceptions;
+﻿using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Catalog.Contracts;
 using FiapCloudGames.Identity.Contracts;
 using FiapCloudGames.Library.Application.Abstractions.Persistence;
-using FiapCloudGames.Library.Application.Features.UserLibrary;
 using FiapCloudGames.Library.Domain.Entities;
 using FiapCloudGames.Library.Domain.Repositories;
 using FiapCloudGames.Promotions.Contracts;
@@ -80,9 +79,8 @@ public sealed class AcquireGameService(
         }
 
         var now = clock.GetUtcNow();
-        var library = await libraries.GetByUserAsync(
-            userId,
-            cancellationToken);
+        var library = await libraries.GetByUserAsync(userId, cancellationToken);
+
         if (library is null)
         {
             library = GameLibrary.Create(userId, now);
@@ -111,11 +109,13 @@ public sealed class AcquireGameService(
                 gameId,
                 game.BasePrice),
             cancellationToken);
+
         var item = library.AcquireGame(
             gameId,
             quote.FinalPrice,
             quote.PromotionId,
             now);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation(

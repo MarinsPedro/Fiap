@@ -1,4 +1,3 @@
-using FiapCloudGames.Catalog.Application.Features.Games;
 using FiapCloudGames.Catalog.Domain.Repositories;
 using Microsoft.Extensions.Logging;
 

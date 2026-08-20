@@ -1,5 +1,4 @@
-using FiapCloudGames.Catalog.Application.Features.Games;
-using FiapCloudGames.Catalog.Domain.Repositories;
+﻿using FiapCloudGames.Catalog.Domain.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace FiapCloudGames.Catalog.Application.Features.Games.ListGames;
@@ -27,3 +26,4 @@ public sealed class ListGamesService(
         return result;
     }
 }
+
