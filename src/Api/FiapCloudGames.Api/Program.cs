@@ -57,10 +57,10 @@ builder.Services.AddSwaggerGen(options =>
         var xmlFile = $"{assembly.GetName().Name}.xml";
         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
-        if (File.Exists(xmlPath))
-        {
-            options.IncludeXmlComments(xmlPath);
-        }
+        if(!File.Exists(xmlPath))
+            throw new FileNotFoundException($"O arquivo XML de documentação '{xmlFile}' não foi encontrado. Certifique-se de que a tag <GenerateDocumentationFile>True</GenerateDocumentationFile> está configurada como True no .csproj.");
+
+        options.IncludeXmlComments(xmlPath);
     }
 
     options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
