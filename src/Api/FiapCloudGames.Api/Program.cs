@@ -44,7 +44,6 @@ builder.Services.AddSwaggerGen(options =>
     // Adiciona os comentários XML de todos os assemblies do projeto
     var assemblies = new[]
     {
-        typeof(Program).Assembly,
         typeof(IdentityPresentationAssemblyReference).Assembly,
         typeof(CatalogPresentationAssemblyReference).Assembly,
         typeof(LibraryPresentationAssemblyReference).Assembly,
@@ -58,7 +57,7 @@ builder.Services.AddSwaggerGen(options =>
         var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
         if(!File.Exists(xmlPath))
-            throw new FileNotFoundException($"O arquivo XML de documentação '{xmlFile}' não foi encontrado. Certifique-se de que a tag <GenerateDocumentationFile>True</GenerateDocumentationFile> está configurada como True no .csproj.");
+            throw new FileNotFoundException($"O arquivo XML de documentação '{xmlFile}' não foi encontrado. Certifique-se de que a tag <GenerateDocumentationFile>True</GenerateDocumentationFile> está configurada como True no {assembly.ManifestModule.Name.Replace(".dll", string.Empty)}.csproj.");
 
         options.IncludeXmlComments(xmlPath);
     }
