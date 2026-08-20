@@ -25,7 +25,7 @@ public sealed class PromotionsController : ControllerBase
     [AllowAnonymous]
     [HttpGet("active")]
     [ProducesResponseType(typeof(PromotionResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<IReadOnlyList<PromotionResponse>>> ListActive(
         [FromServices] ListActivePromotionsService service,
         CancellationToken cancellationToken)
@@ -46,7 +46,7 @@ public sealed class PromotionsController : ControllerBase
     [ProducesResponseType(typeof(PromotionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<PromotionResponse>> GetById(
         [FromRoute] Guid id,
         [FromServices] GetPromotionService service,
@@ -70,7 +70,7 @@ public sealed class PromotionsController : ControllerBase
     [ProducesResponseType(typeof(PromotionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<PromotionResponse>> Create(
         [FromBody] CreatePromotionRequest request,
         [FromServices] CreatePromotionService service,
@@ -97,7 +97,7 @@ public sealed class PromotionsController : ControllerBase
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> End(
         [FromRoute] Guid id,
         [FromServices] EndPromotionService service,

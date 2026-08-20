@@ -25,7 +25,7 @@ public sealed class LibraryController : ControllerBase
     [Authorize]
     [ProducesResponseType(typeof(UserLibraryResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<UserLibraryResponse>> Get(
         [FromServices] GetLibraryService service,
         CancellationToken cancellationToken)
@@ -51,7 +51,7 @@ public sealed class LibraryController : ControllerBase
     [ProducesResponseType(typeof(LibraryItemResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<LibraryItemResponse>> Acquire(
         [FromRoute] Guid gameId,
         [FromServices] AcquireGameService service,

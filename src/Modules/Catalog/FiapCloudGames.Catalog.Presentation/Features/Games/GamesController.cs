@@ -27,7 +27,7 @@ public sealed class GamesController : ControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<GameResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<IReadOnlyList<GameResponse>>> List(
         [FromServices] ListGamesService service,
         CancellationToken cancellationToken)
@@ -47,7 +47,7 @@ public sealed class GamesController : ControllerBase
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(GameResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<GameResponse>> Get(
         [FromRoute] Guid id,
         [FromServices] GetGameService service,
@@ -72,7 +72,7 @@ public sealed class GamesController : ControllerBase
     [ProducesResponseType(typeof(GameResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<GameResponse>> Create(
         [FromBody] CreateGameRequest request,
         [FromServices] CreateGameService service,
@@ -103,7 +103,7 @@ public sealed class GamesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public async Task<ActionResult<GameResponse>> Update(
         [FromRoute] Guid id,
         [FromBody] UpdateGameRequest request,
