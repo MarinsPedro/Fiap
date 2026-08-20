@@ -25,7 +25,7 @@ public sealed class DeactivateGameService(
         if(!game.IsActive)
         {
             logger.LogWarning("Não foi possível desativar: jogo {GameId} já está desativado.", id);
-            throw AppException.BusinessRule("Jogo já está desativado.");
+            throw AppException.Conflict("Jogo já está desativado.");
         }
 
         game.Deactivate();
