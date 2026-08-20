@@ -19,7 +19,10 @@ public sealed class ExceptionHandlingMiddleware(
         catch (OperationCanceledException)
             when (context.RequestAborted.IsCancellationRequested)
         {
-            // A requisição foi cancelada pelo cliente.
+            logger.LogDebug(
+                "Requisição cancelada pelo cliente durante {Method} {Path}.",
+                context.Request.Method,
+                context.Request.Path);
         }
         catch (Exception exception)
             when (!context.Response.HasStarted)
@@ -149,7 +152,7 @@ public sealed class ExceptionHandlingMiddleware(
             return;
         }
 
-        logger.LogInformation(
+        logger.LogWarning(
             "Requisição rejeitada com {Code} ({Status}) em " +
             "{Method} {Path}: {Message}",
             error.Code,
