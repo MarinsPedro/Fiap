@@ -1,4 +1,5 @@
 using FiapCloudGames.Catalog.Application.Features.Games.CreateGame;
+using FiapCloudGames.Catalog.Application.Features.Games.DeactivateGame;
 using FiapCloudGames.Catalog.Application.Features.Games.GetGame;
 using FiapCloudGames.Catalog.Application.Features.Games.ListGames;
 using FiapCloudGames.Catalog.Application.Features.Games.UpdateGame;
@@ -116,5 +117,28 @@ public sealed class GamesController : ControllerBase
             cancellationToken);
 
         return Ok(result.ToResponse());
+    }
+
+    /// <summary>
+    /// Desativação (exclusão lógica) de jogos que somente é realizada por um usuário administrador.
+    /// </summary>
+    /// <param name="id">ID do jogo a ser desativado.</param>
+    /// <param name="service">Serviço para desativar o jogo.</param>
+    /// <param name="cancellationToken">Token de cancelamento.</param>
+    /// <returns>Resultado da operação.</returns>
+    [Authorize(Roles = "Administrator")]
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> Deactivate(
+        [FromRoute] Guid id,
+        [FromServices] DeactivateGameService service,
+        CancellationToken cancellationToken)
+    {
+        await service.ExecuteAsync(id, cancellationToken);
+        return NoContent();
     }
 }
