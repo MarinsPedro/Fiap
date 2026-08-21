@@ -119,7 +119,6 @@ public sealed class GamesController : ControllerBase
         return Ok(result.ToResponse());
     }
 
-
     /// <summary>
     /// Desativação (exclusão lógica) de jogos que somente é realizada por um usuário administrador.
     /// </summary>
