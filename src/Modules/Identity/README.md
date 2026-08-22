@@ -42,7 +42,8 @@ contrato e recebe somente `UserSnapshot`. Não há evento de integração implem
 
 - e-mail normalizado e único;
 - nome entre 2 e 120 caracteres;
-- senha de cadastro com pelo menos 8 caracteres;
+- senha de cadastro com pelo menos 8 caracteres, incluindo letras, números e
+  caracteres especiais;
 - papel padrão `User`;
 - usuário inativo não autentica;
 - PBKDF2/SHA-256 para armazenamento de senha.

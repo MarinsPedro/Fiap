@@ -72,7 +72,7 @@ Edite `.env` e altere todos os valores. O arquivo é ignorado pelo Git.
 | `JWT_KEY` | pelo menos 32 caracteres |
 | `ADMIN_NAME` | nome do administrador inicial |
 | `ADMIN_EMAIL` | e-mail válido |
-| `ADMIN_PASSWORD` | pelo menos 8 caracteres |
+| `ADMIN_PASSWORD` | pelo menos 8 caracteres, com letra, número e caractere especial |
 
 Nunca reutilize credenciais de produção.
 
@@ -119,7 +119,7 @@ Use o e-mail e a senha definidos para o administrador no migrador:
 ```powershell
 $body = @{
   email = "admin@example.com"
-  password = "change-me-now"
+  password = "change-me-now-1!"
 } | ConvertTo-Json
 
 $login = Invoke-RestMethod `

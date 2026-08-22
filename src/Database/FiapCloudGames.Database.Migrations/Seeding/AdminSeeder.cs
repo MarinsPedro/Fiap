@@ -1,5 +1,6 @@
 using System.Net.Mail;
 using System.Security.Cryptography;
+using FiapCloudGames.Identity.Domain.ValueObjects;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 
@@ -27,9 +28,10 @@ internal static class AdminSeeder
             throw new InvalidOperationException("Configure 'Admin:Email' com um e-mail válido.");
         }
 
-        if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
+        if (!Password.TryCreate(password, out var validPassword))
         {
-            throw new InvalidOperationException("Configure 'Admin:Password' com pelo menos 8 caracteres.");
+            throw new InvalidOperationException(
+                $"Configure 'Admin:Password' corretamente. {Password.InvalidMessage}");
         }
 
         var name = configuration["Admin:Name"]?.Trim();
@@ -48,18 +50,20 @@ internal static class AdminSeeder
         command.Parameters.AddWithValue("id", Guid.NewGuid());
         command.Parameters.AddWithValue("name", name);
         command.Parameters.AddWithValue("email", address.Address.Trim().ToLowerInvariant());
-        command.Parameters.AddWithValue("password_hash", Hash(password));
+        command.Parameters.AddWithValue(
+            "password_hash",
+            Hash(validPassword));
         command.Parameters.AddWithValue(
             "created_at_utc",
             clock.GetUtcNow());
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    private static string Hash(string password)
+    private static string Hash(Password password)
     {
         var salt = RandomNumberGenerator.GetBytes(16);
         var hash = Rfc2898DeriveBytes.Pbkdf2(
-            password,
+            password.Value,
             salt,
             Iterations,
             HashAlgorithmName.SHA256,

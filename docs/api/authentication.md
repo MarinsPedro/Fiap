@@ -9,7 +9,7 @@ Content-Type: application/json
 {
   "name": "Aluno FIAP",
   "email": "aluno@example.com",
-  "password": "<senha-local-com-8-ou-mais-caracteres>"
+  "password": "<senha-forte-com-8-ou-mais-caracteres>"
 }
 ```
 

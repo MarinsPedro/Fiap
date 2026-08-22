@@ -7,7 +7,8 @@ estado persistido são protegidos pelo Domain e repetidos no mapping do banco.
 
 - O e-mail é obrigatório, normalizado para minúsculas e validado antes do cadastro.
 - O nome deve ter entre 2 e 120 caracteres.
-- A senha de cadastro deve ter pelo menos 8 caracteres.
+- A senha de cadastro deve ter pelo menos 8 caracteres e incluir letras, números
+  e caracteres especiais.
 - Não podem existir dois usuários com o mesmo e-mail.
 - Novos usuários recebem o papel `User`.
 - O usuário administrador só é criado pelo `AdminSeeder`; não há endpoint público

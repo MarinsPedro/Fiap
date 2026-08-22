@@ -5,8 +5,9 @@
 A validação é distribuída em quatro níveis:
 
 1. `[ApiController]` e Data Annotations validam binding e contratos HTTP.
-2. Serviços de Application validam regras específicas do caso de uso, como
-   política de senha, existência, autorização e conflitos.
+2. Serviços de Application coordenam regras específicas do caso de uso, como
+   existência, autorização e conflitos, e convertem falhas esperadas em erros
+   por campo.
 3. Entidades e value objects protegem invariantes internas sem depender de
    Application.
 4. Mapeamentos e migrations aplicam limites e constraints no banco.
@@ -56,6 +57,13 @@ inválido é esperado, como login, use `Email.TryCreate`.
 O endereço é normalizado com `Trim()` e `ToLowerInvariant()`, validado com
 `MailAddress.TryCreate` e limitado a 254 caracteres. Cadastro e login usam o
 mesmo valor normalizado; a unicidade continua garantida pelo banco.
+
+## Value object `Password`
+
+`Password.Create` e `Password.TryCreate` concentram a política de senha no
+Domain. O objeto exige ao menos 8 caracteres, incluindo letras, números e
+caracteres especiais. A Application valida esse objeto antes de solicitar o
+hash, e somente o hash é persistido no agregado `User`.
 
 ## Ao adicionar uma validação
 

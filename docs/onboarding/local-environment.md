@@ -71,7 +71,7 @@ $env:Cors__AllowedOrigins__1 = "https://localhost:3001"
 ```powershell
 $env:Admin__Name = "Administrador local"
 $env:Admin__Email = "admin@example.com"
-$env:Admin__Password = "change-me-now"
+$env:Admin__Password = "change-me-now-1!"
 dotnet run --project src/Database/FiapCloudGames.Database.Migrations
 ```
 
