@@ -42,6 +42,41 @@ public sealed class UserTests
             exception.Message);
     }
 
+    [Theory]
+    [InlineData("Ab1!")]
+    [InlineData("abcdefgh!")]
+    [InlineData("12345678!")]
+    [InlineData("Abcdefgh1")]
+    [InlineData("Abcdef1 ")]
+    public void PasswordShouldRejectValueWithoutRequiredComposition(
+        string value)
+    {
+        var created = Password.TryCreate(value, out var password);
+
+        Assert.False(created);
+        Assert.Null(password);
+    }
+
+    [Fact]
+    public void PasswordShouldAcceptSecureValue()
+    {
+        const string value = "Senha@12";
+
+        var password = Password.Create(value);
+
+        Assert.Equal(value, password.Value);
+        Assert.DoesNotContain(value, password.ToString());
+    }
+
+    [Fact]
+    public void PasswordShouldReportTheBusinessRuleWhenInvalid()
+    {
+        var exception = Assert.Throws<DomainRuleViolationException>(
+            () => Password.Create("abcdefgh"));
+
+        Assert.Equal(Password.InvalidMessage, exception.Message);
+    }
+
     [Fact]
     public void CreateShouldNormalizeNameAndUseExplicitClock()
     {

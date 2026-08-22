@@ -36,7 +36,7 @@ Retorna `200 OK` e o texto `Healthy`. Não consulta o banco.
 {
   "name": "Aluno FIAP",
   "email": "aluno@example.com",
-  "password": "<senha-local-com-8-ou-mais-caracteres>"
+  "password": "<senha-forte-com-8-ou-mais-caracteres>"
 }
 ```
 

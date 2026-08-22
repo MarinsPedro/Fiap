@@ -22,7 +22,7 @@ public sealed class CreateUserService(
         logger.LogDebug("Iniciando criação de usuário.");
 
         var email = Email.Create(input.Email);
-        ValidatePassword(input.Password);
+        var password = ValidatePassword(input.Password);
 
         if (await users.ExistsAsync(email, cancellationToken))
         {
@@ -35,7 +35,7 @@ public sealed class CreateUserService(
         var user = User.Create(
             input.Name,
             email,
-            passwordHasher.Hash(input.Password),
+            passwordHasher.Hash(password),
             clock.GetUtcNow());
         await users.AddAsync(user, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -47,17 +47,17 @@ public sealed class CreateUserService(
         return IdentityApplicationMappings.ToResult(user);
     }
 
-    private static void ValidatePassword(string? password)
+    private static Password ValidatePassword(string? value)
     {
-        if (!string.IsNullOrWhiteSpace(password) && password.Length >= 8)
+        if (Password.TryCreate(value, out var password))
         {
-            return;
+            return password;
         }
 
         throw AppException.Validation(
             [
                 new AppError(
-                    "A senha deve ter pelo menos 8 caracteres.",
+                    Password.InvalidMessage,
                     "password")
             ]);
     }

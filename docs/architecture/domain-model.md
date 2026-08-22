@@ -26,7 +26,7 @@ da aplicação. O domínio não referencia esse projeto.
 
 | Contexto | Raiz de agregado | Entidades internas | Objetos de valor | Responsabilidade |
 |---|---|---|---|---|
-| Identity | `User` | — | `Email` | identidade, credencial, papel e estado do usuário |
+| Identity | `User` | — | `Email`, `Password` | identidade, credencial, papel e estado do usuário |
 | Catalog | `Game` | — | `GamePrice` | cadastro, preço base e disponibilidade do jogo |
 | Promotions | `Promotion` | `PromotionGame` | `DiscountPercentage` | vigência, abrangência e cálculo de desconto |
 | Library | `GameLibrary` | `LibraryGame` | `AcquisitionPrice` | coleção do usuário e snapshot da aquisição |
@@ -41,6 +41,8 @@ independentes. Seu ciclo de vida pertence, respectivamente, a `Promotion` e
 
 - e-mail válido e normalizado;
 - nome entre 2 e 120 caracteres;
+- senha de cadastro com ao menos 8 caracteres, letras, números e caracteres
+  especiais;
 - hash de senha obrigatório;
 - papel pertencente a `UserRole`;
 - criação em UTC;
@@ -99,6 +101,7 @@ escalares:
 | Objeto de valor | Coluna |
 |---|---|
 | `Email` | `identity.users.email` |
+| `Password` | não é persistido; somente o hash resultante é armazenado |
 | `GamePrice` | `catalog.games.base_price` |
 | `DiscountPercentage` | `promotions.promotions.discount_percent` |
 | `AcquisitionPrice` | `library.library_games.price_paid` |

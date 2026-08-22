@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using FiapCloudGames.Identity.Application.Abstractions.Security;
+using FiapCloudGames.Identity.Domain.ValueObjects;
 
 namespace FiapCloudGames.Identity.Infrastructure.Authentication;
 
@@ -9,12 +10,12 @@ internal sealed class PasswordHasher : IPasswordHasher
     private const int SaltSize = 16;
     private const int HashSize = 32;
 
-    public string Hash(string password)
+    public string Hash(Password password)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(password);
+        ArgumentNullException.ThrowIfNull(password);
         var salt = RandomNumberGenerator.GetBytes(SaltSize);
         var hash = Rfc2898DeriveBytes.Pbkdf2(
-            password,
+            password.Value,
             salt,
             Iterations,
             HashAlgorithmName.SHA256,

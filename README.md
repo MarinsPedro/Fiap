@@ -106,7 +106,9 @@ Copie `.env.example` para `.env` e substitua todos os valores de exemplo:
 Copy-Item .env.example .env
 ```
 
-O `.env` é ignorado pelo Git. `JWT_KEY` precisa ter ao menos 32 caracteres; `ADMIN_PASSWORD` precisa ter ao menos 8.
+O `.env` é ignorado pelo Git. `JWT_KEY` precisa ter ao menos 32 caracteres;
+`ADMIN_PASSWORD` precisa ter ao menos 8 caracteres, com letras, números e
+caracteres especiais.
 
 ### 4. Compilar e testar
 
@@ -151,7 +153,7 @@ $env:ConnectionStrings__Database = "Host=localhost;Port=5432;Database=fiap_cloud
 $env:Jwt__Key = "change-me-with-at-least-32-characters"
 $env:Admin__Name = "Administrador local"
 $env:Admin__Email = "admin@example.com"
-$env:Admin__Password = "change-me-now"
+$env:Admin__Password = "change-me-now-1!"
 ```
 
 Aplique o schema e crie o administrador:
@@ -184,7 +186,7 @@ Content-Type: application/json
 
 {
   "email": "admin@example.com",
-  "password": "change-me-now"
+  "password": "change-me-now-1!"
 }
 ```
 

@@ -71,6 +71,37 @@ public sealed class ApiProblemDetailsTests :
         Assert.Contains(problem.Errors!, error => error.Field == "password");
     }
 
+    [Theory]
+    [InlineData("abcdefgh")]
+    [InlineData("12345678")]
+    [InlineData("Abcdefg!")]
+    [InlineData("Abcdefg1")]
+    public async Task WeakPasswordShouldReturnPasswordValidationError(
+        string password)
+    {
+        var response = await _client.PostAsJsonAsync(
+            new Uri("/api/users", UriKind.Relative),
+            new
+            {
+                Name = "Aluno FIAP",
+                Email = "aluno@fiap.com.br",
+                Password = password
+            });
+
+        var problem = await AssertProblemAsync(
+            response,
+            HttpStatusCode.BadRequest,
+            ApiProblemTypes.Validation,
+            "Um ou mais dados são inválidos",
+            "Verifique os dados informados.",
+            expectedErrorCount: 1);
+        var error = Assert.Single(problem.Errors!);
+        Assert.Equal("password", error.Field);
+        Assert.Equal(
+            "A senha deve ter pelo menos 8 caracteres e conter letras, números e caracteres especiais.",
+            error.Message);
+    }
+
     [Fact]
     public async Task MissingTokenShouldReturnUnauthorizedProblem()
     {
