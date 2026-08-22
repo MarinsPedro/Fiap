@@ -1,4 +1,5 @@
 using FiapCloudGames.Identity.Application.Features.Authentication.Login;
+using FiapCloudGames.Presentation.Common.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -22,9 +23,10 @@ public sealed class AuthenticationController : ControllerBase
     [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status400BadRequest, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status403Forbidden, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<LoginResponse>> Login(
         [FromBody] LoginRequest request,
         [FromServices] LoginService service,

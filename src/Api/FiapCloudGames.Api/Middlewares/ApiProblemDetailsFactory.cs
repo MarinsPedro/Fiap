@@ -1,85 +1,86 @@
 using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
+using FiapCloudGames.Presentation.Common.Errors;
 
 namespace FiapCloudGames.Api.Middlewares;
 
 internal static class ApiProblemDetailsFactory
 {
-    public static ValidationProblemDetails CreateValidation(
+    private static readonly object CurrentProblemDetailsKey = new();
+
+    public static ApiProblemDetails CreateValidation(
         HttpContext context,
-        IDictionary<string, string[]> errors)
+        IReadOnlyCollection<ApiError> errors)
     {
-        var problemDetails = new ValidationProblemDetails(errors)
+        ArgumentNullException.ThrowIfNull(errors);
+
+        return Create(
+            context,
+            ApiProblemDescriptors.Validation,
+            errors: errors);
+    }
+
+    public static ApiProblemDetails Create(
+        HttpContext context,
+        ApiProblemDescriptor descriptor,
+        string? detail = null,
+        IReadOnlyCollection<ApiError>? errors = null)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(descriptor);
+
+        var resolvedDetail = detail ?? descriptor.DefaultDetail;
+        ArgumentException.ThrowIfNullOrWhiteSpace(resolvedDetail);
+
+        if (errors is { Count: 0 })
         {
-            Status = StatusCodes.Status400BadRequest,
-            Title = "Um ou mais dados são inválidos",
-            Detail = "Um ou mais dados informados são inválidos.",
-            Instance = context.Request.Path
+            throw new ArgumentException(
+                "Quando informada, a coleção deve possuir pelo menos um erro.",
+                nameof(errors));
+        }
+
+        if (errors?.Any(error =>
+                error is null ||
+                string.IsNullOrWhiteSpace(error.Message)) == true)
+        {
+            throw new ArgumentException(
+                "Todos os erros devem possuir uma mensagem.",
+                nameof(errors));
+        }
+
+        var problemDetails = new ApiProblemDetails
+        {
+            Type = descriptor.Type,
+            Title = descriptor.Title,
+            Status = descriptor.Status,
+            Detail = resolvedDetail,
+            TraceId = GetTraceId(context),
+            Errors = errors?.ToArray()
         };
 
-        AddExtensions(
-            context,
-            problemDetails,
-            "validation_error");
-
+        context.Items[CurrentProblemDetailsKey] = problemDetails;
         return problemDetails;
     }
 
-    public static void Customize(ProblemDetailsContext context)
+    public static ApiProblemDetails CreateStatusCode(
+        HttpContext context,
+        int status)
     {
-        var statusCode = context.ProblemDetails.Status ??
-            context.HttpContext.Response.StatusCode;
-        var hasApplicationCode =
-            context.ProblemDetails.Extensions.ContainsKey("code");
+        var descriptor = ApiProblemDescriptors.FromStatusCode(status);
 
-        if (!hasApplicationCode)
-        {
-            context.ProblemDetails.Title = GetDefaultTitle(statusCode);
-        }
-
-        AddExtensions(
-            context.HttpContext,
-            context.ProblemDetails,
-            GetDefaultCode(statusCode));
+        return Create(context, descriptor);
     }
 
     public static string GetTraceId(HttpContext context) =>
-        Activity.Current?.Id ?? context.TraceIdentifier;
+        Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier;
 
-    private static void AddExtensions(
-        HttpContext context,
-        ProblemDetails problemDetails,
-        string code)
+    public static ApiProblemDetails? GetCurrent(HttpContext context)
     {
-        problemDetails.Extensions.TryAdd("code", code);
-        problemDetails.Extensions.TryAdd("traceId", GetTraceId(context));
+        ArgumentNullException.ThrowIfNull(context);
+
+        return context.Items.TryGetValue(
+            CurrentProblemDetailsKey,
+            out var problemDetails)
+                ? problemDetails as ApiProblemDetails
+                : null;
     }
-
-    private static string GetDefaultCode(int statusCode) =>
-        statusCode switch
-        {
-            StatusCodes.Status400BadRequest => "bad_request",
-            StatusCodes.Status401Unauthorized => "authentication_required",
-            StatusCodes.Status403Forbidden => "forbidden",
-            StatusCodes.Status404NotFound => "not_found",
-            StatusCodes.Status409Conflict => "conflict",
-            StatusCodes.Status422UnprocessableEntity =>
-                "business_rule_violation",
-            StatusCodes.Status500InternalServerError => "internal_error",
-            _ => "http_error"
-        };
-
-    private static string GetDefaultTitle(int statusCode) =>
-        statusCode switch
-        {
-            StatusCodes.Status400BadRequest => "Requisição inválida",
-            StatusCodes.Status401Unauthorized => "Não autenticado",
-            StatusCodes.Status403Forbidden => "Acesso não permitido",
-            StatusCodes.Status404NotFound => "Recurso não encontrado",
-            StatusCodes.Status409Conflict => "Conflito",
-            StatusCodes.Status422UnprocessableEntity =>
-                "Regra de negócio inválida",
-            StatusCodes.Status500InternalServerError => "Erro interno",
-            _ => "Erro HTTP"
-        };
 }

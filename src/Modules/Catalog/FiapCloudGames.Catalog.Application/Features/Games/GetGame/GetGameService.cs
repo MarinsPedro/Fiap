@@ -1,3 +1,4 @@
+using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Catalog.Domain.Repositories;
 using Microsoft.Extensions.Logging;
 
@@ -7,7 +8,7 @@ public sealed class GetGameService(
     IGameRepository games,
     ILogger<GetGameService> logger)
 {
-    public async Task<GameResult?> ExecuteAsync(
+    public async Task<GameResult> ExecuteAsync(
         Guid id,
         CancellationToken cancellationToken)
     {
@@ -22,7 +23,7 @@ public sealed class GetGameService(
             logger.LogDebug(
                 "Jogo {GameId} não encontrado.",
                 id);
-            return null;
+            throw AppException.NotFound("Jogo não encontrado.");
         }
 
         return GameApplicationMappings.ToResult(game);

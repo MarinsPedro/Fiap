@@ -10,8 +10,8 @@ Uma exceção por situação funcional aumenta o acoplamento e obriga o middlewa
 a conhecer regras dos módulos. Exceções genéricas, por outro lado, não carregam
 semântica HTTP confiável.
 
-Validações com vários campos precisam conservar uma estrutura diferente no
-corpo HTTP, mas não exigem uma segunda classe de exceção.
+Validações com vários campos precisam conservar mensagens e caminhos no corpo
+HTTP, mas não exigem uma segunda classe de exceção.
 
 ## Decisão
 
@@ -20,17 +20,21 @@ corpo HTTP, mas não exigem uma segunda classe de exceção.
 - Armazenar opcionalmente erros por campo dentro da própria `AppException`.
 - Usar somente as categorias `Validation`, `Authentication`, `Forbidden`,
   `NotFound`, `Conflict` e `BusinessRule`.
-- Converter a categoria em status, título e código apenas no middleware da API.
+- Converter a categoria em status, tipo e título por um catálogo central da API.
 - Mapear qualquer outra exceção para 500 com detalhe sanitizado.
 - Ignorar `OperationCanceledException` quando o cliente cancelou a requisição.
-- Não definir URLs próprias para o campo opcional `type`.
-- Usar `IProblemDetailsService` e `ValidationProblemDetails`.
+- Usar URNs estáveis em `type` enquanto não houver documentação HTTP pública e
+  permanente para os tipos.
+- Usar um único `ApiProblemDetails` e acrescentar `errors` somente em validações
+  estruturadas.
+- Não criar códigos específicos para cada regra ou entrada inválida.
+- Omitir `instance`; `traceId` identifica a ocorrência e permite correlacionar
+  a resposta aos logs.
 
 ## Limites
 
-Somente serviços da camada Application lançam `AppException`. Entidades do
-domínio não referenciam `Application.Common`; elas mantêm suas próprias
-invariantes.
+Somente a camada Application lança `AppException`. Entidades do domínio não
+referenciam `Application.Common`; elas mantêm suas próprias invariantes.
 
 `UseStatusCodePages` permanece responsável por completar respostas vazias do
 framework, como challenge, forbid e 404 de rota.
@@ -41,6 +45,8 @@ framework, como challenge, forbid e 404 de rota.
 - novas regras reutilizam categorias existentes;
 - todos os erros funcionais compartilham uma abstração;
 - validação estruturada continua disponível por `Errors`;
+- respostas do middleware, autenticação, autorização, binding e rotas ausentes
+  compartilham o mesmo contrato HTTP;
 - cancelamentos do cliente não poluem os logs como erro interno;
 - exceções técnicas não são disfarçadas como falhas do cliente;
 - testes de Application verificam categoria e mensagem;

@@ -6,37 +6,60 @@ Falhas HTTP retornam `application/problem+json`:
 
 ```json
 {
+  "type": "urn:fiap-cloud-games:problem:not-found",
   "title": "Recurso não encontrado",
   "status": 404,
   "detail": "O jogo informado não foi encontrado.",
-  "instance": "/api/games/22222222-2222-2222-2222-222222222222",
-  "code": "not_found",
-  "traceId": "00-..."
+  "traceId": "18904cfedc6a6bcb08f53c175daec39d"
 }
 ```
 
-O campo `type` é opcional. Quando fornecido pelo ASP.NET Core, aponta para uma
-referência da especificação HTTP, nunca para uma documentação fictícia da
-aplicação.
+`type` identifica de forma estável a categoria do problema. Os URNs são
+mantidos enquanto não existir uma página pública e estável de documentação para
+cada tipo. `traceId` usa o TraceId W3C de 32 caracteres quando há uma `Activity`
+HTTP ativa e identifica a ocorrência para correlação com os logs; fora desse
+contexto, utiliza `HttpContext.TraceIdentifier` como fallback.
 
 Falhas funcionais expõem uma mensagem controlada. Erros inesperados retornam
-`Ocorreu um erro interno inesperado.` e preservam detalhes técnicos somente no
+`Não foi possível concluir a operação.` e preservam detalhes técnicos somente no
 log. Validações com vários campos acrescentam `errors`.
+
+```json
+{
+  "type": "urn:fiap-cloud-games:problem:validation",
+  "title": "Um ou mais dados são inválidos",
+  "status": 400,
+  "detail": "Verifique os dados informados.",
+  "traceId": "18904cfedc6a6bcb08f53c175daec39d",
+  "errors": [
+    {
+      "message": "O nome deve possuir entre 3 e 150 caracteres.",
+      "field": "name"
+    },
+    {
+      "message": "O e-mail informado é inválido.",
+      "field": "email"
+    }
+  ]
+}
+```
+
+`errors` não é enviado em falhas que não sejam validações estruturadas. Cada
+entrada possui `message` e pode possuir `field`; não existe código personalizado
+por erro.
 
 ## Catálogo
 
-| Status | Código | Categoria/origem |
+| Status | Tipo | Categoria/origem |
 |---:|---|---|
-| 400 | `validation_error` | `Validation` ou erro de modelo |
-| 400 | `bad_request` | resposta 400 vazia do framework |
-| 401 | `authentication_error` | `Authentication` |
-| 401 | `authentication_required` | challenge do framework |
+| 400 | `validation` | `Validation`, JSON ou erro de modelo |
+| 400 | `bad-request` | resposta 400 vazia do framework |
+| 401 | `unauthorized` | `Authentication` ou challenge do framework |
 | 403 | `forbidden` | `Forbidden` ou forbid do framework |
-| 404 | `not_found` | `NotFound` ou rota inexistente |
+| 404 | `not-found` | `NotFound` ou rota inexistente |
 | 409 | `conflict` | `Conflict` |
-| 422 | `business_rule_violation` | `BusinessRule` |
-| 422 | `domain_rule_violation` | `DomainRuleViolationException` |
-| 500 | `internal_error` | falha inesperada |
+| 422 | `business-rule` | `BusinessRule` ou `DomainRuleViolationException` |
+| 500 | `internal-server-error` | falha inesperada |
 
 ## Diagnóstico
 

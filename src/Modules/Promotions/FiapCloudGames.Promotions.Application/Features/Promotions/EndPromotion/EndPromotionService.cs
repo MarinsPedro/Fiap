@@ -22,10 +22,11 @@ public sealed class EndPromotionService(
         var promotion = await promotions.GetAsync(id, cancellationToken);
         if (promotion is null)
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Não foi possível encerrar: promoção {PromotionId} não encontrada.",
                 id);
-            throw AppException.NotFound("Promoção não encontrada.");
+            throw AppException.NotFound(
+                "Promoção não encontrada.");
         }
 
         promotion.End(clock.GetUtcNow());

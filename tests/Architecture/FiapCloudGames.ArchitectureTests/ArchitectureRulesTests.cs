@@ -130,6 +130,20 @@ public sealed class ArchitectureRulesTests
     }
 
     [Theory]
+    [MemberData(nameof(DomainAssemblies))]
+    public void DomainShouldNotReferenceOtherModuleDomains(
+        Assembly assembly)
+    {
+        var ownDomain = assembly.GetName().Name;
+
+        AssertNoDependencyOnAny(
+            assembly,
+            DomainNamespaces
+                .Where(item => item != ownDomain)
+                .ToArray());
+    }
+
+    [Theory]
     [MemberData(nameof(ApplicationAssemblies))]
     public void ApplicationShouldNotReferenceOuterLayers(
         Assembly assembly)
@@ -142,6 +156,25 @@ public sealed class ArchitectureRulesTests
     }
 
     [Theory]
+    [MemberData(nameof(ApplicationAssemblies))]
+    public void ApplicationShouldNotReferenceOtherModuleImplementations(
+        Assembly assembly)
+    {
+        var ownApplication = assembly.GetName().Name!;
+        var ownDomain = ownApplication.Replace(
+            ".Application",
+            ".Domain",
+            StringComparison.Ordinal);
+
+        AssertNoDependencyOnAny(
+            assembly,
+            ApplicationNamespaces
+                .Where(item => item != ownApplication)
+                .Concat(DomainNamespaces.Where(item => item != ownDomain))
+                .ToArray());
+    }
+
+    [Theory]
     [MemberData(nameof(InfrastructureAssemblies))]
     public void InfrastructureShouldNotReferencePresentation(
         Assembly assembly)
@@ -149,6 +182,26 @@ public sealed class ArchitectureRulesTests
         AssertNoDependencyOnAny(
             assembly,
             PresentationNamespaces);
+    }
+
+    [Theory]
+    [MemberData(nameof(InfrastructureAssemblies))]
+    public void InfrastructureShouldStayWithinItsModule(
+        Assembly assembly)
+    {
+        var ownInfrastructure = assembly.GetName().Name!;
+        var modulePrefix = ownInfrastructure[..
+            ^".Infrastructure".Length];
+
+        AssertNoDependencyOnAny(
+            assembly,
+            ApplicationNamespaces
+                .Where(item => item != $"{modulePrefix}.Application")
+                .Concat(DomainNamespaces.Where(
+                    item => item != $"{modulePrefix}.Domain"))
+                .Concat(InfrastructureNamespaces.Where(
+                    item => item != ownInfrastructure))
+                .ToArray());
     }
 
     [Theory]
@@ -186,6 +239,36 @@ public sealed class ArchitectureRulesTests
         AssertNoDependencyOnAny(
             assembly,
             ContractNamespaces);
+    }
+
+    [Theory]
+    [MemberData(nameof(PresentationAssemblies))]
+    public void PresentationShouldNotReferenceDomainOrInfrastructure(
+        Assembly assembly)
+    {
+        AssertNoDependencyOnAny(
+            assembly,
+            DomainNamespaces
+                .Concat(InfrastructureNamespaces)
+                .ToArray());
+    }
+
+    [Fact]
+    public void PresentationCommonShouldRemainLayerIndependent()
+    {
+        var assembly = typeof(
+            Presentation.Common.PresentationCommonAssemblyReference)
+            .Assembly;
+
+        AssertNoDependencyOnAny(
+            assembly,
+            DomainNamespaces
+                .Concat(ApplicationNamespaces)
+                .Concat(InfrastructureNamespaces)
+                .Concat(ContractNamespaces)
+                .Append("FiapCloudGames.Domain.Common")
+                .Append("FiapCloudGames.Application.Common")
+                .ToArray());
     }
 
     [Theory]
@@ -295,21 +378,6 @@ public sealed class ArchitectureRulesTests
             .ToArray();
 
         Assert.Empty(publicConstructors);
-    }
-
-    [Fact]
-    public void LibraryApplicationShouldUseOnlyOtherModuleContracts()
-    {
-        var assembly =
-            typeof(Library.Application.DependencyInjection).Assembly;
-
-        AssertNoDependencyOnAny(
-            assembly,
-            ApplicationNamespaces
-                .Where(item =>
-                    item != "FiapCloudGames.Library.Application")
-                .Concat(InfrastructureNamespaces)
-                .ToArray());
     }
 
     [Fact]

@@ -24,8 +24,9 @@ exportadores e plataformas externas continuam fora do escopo.
 ```mermaid
 flowchart LR
     HTTP[Requisição HTTP] --> Activity[Activity do ASP.NET Core]
-    Activity --> Middleware[ExceptionHandlingMiddleware]
-    Middleware --> Service[Service de aplicação]
+    Activity --> ClientErrors[ClientErrorLoggingMiddleware]
+    ClientErrors --> Exceptions[ExceptionHandlingMiddleware]
+    Exceptions --> Service[Service de aplicação]
     Service --> Logger[ILogger do tipo]
     Activity -. TraceId e SpanId .-> Logger
     Logger --> Console[Console estruturado]
@@ -107,15 +108,18 @@ As propriedades usam `PascalCase` e nomes relacionados ao domínio:
 | `Method` | método HTTP |
 | `Path` | caminho da requisição, sem query string |
 | `Status` | status HTTP produzido |
-| `Code` | código estável do Problem Details |
+| `Type` | tipo estável do Problem Details |
+| `DurationMs` | duração da requisição em milissegundos |
+| `ValidationFields` | nomes dos campos inválidos, sem seus valores |
+| `ValidationErrorCount` | quantidade de erros de validação |
 
 ## Níveis de log adotados
 
 | Nível | Uso nesta implementação |
 | --- | --- |
 | `Debug` | consultas, listagens, bibliotecas vazias, ausência esperada de promoção, chamadas entre módulos e cancelamento pelo cliente |
-| `Information` | autenticação bem-sucedida e operações que criam ou alteram estado |
-| `Warning` | recurso necessário não encontrado, credenciais inválidas, recurso inativo, conflito e regra de negócio rejeitada |
+| `Information` | operações concluídas e respostas esperadas 400, 401, 404, 409 e 422 |
+| `Warning` | respostas 403 e 429, recurso necessário não encontrado e rejeições relevantes para segurança |
 | `Error` | exceção inesperada que impede o processamento da requisição |
 
 `Trace` e `Critical` continuam disponíveis, mas nenhum fluxo atual possui um
@@ -131,6 +135,25 @@ aquisição de um jogo registra quando consulta os módulos `Identity`, `Catalog
 Essa abordagem preserva o contexto da operação principal e permite acompanhar
 o fluxo usando os mesmos `TraceId` e `SpanId` da requisição.
 
+## Respostas HTTP 4xx
+
+O
+[`ClientErrorLoggingMiddleware.cs`](../../src/Api/FiapCloudGames.Api/Middlewares/ClientErrorLoggingMiddleware.cs)
+envolve o tratamento de exceções e registra toda resposta 4xx depois que seu
+`ApiProblemDetails` foi produzido. Isso inclui:
+
+- validações automáticas de `[ApiController]` e JSON malformado;
+- challenge 401 e forbid 403;
+- rota ou recurso inexistente;
+- `AppException` e `DomainRuleViolationException` convertidas pela API.
+
+Cada resposta gera um único evento HTTP estruturado. Respostas 400, 401, 404,
+409 e 422 usam `Information`; 403 e 429 usam `Warning`. A mensagem contém
+`Type`, `Status`, `Method`, `Path` e `DurationMs`; o `TraceId` W3C de 32
+caracteres já é fornecido pelo scope do `ILogger` e não é repetido no texto. Em
+validações, registra somente a quantidade e os nomes dos campos, nunca mensagens
+ou valores.
+
 ## Tratamento global de exceções
 
 O
@@ -144,14 +167,9 @@ como erro da aplicação.
 
 ### Falha conhecida
 
-Exceções de domínio e `AppException` são convertidas em Problem Details e
-registradas em `Warning` com:
-
-- `Code`;
-- `Status`;
-- `Method`;
-- `Path`;
-- mensagem funcional.
+Exceções de domínio e `AppException` são convertidas em Problem Details. O
+registro HTTP correspondente é feito pelo `ClientErrorLoggingMiddleware`, sem
+stack trace ou mensagem funcional, evitando duplicidade e exposição de dados.
 
 ### Exceção inesperada
 
@@ -180,6 +198,7 @@ Não devem ser registrados:
 - connection string;
 - secret ou API key;
 - corpo de requisições de autenticação.
+- mensagens e valores rejeitados durante validação.
 
 Falhas de autenticação usam uma mensagem genérica e não informam se o e-mail
 existe. Isso evita exposição de dados e enumeração de usuários.
@@ -190,11 +209,14 @@ controlado.
 
 ## Validação automatizada
 
-O teste
+Os testes
 [`LoggingConfigurationTests.cs`](../../tests/Integration/FiapCloudGames.Api.IntegrationTests/LoggingConfigurationTests.cs)
 resolve `LoggerFactoryOptions` da aplicação e confirma que as opções
 `ActivityTrackingOptions.TraceId` e `ActivityTrackingOptions.SpanId` estão
-ativas.
+ativas. Já
+[`ClientErrorLoggingMiddlewareTests.cs`](../../tests/Integration/FiapCloudGames.Api.IntegrationTests/ClientErrorLoggingMiddlewareTests.cs)
+verifica os níveis por status, os campos estruturados e a ausência de mensagens
+de validação nos logs.
 
 Comandos usados para validar a implementação:
 

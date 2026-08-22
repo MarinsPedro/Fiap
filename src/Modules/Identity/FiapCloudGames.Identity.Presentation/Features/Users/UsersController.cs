@@ -1,11 +1,12 @@
 using FiapCloudGames.Identity.Application.Features.Users.CreateUser;
 using FiapCloudGames.Identity.Application.Features.Users.DeactivateUser;
+using FiapCloudGames.Identity.Application.Features.Users.GetCurrentUser;
 using FiapCloudGames.Identity.Application.Features.Users.GetUser;
 using FiapCloudGames.Identity.Application.Features.Users.UpdateUser;
 using FiapCloudGames.Identity.Presentation.Features.Authentication.Login;
 using FiapCloudGames.Identity.Presentation.Features.Users.CreateUser;
 using FiapCloudGames.Identity.Presentation.Features.Users.UpdateUser;
-using FiapCloudGames.Presentation.Common.Authentication;
+using FiapCloudGames.Presentation.Common.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -28,9 +29,11 @@ public sealed class UsersController : ControllerBase
     /// <returns></returns>
     [AllowAnonymous]
     [HttpPost]
-    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(UserResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status400BadRequest, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status409Conflict, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status422UnprocessableEntity, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<UserResponse>> Create(
         [FromBody] CreateUserRequest request,
         [FromServices] CreateUserService service,
@@ -57,21 +60,18 @@ public sealed class UsersController : ControllerBase
     [Authorize]
     [HttpPut("me")]
     [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status400BadRequest, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status404NotFound, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status409Conflict, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status422UnprocessableEntity, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<UserResponse>> Update(
         [FromBody] UpdateUserRequest request,
         [FromServices] UpdateUserService service,
         CancellationToken cancellationToken)
     {
-        if (!User.TryGetUserId(out var id))
-        {
-            return Unauthorized();
-        }
-
         var result = await service.ExecuteAsync(
-            id,
             request.ToInput(),
             cancellationToken);
 
@@ -88,47 +88,37 @@ public sealed class UsersController : ControllerBase
     [Authorize(Roles = "Administrator")]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status403Forbidden, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status404NotFound, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<UserResponse>> GetById(
         [FromRoute] Guid id,
         [FromServices] GetUserService service,
         CancellationToken cancellationToken)
     {
         var user = await service.ExecuteAsync(id, cancellationToken);
-
-        return user is null
-            ? NotFound()  //TODO: essa resposta deve ser movida para a camada de service, e aplicar um AppException.NotFound.
-            : Ok(user.ToResponse());
+        return Ok(user.ToResponse());
     }
 
     /// <summary>
     /// Obtém os dados do usuário que está logado na plataforma.
     /// </summary>
-    /// <param name="service">Serviço do tipo GetUserService.</param>
+    /// <param name="service">Serviço do tipo GetCurrentUserService.</param>
     /// <param name="cancellationToken">Token para cancelamento.</param>
     /// <returns></returns>
     [Authorize]
     [HttpGet("me")]
     [ProducesResponseType(typeof(UserResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status404NotFound, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<UserResponse>> GetCurrent(
-        [FromServices] GetUserService service,
+        [FromServices] GetCurrentUserService service,
         CancellationToken cancellationToken)
     {
-        if (!User.TryGetUserId(out var id))
-        {
-            return Unauthorized();
-        }
-
-        var user = await service.ExecuteAsync(id, cancellationToken);
-
-        return user is null
-            ? NotFound() //TODO: essa resposta deve ser movida para a camada de service, e aplicar um AppException.NotFound.
-            : Ok(user.ToResponse());
+        var user = await service.ExecuteAsync(cancellationToken);
+        return Ok(user.ToResponse());
     }
 
     /// <summary>
@@ -141,9 +131,11 @@ public sealed class UsersController : ControllerBase
     [Authorize(Roles = "Administrator")]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status403Forbidden, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status404NotFound, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status409Conflict, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<IActionResult> Deactivate(
         [FromRoute] Guid id,
         [FromServices] DeactivateUserService service,

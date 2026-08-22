@@ -5,6 +5,10 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <ProjectReference Include="..\..\..\src\Api\FiapCloudGames.Api\FiapCloudGames.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\BuildingBlocks\FiapCloudGames.Application.Common\FiapCloudGames.Application.Common.csproj" />
+    <ProjectReference Include="..\..\..\src\BuildingBlocks\FiapCloudGames.Domain.Common\FiapCloudGames.Domain.Common.csproj" />
+    <ProjectReference Include="..\..\..\src\BuildingBlocks\FiapCloudGames.Presentation.Common\FiapCloudGames.Presentation.Common.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Catalog\FiapCloudGames.Catalog.Domain\FiapCloudGames.Catalog.Domain.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />

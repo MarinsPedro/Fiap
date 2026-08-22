@@ -41,7 +41,7 @@ public sealed class CreatePromotionService(
                 cancellationToken);
             if (game is null)
             {
-                logger.LogWarning(
+                logger.LogInformation(
                     "Falha ao criar promoção: jogo {GameId} não encontrado.",
                     gameId);
                 throw AppException.NotFound(
@@ -50,7 +50,7 @@ public sealed class CreatePromotionService(
 
             if (!game.IsActive)
             {
-                logger.LogWarning(
+                logger.LogInformation(
                     "Falha ao criar promoção: jogo {GameId} está inativo.",
                     gameId);
                 throw AppException.BusinessRule(
