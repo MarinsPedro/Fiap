@@ -1,6 +1,7 @@
 using FiapCloudGames.Identity.Application.Features.Authentication.Login;
 using FiapCloudGames.Identity.Application.Features.Users.CreateUser;
 using FiapCloudGames.Identity.Application.Features.Users.DeactivateUser;
+using FiapCloudGames.Identity.Application.Features.Users.GetCurrentUser;
 using FiapCloudGames.Identity.Application.Features.Users.GetUser;
 using FiapCloudGames.Identity.Application.Features.Users.UpdateUser;
 using FiapCloudGames.Identity.Application.Integrations;
@@ -16,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<CreateUserService>();
         services.AddScoped<UpdateUserService>();
         services.AddScoped<LoginService>();
+        services.AddScoped<GetCurrentUserService>();
         services.AddScoped<GetUserService>();
         services.AddScoped<DeactivateUserService>();
         services.AddScoped<IIdentityModule, IdentityModule>();

@@ -1,4 +1,5 @@
-﻿using FiapCloudGames.Application.Common.Exceptions;
+﻿using FiapCloudGames.Application.Common.Authentication;
+using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Catalog.Contracts;
 using FiapCloudGames.Identity.Contracts;
 using FiapCloudGames.Library.Application.Abstractions.Persistence;
@@ -10,6 +11,7 @@ using Microsoft.Extensions.Logging;
 namespace FiapCloudGames.Library.Application.Features.UserLibrary.AcquireGame;
 
 public sealed class AcquireGameService(
+    ICurrentUserContext currentUser,
     IGameLibraryRepository libraries,
     ILibraryUnitOfWork unitOfWork,
     IIdentityModule identity,
@@ -19,10 +21,11 @@ public sealed class AcquireGameService(
     ILogger<AcquireGameService> logger)
 {
     public async Task<LibraryItemResult> ExecuteAsync(
-        Guid userId,
         Guid gameId,
         CancellationToken cancellationToken)
     {
+        var userId = currentUser.GetRequiredUserId();
+
         logger.LogInformation(
             "Iniciando aquisição do jogo {GameId} para o usuário {UserId}.",
             gameId,
@@ -36,16 +39,17 @@ public sealed class AcquireGameService(
             cancellationToken);
         if (user is null)
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Falha ao adquirir o jogo {GameId}: usuário {UserId} não encontrado.",
                 gameId,
                 userId);
-            throw AppException.NotFound("Usuário não encontrado.");
+            throw AppException.NotFound(
+                "Usuário não encontrado.");
         }
 
         if (!user.IsActive)
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Falha ao adquirir o jogo {GameId}: usuário {UserId} está inativo.",
                 gameId,
                 userId);
@@ -61,16 +65,17 @@ public sealed class AcquireGameService(
             cancellationToken);
         if (game is null)
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Falha ao adquirir o jogo {GameId}: jogo não encontrado para o usuário {UserId}.",
                 gameId,
                 userId);
-            throw AppException.NotFound("Jogo não encontrado.");
+            throw AppException.NotFound(
+                "Jogo não encontrado.");
         }
 
         if (!game.IsActive)
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Falha ao adquirir o jogo {GameId}: jogo inativo para o usuário {UserId}.",
                 gameId,
                 userId);
@@ -93,7 +98,7 @@ public sealed class AcquireGameService(
 
         if (library.ContainsGame(gameId))
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Falha ao adquirir o jogo {GameId}: jogo já pertence ao usuário {UserId}.",
                 gameId,
                 userId);

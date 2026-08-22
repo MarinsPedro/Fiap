@@ -5,6 +5,7 @@ using FiapCloudGames.Catalog.Application.Features.Games.ListGames;
 using FiapCloudGames.Catalog.Application.Features.Games.UpdateGame;
 using FiapCloudGames.Catalog.Presentation.Features.Games.CreateGame;
 using FiapCloudGames.Catalog.Presentation.Features.Games.UpdateGame;
+using FiapCloudGames.Presentation.Common.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,8 +28,7 @@ public sealed class GamesController : ControllerBase
     [AllowAnonymous]
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<GameResponse>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<IReadOnlyList<GameResponse>>> List(
         [FromServices] ListGamesService service,
         CancellationToken cancellationToken)
@@ -47,18 +47,15 @@ public sealed class GamesController : ControllerBase
     [AllowAnonymous]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(GameResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status404NotFound, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<GameResponse>> Get(
         [FromRoute] Guid id,
         [FromServices] GetGameService service,
         CancellationToken cancellationToken)
     {
         var result = await service.ExecuteAsync(id, cancellationToken);
-
-        return result is null
-            ? NotFound()  //TODO: essa resposta deve ser movida para a camada de service, e aplicar um AppException.NotFound.
-            : Ok(result.ToResponse());
+        return Ok(result.ToResponse());
     }
 
     /// <summary>
@@ -71,9 +68,11 @@ public sealed class GamesController : ControllerBase
     [Authorize(Roles = "Administrator")]
     [HttpPost]
     [ProducesResponseType(typeof(GameResponse), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status400BadRequest, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status403Forbidden, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status422UnprocessableEntity, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<GameResponse>> Create(
         [FromBody] CreateGameRequest request,
         [FromServices] CreateGameService service,
@@ -101,10 +100,12 @@ public sealed class GamesController : ControllerBase
     [Authorize(Roles = "Administrator")]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(GameResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status400BadRequest, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status403Forbidden, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status404NotFound, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status422UnprocessableEntity, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<GameResponse>> Update(
         [FromRoute] Guid id,
         [FromBody] UpdateGameRequest request,
@@ -129,10 +130,11 @@ public sealed class GamesController : ControllerBase
     [Authorize(Roles = "Administrator")]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status403Forbidden, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status404NotFound, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status409Conflict, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<IActionResult> Deactivate(
         [FromRoute] Guid id,
         [FromServices] DeactivateGameService service,

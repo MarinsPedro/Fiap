@@ -26,8 +26,8 @@ public sealed class CreateUserService(
 
         if (await users.ExistsAsync(email, cancellationToken))
         {
-            logger.LogWarning(
-                "Não foi possível criar usuário: e-mail já cadastrado.");
+            logger.LogInformation(
+                "Criação de usuário rejeitada: e-mail já cadastrado.");
             throw AppException.Conflict(
                 "Já existe um usuário com este e-mail.");
         }
@@ -55,10 +55,10 @@ public sealed class CreateUserService(
         }
 
         throw AppException.Validation(
-            new Dictionary<string, string[]>
-            {
-                ["password"] =
-                    ["A senha deve ter pelo menos 8 caracteres."]
-            });
+            [
+                new AppError(
+                    "A senha deve ter pelo menos 8 caracteres.",
+                    "password")
+            ]);
     }
 }

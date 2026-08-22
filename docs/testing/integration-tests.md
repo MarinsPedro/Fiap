@@ -7,16 +7,19 @@
 configura o ambiente `Testing`. A factory fornece connection string, issuer,
 audience e chave JWT de teste apenas para satisfazer a inicialização.
 
-Os 18 casos atuais cobrem:
+Os casos atuais cobrem:
 
 - `GET /health`;
 - JSON inválido e Data Annotations convertidos em
-  `ValidationProblemDetails`;
+  `ApiProblemDetails` com `errors`;
+- normalização de caminhos simples, aninhados e indexados em `camelCase`;
 - respostas vazias 401 e 404 completadas por `UseStatusCodePages`;
 - todas as categorias de `AppException`;
 - `DomainRuleViolationException` como 422;
 - exceções técnicas como 500 sanitizado;
 - validação estruturada e cancelamento iniciado pelo cliente.
+- níveis de logging dos status 4xx e proteção contra vazamento de mensagens de
+  validação.
 
 O health check atual não consulta o banco, portanto essa suíte passa mesmo sem
 PostgreSQL. Os requests exercitados não alcançam persistência com dados válidos.

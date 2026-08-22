@@ -3,6 +3,7 @@ using FiapCloudGames.Promotions.Application.Features.Promotions.EndPromotion;
 using FiapCloudGames.Promotions.Application.Features.Promotions.GetPromotion;
 using FiapCloudGames.Promotions.Application.Features.Promotions.ListActivePromotions;
 using FiapCloudGames.Promotions.Presentation.Features.Promotions.CreatePromotion;
+using FiapCloudGames.Presentation.Common.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,8 +25,8 @@ public sealed class PromotionsController : ControllerBase
     /// <returns>Uma lista de respostas de promoção.</returns>
     [AllowAnonymous]
     [HttpGet("active")]
-    [ProducesResponseType(typeof(PromotionResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(IReadOnlyList<PromotionResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<IReadOnlyList<PromotionResponse>>> ListActive(
         [FromServices] ListActivePromotionsService service,
         CancellationToken cancellationToken)
@@ -44,18 +45,17 @@ public sealed class PromotionsController : ControllerBase
     [Authorize(Roles = "Administrator")]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(PromotionResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status403Forbidden, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status404NotFound, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<PromotionResponse>> GetById(
         [FromRoute] Guid id,
         [FromServices] GetPromotionService service,
         CancellationToken cancellationToken)
     {
         var result = await service.ExecuteAsync(id, cancellationToken);
-        return result is null
-            ? NotFound() //TODO: essa resposta deve ser movida para a camada de service, e aplicar um AppException.NotFound.
-            : Ok(result.ToResponse());
+        return Ok(result.ToResponse());
     }
 
     /// <summary>
@@ -67,10 +67,13 @@ public sealed class PromotionsController : ControllerBase
     /// <returns>Uma resposta de promoção.</returns>
     [Authorize(Roles = "Administrator")]
     [HttpPost]
-    [ProducesResponseType(typeof(PromotionResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(PromotionResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status400BadRequest, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status403Forbidden, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status404NotFound, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status422UnprocessableEntity, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<PromotionResponse>> Create(
         [FromBody] CreatePromotionRequest request,
         [FromServices] CreatePromotionService service,
@@ -95,9 +98,11 @@ public sealed class PromotionsController : ControllerBase
     [Authorize(Roles = "Administrator")]
     [HttpPost("{id:guid}/end")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status403Forbidden, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status404NotFound, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status422UnprocessableEntity, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<IActionResult> End(
         [FromRoute] Guid id,
         [FromServices] EndPromotionService service,

@@ -22,7 +22,7 @@ public sealed class LoginService(
         if (string.IsNullOrWhiteSpace(input.Password) ||
             !Email.TryCreate(input.Email, out var email))
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Falha de autenticação por credenciais inválidas.");
             throw InvalidCredentials();
         }
@@ -33,14 +33,14 @@ public sealed class LoginService(
                 input.Password,
                 user.PasswordHash))
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Falha de autenticação por credenciais inválidas.");
             throw InvalidCredentials();
         }
 
         if (!user.IsActive)
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Falha de autenticação: usuário {UserId} está inativo.",
                 user.Id);
             throw AppException.Forbidden(

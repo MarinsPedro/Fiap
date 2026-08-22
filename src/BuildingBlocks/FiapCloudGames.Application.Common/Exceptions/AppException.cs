@@ -5,23 +5,29 @@ public sealed class AppException : Exception
     private AppException(
         AppErrorCategory category,
         string message,
-        IReadOnlyDictionary<string, string[]>? errors = null)
+        IReadOnlyCollection<AppError>? errors = null)
         : base(message)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(message);
 
         Category = category;
-        Errors = errors?.ToDictionary(
-            item => item.Key,
-            item => item.Value.ToArray(),
-            StringComparer.OrdinalIgnoreCase);
+        Errors = errors?.ToArray() ?? [];
+
+        if (Errors.Any(error =>
+                error is null ||
+                string.IsNullOrWhiteSpace(error.Message)))
+        {
+            throw new ArgumentException(
+                "Todos os erros devem possuir uma mensagem.",
+                nameof(errors));
+        }
     }
 
     public AppErrorCategory Category { get; }
 
-    public IReadOnlyDictionary<string, string[]>? Errors { get; }
+    public IReadOnlyCollection<AppError> Errors { get; }
 
-    public bool HasErrors => Errors is { Count: > 0 };
+    public bool HasErrors => Errors.Count > 0;
 
     public static AppException Validation(string message) =>
         new(
@@ -29,7 +35,7 @@ public sealed class AppException : Exception
             message);
 
     public static AppException Validation(
-        IReadOnlyDictionary<string, string[]> errors)
+        IReadOnlyCollection<AppError> errors)
     {
         ArgumentNullException.ThrowIfNull(errors);
 

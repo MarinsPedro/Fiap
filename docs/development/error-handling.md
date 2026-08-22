@@ -15,14 +15,14 @@ FiapCloudGames.Application.Common
 negócio utiliza uma categoria existente e não exige outra exceção, código ou
 alteração no middleware.
 
-| Categoria | Status | Código |
+| Categoria | Status | Tipo |
 |---|---:|---|
-| `Validation` | 400 | `validation_error` |
-| `Authentication` | 401 | `authentication_error` |
+| `Validation` | 400 | `validation` |
+| `Authentication` | 401 | `unauthorized` |
 | `Forbidden` | 403 | `forbidden` |
-| `NotFound` | 404 | `not_found` |
+| `NotFound` | 404 | `not-found` |
 | `Conflict` | 409 | `conflict` |
-| `BusinessRule` | 422 | `business_rule_violation` |
+| `BusinessRule` | 422 | `business-rule` |
 
 Exemplos:
 
@@ -40,35 +40,38 @@ throw AppException.BusinessRule(
 exceção também pode representar uma validação simples com
 `AppException.Validation(message)`.
 
-Quando `Errors` possui itens, o middleware produz `ValidationProblemDetails`:
+Quando `Errors` possui itens, o middleware acrescenta a extensão `errors` ao
+mesmo `ApiProblemDetails` usado pelas demais falhas:
 
 ```json
 {
+  "type": "urn:fiap-cloud-games:problem:validation",
   "title": "Um ou mais dados são inválidos",
   "status": 400,
-  "detail": "Um ou mais dados informados são inválidos.",
-  "instance": "/api/games",
-  "code": "validation_error",
-  "traceId": "00-...",
-  "errors": {
-    "title": [
-      "O título é obrigatório."
-    ],
-    "basePrice": [
-      "O preço não pode ser negativo."
-    ]
-  }
+  "detail": "Verifique os dados informados.",
+  "traceId": "18904cfedc6a6bcb08f53c175daec39d",
+  "errors": [
+    {
+      "message": "O título é obrigatório.",
+      "field": "title"
+    },
+    {
+      "message": "O preço não pode ser negativo.",
+      "field": "basePrice"
+    }
+  ]
 }
 ```
 
-Erros automáticos de JSON e `ModelState` usam o mesmo código e formato.
+Erros automáticos de JSON e `ModelState` usam o mesmo tipo e formato. Em JSON
+malformado, a resposta contém somente uma mensagem genérica, sem `field`.
 
 ## Middleware
 
 `ExceptionHandlingMiddleware` conhece apenas:
 
 ```text
-DomainRuleViolationException → 422 domain_rule_violation
+DomainRuleViolationException → 422 business-rule
 AppException                 → categoria convertida em HTTP
 Exception                    → 500 sanitizado
 ```
@@ -80,12 +83,16 @@ Exceções genéricas como `InvalidOperationException`, `KeyNotFoundException`,
 `ArgumentException` e `UnauthorizedAccessException` não recebem significado
 funcional e permanecem como 500.
 
-Falhas funcionais são registradas em nível Information, sem stack trace. Falhas
-500 são registradas em Error com a exceção completa, mas o cliente recebe apenas
-`Ocorreu um erro interno inesperado.`.
+As respostas 4xx são registradas uma única vez pelo
+`ClientErrorLoggingMiddleware`: 400, 401, 404, 409 e 422 em `Information`; 403 e
+429 em `Warning`. O log contém metadados HTTP, mas não inclui o corpo, mensagens
+de validação ou valores informados pelo cliente. Falhas 500 continuam em
+`Error`, com a exceção completa, enquanto o cliente recebe somente
+`Não foi possível concluir a operação.`.
 
-O campo opcional `type` não utiliza URLs próprias fictícias; quando presente,
-fica sob responsabilidade do writer padrão do ASP.NET Core.
+O campo `type` utiliza URNs próprios, estáveis e sem códigos específicos por
+regra. Uma migração para URLs deve ocorrer somente quando houver documentação
+pública e permanente para os tipos.
 
 ## Limite arquitetural
 

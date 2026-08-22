@@ -2,8 +2,8 @@ using System.Text.Json;
 using FiapCloudGames.Api.Middlewares;
 using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Domain.Common;
+using FiapCloudGames.Presentation.Common.Errors;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FiapCloudGames.Api.IntegrationTests;
@@ -14,62 +14,53 @@ public sealed class ExceptionHandlingMiddlewareTests
     [InlineData(
         "validation",
         400,
-        "validation_error",
+        ApiProblemTypes.Validation,
         AppErrorCategory.Validation)]
     [InlineData(
         "authentication",
         401,
-        "authentication_error",
+        ApiProblemTypes.Unauthorized,
         AppErrorCategory.Authentication)]
     [InlineData(
         "forbidden",
         403,
-        "forbidden",
+        ApiProblemTypes.Forbidden,
         AppErrorCategory.Forbidden)]
     [InlineData(
         "not-found",
         404,
-        "not_found",
+        ApiProblemTypes.NotFound,
         AppErrorCategory.NotFound)]
     [InlineData(
         "conflict",
         409,
-        "conflict",
+        ApiProblemTypes.Conflict,
         AppErrorCategory.Conflict)]
     [InlineData(
         "business-rule",
         422,
-        "business_rule_violation",
+        ApiProblemTypes.BusinessRule,
         AppErrorCategory.BusinessRule)]
-    public async Task ShouldMapOnlySemanticApplicationExceptions(
+    public async Task ShouldMapSemanticApplicationExceptions(
         string exceptionKind,
         int expectedStatus,
-        string expectedCode,
+        string expectedType,
         AppErrorCategory expectedCategory)
     {
         var exception = CreateSemanticException(exceptionKind);
         var result = await InvokeAsync(exception);
-        using var document = result.Document;
+        var problem = result.Problem;
 
         Assert.Equal(expectedCategory, exception.Category);
         Assert.Equal(expectedStatus, result.StatusCode);
-        Assert.Equal(
-            expectedStatus,
-            document.RootElement.GetProperty("status").GetInt32());
-        Assert.Equal(
-            expectedCode,
-            document.RootElement.GetProperty("code").GetString());
-        Assert.False(
-            string.IsNullOrWhiteSpace(
-                document.RootElement.GetProperty("traceId").GetString()));
-        Assert.Equal(
-            exception.Message,
-            document.RootElement.GetProperty("detail").GetString());
-        Assert.DoesNotContain(
-            "api.fiapcloudgames.com/errors",
-            document.RootElement.GetProperty("type").GetString() ??
-                string.Empty,
-            StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(ApiProblemDetailsContentTypes.Json, result.ContentType);
+        Assert.Equal(expectedType, problem.Type);
+        Assert.Equal(expectedStatus, problem.Status);
+        Assert.False(string.IsNullOrWhiteSpace(problem.Title));
+        Assert.False(string.IsNullOrWhiteSpace(problem.Detail));
+        Assert.False(string.IsNullOrWhiteSpace(problem.TraceId));
+        Assert.Equal(exception.Message, problem.Detail);
+        Assert.Null(problem.Errors);
     }
 
     [Theory]
@@ -77,104 +68,83 @@ public sealed class ExceptionHandlingMiddlewareTests
     [InlineData("key-not-found")]
     [InlineData("argument")]
     [InlineData("unauthorized-access")]
-    public async Task GenericExceptionsShouldRemainInternalServerErrors(
+    public async Task GenericExceptionsShouldRemainSafeInternalErrors(
         string exceptionKind)
     {
         var exception = CreateGenericException(exceptionKind);
         var result = await InvokeAsync(exception);
-        using var document = result.Document;
+        var problem = result.Problem;
 
         Assert.Equal(StatusCodes.Status500InternalServerError, result.StatusCode);
-        Assert.Equal(
-            "internal_error",
-            document.RootElement.GetProperty("code").GetString());
-        Assert.Equal(
-            "Ocorreu um erro interno inesperado.",
-            document.RootElement.GetProperty("detail").GetString());
+        Assert.Equal(ApiProblemTypes.InternalServerError, problem.Type);
+        Assert.Equal("Erro interno", problem.Title);
+        Assert.Equal("Não foi possível concluir a operação.", problem.Detail);
+        Assert.Null(problem.Errors);
         Assert.DoesNotContain(
             exception.Message,
-            document.RootElement.GetRawText(),
+            JsonSerializer.Serialize(problem),
             StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task DomainRuleViolationsShouldReturnUnprocessableEntity()
+    public async Task DomainRuleViolationsShouldReturnBusinessRuleError()
     {
         var exception = new DomainRuleViolationException(
             "O fim da promoção deve ser posterior ao início.");
         var result = await InvokeAsync(exception);
-        using var document = result.Document;
-        var root = document.RootElement;
+        var problem = result.Problem;
 
         Assert.Equal(
             StatusCodes.Status422UnprocessableEntity,
             result.StatusCode);
-        Assert.Equal(
-            "Regra de negócio inválida",
-            root.GetProperty("title").GetString());
-        Assert.Equal(
-            "domain_rule_violation",
-            root.GetProperty("code").GetString());
-        Assert.Equal(
-            exception.Message,
-            root.GetProperty("detail").GetString());
-        Assert.False(
-            string.IsNullOrWhiteSpace(
-                root.GetProperty("traceId").GetString()));
+        Assert.Equal(ApiProblemTypes.BusinessRule, problem.Type);
+        Assert.Equal("Regra de negócio não atendida", problem.Title);
+        Assert.Equal(exception.Message, problem.Detail);
+        Assert.Null(problem.Errors);
     }
 
     [Fact]
-    public async Task ValidationCategoryShouldReturnValidationProblemDetails()
+    public async Task ValidationShouldPreserveMultipleFieldErrors()
     {
         var exception = AppException.Validation(
-            new Dictionary<string, string[]>
-            {
-                ["name"] = ["O nome é obrigatório."],
-                ["email"] =
-                [
+            [
+                new AppError(
+                    "O nome é obrigatório.",
+                    "name"),
+                new AppError(
                     "O e-mail é inválido.",
-                    "O e-mail já está cadastrado."
-                ]
-            });
+                    "email")
+            ]);
 
         var result = await InvokeAsync(exception);
-        using var document = result.Document;
-        var root = document.RootElement;
+        var problem = result.Problem;
 
-        Assert.Equal(AppErrorCategory.Validation, exception.Category);
-        Assert.True(exception.HasErrors);
         Assert.Equal(StatusCodes.Status400BadRequest, result.StatusCode);
-        Assert.Equal("validation_error", root.GetProperty("code").GetString());
-        Assert.Equal(
-            "Um ou mais dados informados são inválidos.",
-            root.GetProperty("detail").GetString());
-        Assert.DoesNotContain(
-            "api.fiapcloudgames.com/errors",
-            root.GetProperty("type").GetString() ?? string.Empty,
-            StringComparison.OrdinalIgnoreCase);
-        Assert.Equal(
-            1,
-            root.GetProperty("errors").GetProperty("name").GetArrayLength());
-        Assert.Equal(
-            2,
-            root.GetProperty("errors").GetProperty("email").GetArrayLength());
+        Assert.Equal(ApiProblemTypes.Validation, problem.Type);
+        var errors = Assert.IsAssignableFrom<IReadOnlyCollection<ApiError>>(
+            problem.Errors);
+        Assert.Collection(
+            errors,
+            error =>
+            {
+                Assert.Equal("O nome é obrigatório.", error.Message);
+                Assert.Equal("name", error.Field);
+            },
+            error =>
+            {
+                Assert.Equal("O e-mail é inválido.", error.Message);
+                Assert.Equal("email", error.Field);
+            });
     }
 
     [Fact]
     public async Task ClientCancellationShouldNotBecomeInternalError()
     {
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddOptions();
-        services.AddProblemDetails();
-
-        using var serviceProvider = services.BuildServiceProvider();
         using var cancellationSource = new CancellationTokenSource();
         cancellationSource.Cancel();
 
         var context = new DefaultHttpContext
         {
-            RequestServices = serviceProvider,
             RequestAborted = cancellationSource.Token
         };
 
@@ -184,9 +154,7 @@ public sealed class ExceptionHandlingMiddlewareTests
             _ => Task.FromCanceled(cancellationSource.Token),
             NullLogger<ExceptionHandlingMiddleware>.Instance);
 
-        await middleware.InvokeAsync(
-            context,
-            serviceProvider.GetRequiredService<IProblemDetailsService>());
+        await middleware.InvokeAsync(context);
 
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
         Assert.Equal(0, context.Response.Body.Length);
@@ -201,9 +169,10 @@ public sealed class ExceptionHandlingMiddlewareTests
                 "E-mail ou senha inválidos."),
             "forbidden" => AppException.Forbidden(
                 "O usuário está inativo."),
-            "not-found" => AppException.NotFound("Jogo não encontrado."),
+            "not-found" => AppException.NotFound(
+                "Jogo não encontrado."),
             "conflict" => AppException.Conflict(
-                "O e-mail já está cadastrado."),
+                "Jogo já está desativado."),
             "business-rule" => AppException.BusinessRule(
                 "O usuário está inativo."),
             _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
@@ -226,17 +195,7 @@ public sealed class ExceptionHandlingMiddlewareTests
     private static async Task<MiddlewareResult> InvokeAsync(
         Exception exception)
     {
-        var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddOptions();
-        services.AddProblemDetails();
-
-        using var serviceProvider = services.BuildServiceProvider();
-        var context = new DefaultHttpContext
-        {
-            RequestServices = serviceProvider
-        };
-
+        var context = new DefaultHttpContext();
         context.Request.Method = HttpMethods.Get;
         context.Request.Path = "/tests/errors";
         context.Response.Body = new MemoryStream();
@@ -245,17 +204,21 @@ public sealed class ExceptionHandlingMiddlewareTests
             _ => Task.FromException(exception),
             NullLogger<ExceptionHandlingMiddleware>.Instance);
 
-        await middleware.InvokeAsync(
-            context,
-            serviceProvider.GetRequiredService<IProblemDetailsService>());
+        await middleware.InvokeAsync(context);
 
         context.Response.Body.Position = 0;
-        var document = await JsonDocument.ParseAsync(context.Response.Body);
+        var problem = await JsonSerializer.DeserializeAsync<ApiProblemDetails>(
+            context.Response.Body,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
 
-        return new MiddlewareResult(context.Response.StatusCode, document);
+        return new MiddlewareResult(
+            context.Response.StatusCode,
+            context.Response.ContentType,
+            Assert.IsType<ApiProblemDetails>(problem));
     }
 
     private sealed record MiddlewareResult(
         int StatusCode,
-        JsonDocument Document);
+        string? ContentType,
+        ApiProblemDetails Problem);
 }

@@ -15,7 +15,7 @@ A validação é distribuída em quatro níveis:
 
 | Origem | Resultado | HTTP |
 |---|---|---:|
-| JSON ou `ModelState` inválido | `ValidationProblemDetails` | 400 |
+| JSON ou `ModelState` inválido | `ApiProblemDetails` com `errors` | 400 |
 | entrada inválida no caso de uso | `AppException.Validation` | 400 |
 | credenciais inválidas | `AppException.Authentication` | 401 |
 | identidade sem permissão | `AppException.Forbidden` | 403 |
@@ -34,15 +34,19 @@ operação:
 if (errors.Count > 0)
 {
     throw AppException.Validation(
-        errors.ToDictionary(
-            item => item.Key,
-            item => item.Value.ToArray(),
-            StringComparer.OrdinalIgnoreCase));
+        [
+            new AppError(
+                "O nome é obrigatório.",
+                "name"),
+            new AppError(
+                "O e-mail é inválido.",
+                "email")
+        ]);
 }
 ```
 
 `AppException.Errors` é somente leitura e `HasErrors` informa se o middleware
-deve produzir `ValidationProblemDetails`.
+deve acrescentar a coleção `errors` ao `ApiProblemDetails`.
 
 ## Value object `Email`
 
@@ -55,7 +59,9 @@ mesmo valor normalizado; a unicidade continua garantida pelo banco.
 
 ## Ao adicionar uma validação
 
-- Use chaves em `camelCase` e mensagens claras.
+- Use caminhos em `camelCase` e mensagens claras. Segmentos aninhados e itens de
+  coleções são representados, por exemplo, como `address.postalCode` e
+  `items[0].gameId`.
 - Preserve invariantes no domínio e constraints no banco.
 - Use uma das categorias existentes de `AppException`.
 - Não adicione uma categoria para cada regra de negócio.

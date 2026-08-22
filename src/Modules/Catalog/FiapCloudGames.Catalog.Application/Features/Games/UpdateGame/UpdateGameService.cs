@@ -22,10 +22,11 @@ public sealed class UpdateGameService(
         var game = await games.GetAsync(id, cancellationToken);
         if (game is null)
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Não foi possível atualizar: jogo {GameId} não encontrado.",
                 id);
-            throw AppException.NotFound("Jogo não encontrado.");
+            throw AppException.NotFound(
+                "Jogo não encontrado.");
         }
 
         game.ChangeDetails(

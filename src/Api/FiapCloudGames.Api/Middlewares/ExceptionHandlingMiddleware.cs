@@ -1,6 +1,6 @@
 using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Domain.Common;
-using Microsoft.AspNetCore.Mvc;
+using FiapCloudGames.Presentation.Common.Errors;
 
 namespace FiapCloudGames.Api.Middlewares;
 
@@ -8,9 +8,7 @@ public sealed class ExceptionHandlingMiddleware(
     RequestDelegate next,
     ILogger<ExceptionHandlingMiddleware> logger)
 {
-    public async Task InvokeAsync(
-        HttpContext context,
-        IProblemDetailsService problemDetailsService)
+    public async Task InvokeAsync(HttpContext context)
     {
         try
         {
@@ -29,20 +27,22 @@ public sealed class ExceptionHandlingMiddleware(
         {
             var error = ResolveError(exception);
 
-            LogException(context, exception, error);
+            LogUnexpectedException(context, exception, error);
 
             context.Response.Clear();
-            context.Response.StatusCode = error.Status;
+            context.Response.StatusCode = error.Descriptor.Status;
 
-            await problemDetailsService.WriteAsync(
-                new ProblemDetailsContext
-                {
-                    HttpContext = context,
-                    ProblemDetails = CreateProblemDetails(
-                        context,
-                        error),
-                    Exception = exception
-                });
+            var problemDetails = ApiProblemDetailsFactory.Create(
+                context,
+                error.Descriptor,
+                error.Detail,
+                error.Errors);
+
+            await context.Response.WriteAsJsonAsync(
+                problemDetails,
+                options: null,
+                contentType: ApiProblemDetailsContentTypes.Json,
+                cancellationToken: context.RequestAborted);
         }
     }
 
@@ -51,9 +51,7 @@ public sealed class ExceptionHandlingMiddleware(
         if (exception is DomainRuleViolationException domainException)
         {
             return new ResolvedError(
-                StatusCodes.Status422UnprocessableEntity,
-                "Regra de negócio inválida",
-                "domain_rule_violation",
+                ApiProblemDescriptors.BusinessRule,
                 domainException.Message);
         }
 
@@ -62,110 +60,54 @@ public sealed class ExceptionHandlingMiddleware(
             return InternalError();
         }
 
-        return appException.Category switch
-        {
-            AppErrorCategory.Validation => new(
-                StatusCodes.Status400BadRequest,
-                "Um ou mais dados são inválidos",
-                "validation_error",
-                appException.Message,
-                appException.Errors),
+        var descriptor = ApiProblemDescriptors.FromCategory(
+            appException.Category);
 
-            AppErrorCategory.Authentication => new(
-                StatusCodes.Status401Unauthorized,
-                "Não autenticado",
-                "authentication_error",
-                appException.Message),
+        var errors = appException.HasErrors
+            ? appException.Errors
+                .Select(error => new ApiError
+                {
+                    Message = error.Message,
+                    Field = error.Field
+                })
+                .ToArray()
+            : null;
 
-            AppErrorCategory.Forbidden => new(
-                StatusCodes.Status403Forbidden,
-                "Acesso não permitido",
-                "forbidden",
-                appException.Message),
+        var detail = appException.HasErrors
+            ? "Verifique os dados informados."
+            : appException.Message;
 
-            AppErrorCategory.NotFound => new(
-                StatusCodes.Status404NotFound,
-                "Recurso não encontrado",
-                "not_found",
-                appException.Message),
-
-            AppErrorCategory.Conflict => new(
-                StatusCodes.Status409Conflict,
-                "Conflito",
-                "conflict",
-                appException.Message),
-
-            AppErrorCategory.BusinessRule => new(
-                StatusCodes.Status422UnprocessableEntity,
-                "Regra de negócio inválida",
-                "business_rule_violation",
-                appException.Message),
-
-            _ => InternalError()
-        };
+        return new ResolvedError(
+            descriptor,
+            detail,
+            errors);
     }
 
     private static ResolvedError InternalError() =>
         new(
-            StatusCodes.Status500InternalServerError,
-            "Erro interno",
-            "internal_error",
-            "Ocorreu um erro interno inesperado.");
+            ApiProblemDescriptors.InternalServerError,
+            ApiProblemDescriptors.InternalServerError.DefaultDetail);
 
-    private static ProblemDetails CreateProblemDetails(
-        HttpContext context,
-        ResolvedError error)
-    {
-        ProblemDetails problemDetails =
-            error.Errors is { Count: > 0 }
-                ? new ValidationProblemDetails(
-                    error.Errors.ToDictionary(
-                        item => item.Key,
-                        item => item.Value,
-                        StringComparer.OrdinalIgnoreCase))
-                : new ProblemDetails();
-
-        problemDetails.Status = error.Status;
-        problemDetails.Title = error.Title;
-        problemDetails.Detail = error.Detail;
-        problemDetails.Instance = context.Request.Path.Value;
-        problemDetails.Extensions["code"] = error.Code;
-        problemDetails.Extensions["traceId"] =
-            ApiProblemDetailsFactory.GetTraceId(context);
-
-        return problemDetails;
-    }
-
-    private void LogException(
+    private void LogUnexpectedException(
         HttpContext context,
         Exception exception,
         ResolvedError error)
     {
-        if (error.Status >= StatusCodes.Status500InternalServerError)
+        if (error.Descriptor.Status <
+            StatusCodes.Status500InternalServerError)
         {
-            logger.LogError(
-                exception,
-                "Erro não tratado ao processar {Method} {Path}.",
-                context.Request.Method,
-                context.Request.Path);
-
             return;
         }
 
-        logger.LogWarning(
-            "Requisição rejeitada com {Code} ({Status}) em " +
-            "{Method} {Path}: {Message}",
-            error.Code,
-            error.Status,
+        logger.LogError(
+            exception,
+            "Erro não tratado ao processar {Method} {Path}.",
             context.Request.Method,
-            context.Request.Path,
-            error.Detail);
+            context.Request.Path);
     }
 
     private sealed record ResolvedError(
-        int Status,
-        string Title,
-        string Code,
+        ApiProblemDescriptor Descriptor,
         string Detail,
-        IReadOnlyDictionary<string, string[]>? Errors = null);
+        IReadOnlyCollection<ApiError>? Errors = null);
 }

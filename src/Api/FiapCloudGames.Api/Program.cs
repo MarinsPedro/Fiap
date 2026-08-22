@@ -1,17 +1,18 @@
-using System.Text.Json;
 using System.Text.Json.Serialization;
+using FiapCloudGames.Api.Authentication;
+using FiapCloudGames.Api.Configuration;
 using FiapCloudGames.Api.Middlewares;
+using FiapCloudGames.Application.Common.Authentication;
 using FiapCloudGames.Catalog.Infrastructure;
 using FiapCloudGames.Catalog.Presentation;
 using FiapCloudGames.Identity.Infrastructure;
 using FiapCloudGames.Identity.Presentation;
 using FiapCloudGames.Library.Infrastructure;
 using FiapCloudGames.Library.Presentation;
+using FiapCloudGames.Presentation.Common.Errors;
 using FiapCloudGames.Promotions.Infrastructure;
 using FiapCloudGames.Promotions.Presentation;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.Extensions.Logging.Console;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,10 +29,8 @@ builder.Logging.AddSimpleConsole(options =>
 });
 
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddProblemDetails(options =>
-{
-    options.CustomizeProblemDetails = ApiProblemDetailsFactory.Customize;
-});
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserContext, HttpCurrentUserContext>();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
@@ -111,28 +110,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers()
     .ConfigureApiBehaviorOptions(options =>
-    {
-        options.InvalidModelStateResponseFactory = actionContext =>
-        {
-            var errors = actionContext.ModelState
-                .Where(item => item.Value is { Errors.Count: > 0 })
-                .ToDictionary(
-                    item => NormalizeFieldName(item.Key),
-                    item => item.Value!.Errors
-                        .Select(ToValidationMessage)
-                        .Distinct(StringComparer.Ordinal)
-                        .ToArray(),
-                    StringComparer.OrdinalIgnoreCase);
-
-            var result = new BadRequestObjectResult(
-                ApiProblemDetailsFactory.CreateValidation(
-                    actionContext.HttpContext,
-                    errors));
-
-            result.ContentTypes.Add("application/problem+json");
-            return result;
-        };
-    })
+        options.ConfigureProblemDetailsResponses())
     .AddJsonOptions(options =>
         options.JsonSerializerOptions.Converters.Add(
             new JsonStringEnumConverter()))
@@ -148,8 +126,21 @@ builder.Services.AddLibraryInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
+app.UseMiddleware<ClientErrorLoggingMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-app.UseStatusCodePages();
+app.UseStatusCodePages(async (StatusCodeContext statusCodeContext) =>
+{
+    var context = statusCodeContext.HttpContext;
+    var problemDetails = ApiProblemDetailsFactory.CreateStatusCode(
+        context,
+        context.Response.StatusCode);
+
+    await context.Response.WriteAsJsonAsync(
+        problemDetails,
+        options: null,
+        contentType: ApiProblemDetailsContentTypes.Json,
+        cancellationToken: context.RequestAborted);
+});
 app.UseCors();
 
 app.UseAuthentication();
@@ -169,22 +160,5 @@ app.MapHealthChecks("/health");
 app.MapControllers();
 
 await app.RunAsync();
-
-static string NormalizeFieldName(string fieldName) =>
-    string.IsNullOrWhiteSpace(fieldName) || fieldName.StartsWith('$')
-        ? fieldName
-        : JsonNamingPolicy.CamelCase.ConvertName(fieldName);
-
-static string ToValidationMessage(ModelError error)
-{
-    if (error.Exception is JsonException)
-    {
-        return "O JSON enviado é inválido.";
-    }
-
-    return string.IsNullOrWhiteSpace(error.ErrorMessage)
-        ? "O valor informado é inválido."
-        : error.ErrorMessage;
-}
 
 public partial class Program;

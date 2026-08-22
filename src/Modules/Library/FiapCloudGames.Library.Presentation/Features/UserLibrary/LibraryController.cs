@@ -1,6 +1,6 @@
 using FiapCloudGames.Library.Application.Features.UserLibrary.AcquireGame;
-using FiapCloudGames.Library.Application.Features.UserLibrary.GetLibrary;
-using FiapCloudGames.Presentation.Common.Authentication;
+using FiapCloudGames.Library.Application.Features.UserLibrary.GetCurrentLibrary;
+using FiapCloudGames.Presentation.Common.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,18 +24,13 @@ public sealed class LibraryController : ControllerBase
     [HttpGet]
     [Authorize]
     [ProducesResponseType(typeof(UserLibraryResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<UserLibraryResponse>> Get(
-        [FromServices] GetLibraryService service,
+        [FromServices] GetCurrentLibraryService service,
         CancellationToken cancellationToken)
     {
-        if (!User.TryGetUserId(out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var result = await service.ExecuteAsync(userId, cancellationToken);
+        var result = await service.ExecuteAsync(cancellationToken);
         return Ok(result.ToResponse());
     }
 
@@ -48,21 +43,18 @@ public sealed class LibraryController : ControllerBase
     /// <returns>Retorna os detalhes do jogo adicinado na biblioteca do usuário logado.</returns>
     [Authorize]
     [HttpPost("games/{gameId:guid}")]
-    [ProducesResponseType(typeof(LibraryItemResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(typeof(LibraryItemResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status401Unauthorized, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status404NotFound, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status409Conflict, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status422UnprocessableEntity, ApiProblemDetailsContentTypes.Json)]
+    [ProducesResponseType(typeof(ApiProblemDetails), StatusCodes.Status500InternalServerError, ApiProblemDetailsContentTypes.Json)]
     public async Task<ActionResult<LibraryItemResponse>> Acquire(
         [FromRoute] Guid gameId,
         [FromServices] AcquireGameService service,
         CancellationToken cancellationToken)
     {
-        if (!User.TryGetUserId(out var userId))
-        {
-            return Unauthorized();
-        }
-
-        var result = await service.ExecuteAsync(userId, gameId, cancellationToken);
+        var result = await service.ExecuteAsync(gameId, cancellationToken);
         var response = result.ToResponse();
         return CreatedAtAction(nameof(Get), response);
     }

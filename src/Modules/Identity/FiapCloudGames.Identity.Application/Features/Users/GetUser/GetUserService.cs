@@ -1,3 +1,4 @@
+using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Identity.Application.Features.Users;
 using FiapCloudGames.Identity.Domain.Repositories;
 using Microsoft.Extensions.Logging;
@@ -8,7 +9,7 @@ public sealed class GetUserService(
     IUserRepository users,
     ILogger<GetUserService> logger)
 {
-    public async Task<UserResult?> ExecuteAsync(
+    public async Task<UserResult> ExecuteAsync(
         Guid id,
         CancellationToken cancellationToken)
     {
@@ -23,7 +24,7 @@ public sealed class GetUserService(
             logger.LogDebug(
                 "Usuário {UserId} não encontrado.",
                 id);
-            return null;
+            throw AppException.NotFound("Usuário não encontrado.");
         }
 
         return IdentityApplicationMappings.ToResult(user);

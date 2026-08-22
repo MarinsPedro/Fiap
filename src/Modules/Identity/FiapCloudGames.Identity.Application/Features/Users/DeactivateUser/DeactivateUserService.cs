@@ -21,18 +21,20 @@ public sealed class DeactivateUserService(
         var user = await users.GetAsync(id, cancellationToken);
         if (user is null)
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Não foi possível desativar: usuário {UserId} não encontrado.",
                 id);
-            throw AppException.NotFound("Usuário não encontrado.");
+            throw AppException.NotFound(
+                "Usuário não encontrado.");
         }
 
         if (!user.IsActive)
         {
-            logger.LogWarning(
+            logger.LogInformation(
                 "Não foi possível desativar: usuário {UserId} já foi desativado.",
                 id);
-            throw AppException.BusinessRule("Usuário já desativado.");
+            throw AppException.Conflict(
+                "Usuário já desativado.");
         }
 
         user.Deactivate();

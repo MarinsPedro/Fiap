@@ -1,3 +1,4 @@
+using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Promotions.Application.Features.Promotions;
 using FiapCloudGames.Promotions.Domain.Repositories;
 using Microsoft.Extensions.Logging;
@@ -8,7 +9,7 @@ public sealed class GetPromotionService(
     IPromotionRepository promotions,
     ILogger<GetPromotionService> logger)
 {
-    public async Task<PromotionResult?> ExecuteAsync(
+    public async Task<PromotionResult> ExecuteAsync(
         Guid id,
         CancellationToken cancellationToken)
     {
@@ -23,7 +24,7 @@ public sealed class GetPromotionService(
             logger.LogDebug(
                 "Promoção {PromotionId} não encontrada.",
                 id);
-            return null;
+            throw AppException.NotFound("Promoção não encontrada.");
         }
 
         return PromotionApplicationMappings.ToResult(promotion);

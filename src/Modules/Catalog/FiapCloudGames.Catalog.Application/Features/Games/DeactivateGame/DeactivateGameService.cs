@@ -18,14 +18,16 @@ public sealed class DeactivateGameService(
 
         if (game is null)
         {
-            logger.LogWarning("Não foi possível desativar: jogo {GameId} não encontrado.", id);
-            throw AppException.NotFound("Jogo não encontrado.");
+            logger.LogInformation("Não foi possível desativar: jogo {GameId} não encontrado.", id);
+            throw AppException.NotFound(
+                "Jogo não encontrado.");
         }
 
         if(!game.IsActive)
         {
-            logger.LogWarning("Não foi possível desativar: jogo {GameId} já está desativado.", id);
-            throw AppException.Conflict("Jogo já está desativado.");
+            logger.LogInformation("Não foi possível desativar: jogo {GameId} já está desativado.", id);
+            throw AppException.Conflict(
+                "Jogo já está desativado.");
         }
 
         game.Deactivate();
