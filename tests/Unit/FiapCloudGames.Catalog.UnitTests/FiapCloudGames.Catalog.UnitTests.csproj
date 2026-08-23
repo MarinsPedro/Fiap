@@ -5,6 +5,7 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <ProjectReference Include="..\..\..\src\BuildingBlocks\FiapCloudGames.Domain.Common\FiapCloudGames.Domain.Common.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Catalog\FiapCloudGames.Catalog.Application\FiapCloudGames.Catalog.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Catalog\FiapCloudGames.Catalog.Domain\FiapCloudGames.Catalog.Domain.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />

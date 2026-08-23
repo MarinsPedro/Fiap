@@ -35,21 +35,11 @@ public sealed class UpdateGameService(
             input.Category,
             input.BasePrice);
 
-        if (input.IsActive)
-        {
-            game.Activate();
-        }
-        else
-        {
-            game.Deactivate();
-        }
-
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation(
-            "Jogo {GameId} atualizado com sucesso. Ativo: {IsActive}.",
-            game.Id,
-            game.IsActive);
+            "Jogo {GameId} atualizado com sucesso.",
+            game.Id);
 
         return GameApplicationMappings.ToResult(game);
     }

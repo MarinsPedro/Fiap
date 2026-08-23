@@ -9,7 +9,6 @@ namespace FiapCloudGames.Catalog.Presentation.Features.Games.UpdateGame;
 /// <param name="Description">Descrição do jogo.</param>
 /// <param name="Category">Categoria do jogo.</param>
 /// <param name="BasePrice">Preço base do jogo.</param>
-/// <param name="IsActive">Indica se o jogo está ativo.</param>
 public sealed record UpdateGameRequest(
     [Required, StringLength(160, MinimumLength = 2)]
     string Title,
@@ -21,5 +20,4 @@ public sealed record UpdateGameRequest(
     string Category,
 
     [Range(0, double.MaxValue)]
-    decimal BasePrice,
-    bool IsActive);
+    decimal BasePrice);

@@ -13,6 +13,5 @@ internal static class UpdateGameHttpMappings
             request.Title,
             request.Description,
             request.Category,
-            request.BasePrice,
-            request.IsActive);
+            request.BasePrice);
 }

@@ -16,6 +16,7 @@ Todos os exemplos usam IDs e dados ilustrativos.
 | GET | `/api/games/{id}` | público | 200 |
 | POST | `/api/games` | Administrator | 201 |
 | PUT | `/api/games/{id}` | Administrator | 200 |
+| DELETE | `/api/games/{id}` | Administrator | 204 |
 | GET | `/api/promotions/active` | público | 200 |
 | POST | `/api/promotions` | Administrator | 201 |
 | POST | `/api/promotions/{id}/end` | Administrator | 204 |
@@ -127,12 +128,18 @@ Exige Administrator e recebe o estado editável completo:
   "title": "Cloud Quest Deluxe",
   "description": "Edição atualizada.",
   "category": "RPG",
-  "basePrice": 119.9,
-  "isActive": true
+  "basePrice": 119.9
 }
 ```
 
-Retorna 200 com o jogo atualizado ou 404 quando o serviço não encontra o ID.
+Retorna 200 com o jogo atualizado ou 404 quando o serviço não encontra o ID. A
+atualização não altera o estado do jogo; a desativação é realizada por
+`DELETE /api/games/{id}`.
+
+### `DELETE /api/games/{id}`
+
+Exige Administrator, desativa o jogo e retorna 204. Um ID inexistente retorna
+404; um jogo já desativado retorna 409.
 
 ## Promotions
 
