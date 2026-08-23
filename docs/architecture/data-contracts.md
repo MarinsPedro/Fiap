@@ -109,6 +109,9 @@ Consultas usam uma Query explícita e devolvem um Snapshot mínimo e imutável:
 ```csharp
 public sealed record GetGameQuery(Guid GameId);
 
+public sealed record GetGamesQuery(
+    IReadOnlyCollection<Guid> GameIds);
+
 public sealed record GameSnapshot(
     Guid Id,
     string Title,
@@ -120,6 +123,10 @@ public interface ICatalogModule
     Task<GameSnapshot?> GetGameAsync(
         GetGameQuery query,
         CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<GameSnapshot>> GetGamesAsync(
+        GetGamesQuery query,
+        CancellationToken cancellationToken);
 }
 ```
 
@@ -127,12 +134,17 @@ public interface ICatalogModule
 estado e representa os dados observados naquele instante. Ele contém apenas os
 campos necessários pelos consumidores.
 
+A consulta individual devolve `null` quando o jogo não existe. A consulta em
+lote devolve somente os jogos encontrados; o consumidor compara os IDs para
+identificar ausências. Library e Promotions usam a operação em lote para evitar
+uma consulta ao banco para cada jogo.
+
 Os contratos síncronos implementados são:
 
 | Módulo | Query | Snapshot |
 |---|---|---|
 | Identity | `GetUserQuery` | `UserSnapshot` |
-| Catalog | `GetGameQuery` | `GameSnapshot` |
+| Catalog | `GetGameQuery`, `GetGamesQuery` | `GameSnapshot` |
 | Promotions | `GetPriceQuoteQuery` | `PriceQuoteSnapshot` |
 | Library | `GetUserLibraryQuery` | `UserLibrarySnapshot` |
 

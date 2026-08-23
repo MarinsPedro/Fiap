@@ -1,16 +1,16 @@
-using FiapCloudGames.Identity.Application.Features.Users.GetUser;
+using FiapCloudGames.Identity.Application.Features.Users.FindUser;
 using FiapCloudGames.Identity.Contracts;
 
 namespace FiapCloudGames.Identity.Application.Integrations;
 
-internal sealed class IdentityModule(GetUserService getUserService)
+internal sealed class IdentityModule(FindUserService findUser)
     : IIdentityModule
 {
     public async Task<UserSnapshot?> GetUserAsync(
         GetUserQuery query,
         CancellationToken cancellationToken)
     {
-        var result = await getUserService.ExecuteAsync(
+        var result = await findUser.ExecuteAsync(
             query.UserId,
             cancellationToken);
 

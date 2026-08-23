@@ -1,5 +1,7 @@
 using FiapCloudGames.Catalog.Application.Features.Games.CreateGame;
 using FiapCloudGames.Catalog.Application.Features.Games.DeactivateGame;
+using FiapCloudGames.Catalog.Application.Features.Games.FindGame;
+using FiapCloudGames.Catalog.Application.Features.Games.FindGames;
 using FiapCloudGames.Catalog.Application.Features.Games.GetGame;
 using FiapCloudGames.Catalog.Application.Features.Games.ListGames;
 using FiapCloudGames.Catalog.Application.Features.Games.UpdateGame;
@@ -15,6 +17,8 @@ public static class DependencyInjection
     {
         services.AddScoped<CreateGameService>();
         services.AddScoped<UpdateGameService>();
+        services.AddScoped<FindGameService>();
+        services.AddScoped<FindGamesService>();
         services.AddScoped<GetGameService>();
         services.AddScoped<ListGamesService>();
         services.AddScoped<DeactivateGameService>();

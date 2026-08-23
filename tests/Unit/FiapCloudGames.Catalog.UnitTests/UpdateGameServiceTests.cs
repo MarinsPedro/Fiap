@@ -71,6 +71,11 @@ public sealed class UpdateGameServiceTests
             CancellationToken cancellationToken) =>
             Task.FromResult<Game?>(id == game.Id ? game : null);
 
+        public Task<IReadOnlyList<Game>> ListByIdsAsync(
+            IReadOnlyCollection<Guid> ids,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
         public Task<IReadOnlyList<Game>> ListAsync(
             bool onlyActive,
             CancellationToken cancellationToken) =>

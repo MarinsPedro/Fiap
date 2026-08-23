@@ -2,6 +2,7 @@ using FiapCloudGames.Application.Common.Authentication;
 using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Identity.Application.Abstractions.Persistence;
 using FiapCloudGames.Identity.Application.Features.Users.DeactivateUser;
+using FiapCloudGames.Identity.Application.Features.Users.FindUser;
 using FiapCloudGames.Identity.Application.Features.Users.GetCurrentUser;
 using FiapCloudGames.Identity.Application.Features.Users.GetUser;
 using FiapCloudGames.Identity.Domain.Entities;
@@ -21,9 +22,10 @@ public sealed class UserApplicationServicesTests
     {
         var user = CreateUser();
         var users = new UserRepository(user);
-        var getUser = new GetUserService(
+        var findUser = new FindUserService(
             users,
-            NullLogger<GetUserService>.Instance);
+            NullLogger<FindUserService>.Instance);
+        var getUser = new GetUserService(findUser);
         var service = new GetCurrentUserService(
             new CurrentUserContext(user.Id),
             getUser);
@@ -33,6 +35,21 @@ public sealed class UserApplicationServicesTests
 
         Assert.Equal(user.Id, result.Id);
         Assert.Equal(user.Id, users.RequestedUserId);
+    }
+
+    [Fact]
+    public async Task FindUserShouldReturnNullWhenUserDoesNotExist()
+    {
+        var user = CreateUser();
+        var service = new FindUserService(
+            new UserRepository(user),
+            NullLogger<FindUserService>.Instance);
+
+        var result = await service.ExecuteAsync(
+            Guid.NewGuid(),
+            CancellationToken.None);
+
+        Assert.Null(result);
     }
 
     [Fact]

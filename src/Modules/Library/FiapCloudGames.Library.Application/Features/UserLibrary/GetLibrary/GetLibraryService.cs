@@ -30,12 +30,19 @@ public sealed class GetLibraryService(
             return new UserLibraryResult(userId, []);
         }
 
+        var games = await catalog.GetGamesAsync(
+            new GetGamesQuery(
+                libraryGames
+                    .Select(item => item.GameId)
+                    .Distinct()
+                    .ToArray()),
+            cancellationToken);
+        var gamesById = games.ToDictionary(game => game.Id);
+
         var items = new List<LibraryItemResult>(libraryGames.Count);
         foreach (var item in libraryGames)
         {
-            var game = await catalog.GetGameAsync(
-                new GetGameQuery(item.GameId),
-                cancellationToken);
+            gamesById.TryGetValue(item.GameId, out var game);
 
             if (game is null)
             {

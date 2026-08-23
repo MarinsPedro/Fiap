@@ -12,6 +12,21 @@ internal sealed class GameRepository(CatalogDbContext dbContext) : IGameReposito
     public Task<Game?> GetAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Games.SingleOrDefaultAsync(game => game.Id == id, cancellationToken);
 
+    public async Task<IReadOnlyList<Game>> ListByIdsAsync(
+        IReadOnlyCollection<Guid> ids,
+        CancellationToken cancellationToken)
+    {
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        return await dbContext.Games
+            .AsNoTracking()
+            .Where(game => ids.Contains(game.Id))
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Game>> ListAsync(bool onlyActive, CancellationToken cancellationToken)
     {
         var query = dbContext.Games.AsNoTracking();

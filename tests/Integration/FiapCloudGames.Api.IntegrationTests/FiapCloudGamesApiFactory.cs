@@ -77,6 +77,14 @@ public sealed class FiapCloudGamesApiFactory
                     ? _inactiveGame
                     : null);
 
+        public Task<IReadOnlyList<Game>> ListByIdsAsync(
+            IReadOnlyCollection<Guid> ids,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<Game>>(
+                ids.Contains(InactiveGameId)
+                    ? [_inactiveGame]
+                    : []);
+
         public Task<IReadOnlyList<Game>> ListAsync(
             bool onlyActive,
             CancellationToken cancellationToken) =>
