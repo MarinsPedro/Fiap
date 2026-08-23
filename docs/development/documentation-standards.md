@@ -36,8 +36,7 @@ Não registre contagens ou listas completas desses itens em documentos manuais.
 ### Gerada
 
 Quando uma visualização dinâmica for necessária em Markdown, produza-a por
-automação e marque o arquivo como gerado e não editável. O repositório ainda não
-possui esse fluxo; a decisão está em [DOC-011](../backlog.md).
+automação e marque o arquivo como gerado e não editável.
 
 ## Uma informação, um documento autoritativo
 
@@ -56,7 +55,7 @@ vez de copiar o mesmo conteúdo. Exemplos:
 - Prefira links relativos dentro do repositório.
 - Marque exemplos ilustrativos como tal.
 - Nunca inclua credenciais, tokens ou connection strings reais.
-- Concentre pendências em [docs/backlog.md](../backlog.md).
+- Documente somente regras, contratos, decisões e procedimentos vigentes.
 - Atualize `CHANGELOG.md` quando houver mudança relevante de comportamento.
 
 ## Definition of Done
@@ -68,10 +67,4 @@ vez de copiar o mesmo conteúdo. Exemplos:
 - [ ] Exemplos ainda representam o padrão arquitetural vigente.
 - [ ] Links locais foram verificados.
 - [ ] Nenhum segredo real foi adicionado.
-- [ ] Pendências novas foram consolidadas no backlog.
-
-## Automação desejada
-
-Lint de Markdown, validação de links, line endings e geração/validação do OpenAPI
-devem ser incorporados ao fluxo de CI quando ele existir. Consulte
-[DOC-011](../backlog.md).
+- [ ] Conteúdo especulativo ou não decidido não foi incluído.

@@ -13,8 +13,7 @@ Esta implementação permite:
 - pesquisar eventos por propriedades como `UserId`, `GameId` e `PromotionId`;
 - correlacionar logs da mesma requisição por `TraceId` e `SpanId`;
 - configurar a verbosidade por ambiente;
-- manter os logs legíveis no console durante o desenvolvimento;
-- preparar a aplicação para uma futura integração com OpenTelemetry.
+- manter os logs legíveis no console durante o desenvolvimento.
 
 O escopo atual é exclusivamente logging. Métricas, criação manual de traces,
 exportadores e plataformas externas continuam fora do escopo.
@@ -30,7 +29,6 @@ flowchart LR
     Service --> Logger[ILogger do tipo]
     Activity -. TraceId e SpanId .-> Logger
     Logger --> Console[Console estruturado]
-    Logger -. evolução futura .-> OTEL[OpenTelemetry]
 ```
 
 O ASP.NET Core cria uma `Activity` para a requisição HTTP. A configuração do
@@ -80,8 +78,7 @@ logger.LogInformation(
 ```
 
 `GameId` e `UserId` tornam-se propriedades do evento, além de aparecerem na
-mensagem renderizada. Um provedor futuro poderá indexá-las sem precisar
-interpretar o texto.
+mensagem renderizada.
 
 Não deve ser usada interpolação em chamadas de log:
 
@@ -227,33 +224,6 @@ dotnet test FiapCloudGames.sln --no-build --no-restore
 
 ## Operação local
 
-Para acompanhar os logs com Docker Compose:
-
-```powershell
-docker compose logs -f api
-docker compose logs -f migrator
-```
-
-No console, os campos estruturados aparecem renderizados na mensagem. Os
-escopos também incluem `TraceId` e `SpanId` quando a origem é uma requisição
-HTTP.
-
-## Limitações e evolução futura
-
-Ainda não existem no repositório:
-
-- configuração do SDK do OpenTelemetry;
-- `ActivitySource` próprio da aplicação;
-- métricas criadas com `Meter`;
-- exportador OTLP;
-- Application Insights, Grafana, Seq ou outra plataforma de observabilidade;
-- dashboard e alertas;
-- SLO e SLI;
-- política formal de retenção e mascaramento.
-
-A adoção de `ILogger<T>`, propriedades estruturadas e correlação com a
-`Activity` atual permite adicionar essas capacidades posteriormente sem alterar
-o contrato de logging dos serviços.
-
-Plataforma de observabilidade, retenção, alertas, política de dados e exportação
-OTLP são acompanhadas em [DOC-006](../backlog.md).
+Acompanhe o terminal que executa a API ou o migrador. No console, os campos
+estruturados aparecem renderizados na mensagem. Os escopos também incluem
+`TraceId` e `SpanId` quando a origem é uma requisição HTTP.

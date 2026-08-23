@@ -30,12 +30,6 @@ Antes de chamar o EF, o executável cria o schema técnico `infra`. Depois, cham
 Library e executa o seed opcional de administrador. A API não aplica migrations
 no startup.
 
-Com containers:
-
-```powershell
-docker compose up --build
-```
-
 ## Ferramenta local
 
 O repositório fixa `dotnet-ef` 10.0.10 em `.config/dotnet-tools.json`:
@@ -144,7 +138,3 @@ Faça backup e obtenha aprovação antes de rollback em ambiente compartilhado.
 Os testes descobrem automaticamente os contexts e validam migrations,
 snapshots, assembly, histórico e convenções de mapping por metadados, sem abrir
 conexão.
-
-PostgreSQL real não faz parte do padrão transversal. Adicionar aplicação ou
-reversão de migrations em banco exige uma decisão explícita de estratégia,
-isolamento e ciclo de vida para essa nova categoria de teste.

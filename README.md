@@ -51,8 +51,7 @@ Consulte a [visão arquitetural](docs/architecture/overview.md), as
 Pré-requisitos:
 
 - Git;
-- um SDK .NET compatível com a política definida em `global.json`;
-- Docker com Compose para o fluxo local recomendado.
+- um SDK .NET compatível com a política definida em `global.json`.
 
 Verifique o SDK efetivamente selecionado na sua máquina:
 
@@ -60,15 +59,6 @@ Verifique o SDK efetivamente selecionado na sua máquina:
 dotnet --version
 dotnet --info
 ```
-
-Crie a configuração local e substitua todos os valores de exemplo:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-O `.env` não deve ser versionado. Nunca reutilize credenciais de ambientes
-compartilhados.
 
 ## Compilar e testar
 
@@ -80,20 +70,6 @@ dotnet test FiapCloudGames.sln --no-build --no-restore
 
 O relatório do comando de testes é a fonte do estado atual da suíte; quantidades
 de testes não são mantidas em Markdown.
-
-## Executar com Docker
-
-```powershell
-docker compose up --build -d
-docker compose ps
-docker compose logs migrator
-docker compose logs api
-```
-
-O Compose inicia PostgreSQL, executa o migrador e só então inicia a API. Valide o
-processo em `http://localhost:8080/health`.
-
-O Compose usa `Production`; por isso não expõe OpenAPI nem Swagger UI.
 
 ## Executar em Development
 
@@ -124,14 +100,4 @@ O [índice central](docs/README.md) organiza a documentação por objetivo:
 - [desenvolvimento](docs/development/creating-an-endpoint.md);
 - [testes](docs/testing/overview.md);
 - [operações](docs/operations/README.md);
-- [pendências consolidadas](docs/backlog.md);
 - [contribuição](CONTRIBUTING.md).
-
-## Limites operacionais
-
-O health check atual mede o processo, não o PostgreSQL. Os testes transversais de
-banco inspecionam metadados do EF Core sem executar PostgreSQL real. Não há
-pipeline de CI/CD, plataforma de produção, backup automatizado, métricas, APM ou
-política de rollback aprovada.
-
-Essas lacunas são acompanhadas no [backlog documental](docs/backlog.md).

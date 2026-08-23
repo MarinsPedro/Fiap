@@ -36,5 +36,3 @@ dotnet test tests/Unit/FiapCloudGames.Promotions.UnitTests
 ```
 
 Consulte [regras de negócio](../../../docs/development/business-rules.md).
-Pendências de ciclo de vida e consistência estão em
-[DOC-004 e DOC-010](../../../docs/backlog.md).

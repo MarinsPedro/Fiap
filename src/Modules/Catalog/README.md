@@ -36,5 +36,3 @@ dotnet test tests/Unit/FiapCloudGames.Catalog.UnitTests
 ```
 
 Consulte [regras de negócio](../../../docs/development/business-rules.md).
-Pendências de escala e ciclo de vida estão em
-[DOC-002 e DOC-010](../../../docs/backlog.md).

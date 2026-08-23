@@ -52,9 +52,6 @@ O modelo atual não possui:
 - interceptadores de persistência;
 - retry policy explicitamente configurada.
 
-Concorrência e consistência são acompanhadas em [DOC-004](../backlog.md);
-resiliência e operação com múltiplas réplicas, em [DOC-007](../backlog.md).
-
 ## Boas práticas ao alterar o modelo
 
 1. Altere primeiro o domínio e o mapeamento EF do módulo.

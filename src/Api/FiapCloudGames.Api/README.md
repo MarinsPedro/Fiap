@@ -58,5 +58,4 @@ nos testes de Domain e Application.
 ## Limites
 
 O health check não valida o banco. OpenAPI não é publicado em Production. A API
-ainda não possui versionamento, rate limiting ou probes de prontidão de
-dependências.
+não possui versionamento, rate limiting ou probes de prontidão de dependências.

@@ -51,5 +51,4 @@ usa 403. Ambas seguem o contrato descrito em [erros](errors.md).
 ## Limitações
 
 Não há refresh token, revogação, MFA, recuperação de senha ou confirmação de
-e-mail. O ciclo de vida de credenciais é acompanhado em
-[DOC-005](../backlog.md).
+e-mail.

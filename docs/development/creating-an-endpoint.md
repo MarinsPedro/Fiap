@@ -105,8 +105,8 @@ Registre services da Application no módulo e implementações técnicas em
 Infrastructure. Um novo módulo Presentation também precisa ser descoberto pelo
 host.
 
-O container deve conseguir construir a aplicação sem criar dependência de
-Application para Infrastructure.
+O provedor de serviços deve conseguir construir a aplicação sem criar
+dependência de Application para Infrastructure.
 
 ## 7. Erros e validação
 

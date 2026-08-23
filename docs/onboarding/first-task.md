@@ -6,15 +6,12 @@ exercício envelhece quando o código evolui.
 
 ## 1. Selecionar o trabalho
 
-Escolha uma issue pequena ou uma pendência aprovada pela equipe, como:
+Escolha uma tarefa pequena aprovada pela equipe, como:
 
-- cobrir uma fronteira ainda não testada;
+- ampliar a cobertura de uma fronteira arquitetural;
 - melhorar uma mensagem ou validação;
 - corrigir um link ou procedimento;
 - realizar refatoração local que preserve contratos.
-
-Regras de branch, revisão e seleção de tarefas dependem de
-[DOC-001](../backlog.md).
 
 ## 2. Localizar a fonte
 

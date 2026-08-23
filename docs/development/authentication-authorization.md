@@ -35,15 +35,14 @@ o papel `Administrator`.
 ```
 
 `Jwt:Key` é obrigatória e deve ter pelo menos 32 caracteres. Não grave uma chave
-real em `appsettings*.json`, `.env.example`, documentação, teste ou histórico Git.
-Use variável `Jwt__Key` ou o gerenciador de segredos da plataforma.
+real em `appsettings*.json`, documentação, teste ou histórico Git. Use a variável
+`Jwt__Key` ou o gerenciador de segredos da plataforma.
 
 ## Administrador inicial
 
 O migrador executa o `AdminSeeder` quando `Admin__Email` e `Admin__Password` são
 fornecidos juntos. Esse é o único caminho implementado para criar inicialmente um
-administrador. O Compose exige essas variáveis; para execução local direta elas
-são opcionais.
+administrador. Na execução local direta, essas variáveis são opcionais.
 
 Exemplo apenas local:
 
@@ -64,4 +63,3 @@ $env:Admin__Name = "Administrador local"
 - Não há rotação automatizada da chave JWT.
 - Não há recuperação de senha, MFA, confirmação de e-mail ou provedor externo.
 - Não há policies além da verificação de papéis.
-- Ciclo de vida de credenciais e rotação de segredos: [DOC-005](../backlog.md).

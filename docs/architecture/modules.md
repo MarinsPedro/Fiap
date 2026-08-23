@@ -82,6 +82,3 @@ OpenAPI gerado em Development.
 Uma mudança pertence a um módulo quando sua linguagem, regra e dado são daquele
 bounded context. Integrações novas devem preservar Contracts ou explicitar uma
 mudança de arquitetura.
-
-Pendências de produto e integração estão em
-[DOC-003, DOC-004 e DOC-010](../backlog.md).

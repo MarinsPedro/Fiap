@@ -61,12 +61,3 @@ Os módulos consultam fachadas e DTOs de `Contracts`. Como cada
 `DbContext` possui sua própria unidade de trabalho, uma operação que toca mais de
 um módulo não possui transação distribuída. Não há eventos de integração
 implementados.
-
-Consistência, publicação de eventos e compensação são acompanhadas em
-[DOC-004](../backlog.md).
-
-## Pontos ainda não definidos
-
-- moeda, impostos, pagamento, cancelamento e reembolso: [DOC-003](../backlog.md);
-- concorrência de aquisição: [DOC-004](../backlog.md);
-- reativação e ciclo de vida de promoções: [DOC-010](../backlog.md).

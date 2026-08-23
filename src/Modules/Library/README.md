@@ -37,6 +37,4 @@ dotnet test tests/Unit/FiapCloudGames.Library.UnitTests
 ```
 
 Consulte [fluxo de requisição](../../../docs/architecture/request-flow.md) e
-[regras de negócio](../../../docs/development/business-rules.md). Pagamento e
-concorrência são acompanhados em
-[DOC-003 e DOC-004](../../../docs/backlog.md).
+[regras de negócio](../../../docs/development/business-rules.md).

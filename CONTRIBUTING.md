@@ -1,6 +1,6 @@
 # Como contribuir
 
-Este guia separa regras confirmadas pelo repositório de recomendações que ainda precisam de acordo da equipe.
+Este guia documenta as regras técnicas e o fluxo de contribuição do repositório.
 
 ## Preparar o ambiente
 
@@ -29,10 +29,7 @@ dotnet test FiapCloudGames.sln --no-build --no-restore
 
 ## Branches e commits
 
-Estratégia oficial de branches, commits, merge e aprovações depende de
-[DOC-001](docs/backlog.md).
-
-Recomendação até a equipe formalizar:
+Use este fluxo:
 
 1. crie uma branch curta a partir da branch principal, por exemplo `feature/catalog-filter`;
 2. mantenha commits pequenos e descritivos;
@@ -50,7 +47,7 @@ dotnet test FiapCloudGames.sln --no-build --no-restore
 dotnet format FiapCloudGames.sln --verify-no-changes --no-restore
 ```
 
-`dotnet format` é uma validação recomendada a partir do `.editorconfig`; o repositório não contém pipeline que a imponha.
+`dotnet format` valida o código a partir do `.editorconfig`.
 
 Verifique também:
 
@@ -59,7 +56,7 @@ Verifique também:
 - um mapeamento EF alterado possui migration EF Core e snapshot equivalentes no
   projeto central;
 - requests, responses, status e autorização aparecem corretamente no OpenAPI;
-- nenhum token, senha, connection string real ou `.env` foi adicionado;
+- nenhum token, senha ou connection string real foi adicionado;
 - os links Markdown alterados resolvem;
 - o documento autoritativo foi atualizado quando uma regra ou procedimento mudou.
 
@@ -99,7 +96,7 @@ Requests/responses, logs sanitizados ou capturas quando aplicável.
 Como desfazer a mudança de código e de banco.
 ```
 
-## Critérios de aceite recomendados
+## Critérios de aceite
 
 - build sem warnings nem erros;
 - testes existentes e novos aprovados;
@@ -109,13 +106,6 @@ Como desfazer a mudança de código e de banco.
 - logs sem dados sensíveis;
 - documentação e OpenAPI validados;
 - revisão por outro desenvolvedor.
-
-## Versionamento e release
-
-Versionamento e processo oficial de release dependem de
-[DOC-001](docs/backlog.md) e [DOC-007](docs/backlog.md).
-
-Não crie tag, release ou publique imagem sem uma decisão explícita da equipe.
 
 ## Definition of Done da documentação
 

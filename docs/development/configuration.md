@@ -25,24 +25,6 @@ as anteriores. Variáveis hierárquicas usam `__`, por exemplo
 | `Admin:Password` | migrador | em par | senha do administrador inicial |
 | `Admin:Name` | migrador | não | nome do administrador inicial |
 
-## Variáveis do Compose
-
-O arquivo `.env.example` documenta as entradas esperadas pelo Compose:
-
-- `POSTGRES_PASSWORD`;
-- `JWT_KEY`;
-- `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_NAME`.
-
-Nome do banco, usuário, portas, emissor e audiência estão fixados no
-`docker-compose.yml`. Alterá-los exige editar o Compose.
-
-Copie o exemplo e mantenha o arquivo real fora do Git:
-
-```powershell
-Copy-Item .env.example .env
-docker compose up --build
-```
-
 ## Segredos
 
 - Nunca use os placeholders de exemplo em ambiente compartilhado.
@@ -52,22 +34,11 @@ docker compose up --build
 - Restrinja acesso aos segredos e defina rotação.
 - O migrador possui `UserSecretsId`; a API não. Não há integração com um cofre.
 
-Gerenciador, criação, rotação e revogação de segredos são acompanhados em
-[DOC-005](../backlog.md).
-
 ## Ambientes
 
-O Compose executa a API em `Production`; por isso o documento OpenAPI não fica
-exposto nesse fluxo. A execução local com `ASPNETCORE_ENVIRONMENT=Development`
-habilita `/swagger/v1/swagger.json` e a Swagger UI em
-`/swagger/index.html`.
+A execução local com `ASPNETCORE_ENVIRONMENT=Development` habilita
+`/swagger/v1/swagger.json` e a Swagger UI em `/swagger/index.html`.
 
 O código usa valores de fallback para issuer e audience apenas se as chaves não
 existirem. Como o arquivo base declara essas chaves com string vazia, execuções
-fora do Compose devem informar `Jwt__Issuer` e `Jwt__Audience` explicitamente.
-
-Não existem arquivos ou contratos formais para staging/produção, nem matriz de
-valores por ambiente.
-
-Ambientes, responsáveis e promoção de configuração são acompanhados em
-[DOC-007](../backlog.md).
+locais devem informar `Jwt__Issuer` e `Jwt__Audience` explicitamente.

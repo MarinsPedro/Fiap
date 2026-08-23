@@ -28,8 +28,6 @@ Nos perfis locais padrão:
 - HTTP: `http://localhost:5080`;
 - HTTPS: `https://localhost:7080`.
 
-O Compose executa em Production e não publica o documento ou a interface.
-
 ## O que permanece documentado manualmente
 
 Os documentos desta pasta registram contratos e regras transversais que não

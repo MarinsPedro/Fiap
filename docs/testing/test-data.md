@@ -34,7 +34,3 @@ repository específico. Eles devem ficar fora do OpenAPI público.
 Os testes de Database usam uma connection string fictícia apenas para configurar
 o provedor Npgsql. Nenhuma conexão é aberta, nenhum dado é persistido e não há
 necessidade de limpeza de banco.
-
-Se futuramente testes com PostgreSQL real forem aprovados, essa será uma mudança
-de estratégia. O isolamento, ciclo de vida e destino desses testes deverão ser
-definidos antes da implementação.

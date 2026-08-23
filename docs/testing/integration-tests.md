@@ -64,8 +64,7 @@ Infrastructure. A suíte protege:
 ### Fora do escopo
 
 Este projeto não valida repositories, CRUD, SQL, constraints em runtime,
-transações, concorrência, performance ou PostgreSQL real. Também não utiliza
-container de banco.
+transações, concorrência, performance ou PostgreSQL real.
 
 Esse trade-off é intencional: a estratégia prioriza baixo custo de manutenção,
 regras de negócio em Domain/Application e proteção estrutural por metadados. Se

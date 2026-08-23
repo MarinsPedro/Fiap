@@ -96,6 +96,3 @@ Use as fontes do repositório para responder perguntas de inventário:
 O desenho atual não fornece transação distribuída, outbox, comunicação
 assíncrona, cache ou resiliência entre módulos. O health check não verifica o
 banco e a API não possui versionamento.
-
-Decisões pendentes estão consolidadas em
-[DOC-002, DOC-004 e DOC-006](../backlog.md).

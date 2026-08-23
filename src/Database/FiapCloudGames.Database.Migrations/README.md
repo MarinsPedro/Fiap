@@ -44,6 +44,4 @@ Os comandos completos e a política de rollback estão em
 Não versione connection strings. Use variável de ambiente, User Secrets local ou
 secret store do ambiente.
 
-Os testes atuais validam modelos e migrations por metadados, sem abrir
-PostgreSQL. A adoção de banco real nos testes depende de
-[DOC-009](../../../docs/backlog.md).
+Os testes validam modelos e migrations por metadados, sem abrir PostgreSQL.

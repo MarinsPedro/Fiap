@@ -14,7 +14,7 @@ testes arquiteturais nem mantém um histórico formal de decisões.
 | Presentation adapta HTTP | manter semântica de transporte fora da Application | controllers e mappings |
 | migrations são executadas fora da API | não conceder evolução de schema ao processo HTTP | migrador e host |
 | Problem Details é o contrato global de erro | oferecer respostas previsíveis sem expor falhas internas | middlewares e testes de integração |
-| OpenAPI é exposto apenas em Development | evitar publicação acidental sem política operacional | configuração do host |
+| OpenAPI é exposto apenas em Development | reduzir a superfície exposta em Production | configuração do host |
 
 Quando uma restrição puder ser automatizada, o teste é a proteção executável e
 este texto explica sua intenção.
@@ -27,14 +27,4 @@ este texto explica sua intenção.
 - não há outbox, broker ou compensação automática;
 - erros específicos de concorrência do banco não possuem tradução completa;
 - o health check mede o processo e não a prontidão das dependências;
-- os testes de banco não exercitam SQL contra PostgreSQL real;
-- rollback exige procedimento explícito por contexto;
-- coleções públicas ainda não possuem política de escala definida.
-
-## Decisões pendentes
-
-- evolução e compatibilidade HTTP: [DOC-002](../backlog.md);
-- concorrência e consistência entre módulos: [DOC-004](../backlog.md);
-- observabilidade e SLOs: [DOC-006](../backlog.md);
-- deploy, backup e rollback: [DOC-007](../backlog.md);
-- PostgreSQL real nos testes: [DOC-009](../backlog.md).
+- os testes de banco não exercitam SQL contra PostgreSQL real.

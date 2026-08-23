@@ -69,18 +69,14 @@ copiar suas listas completas.
 ## Operações
 
 - [Índice de operações](operations/README.md)
-- [Docker](operations/docker.md)
 - [Health checks](operations/health-checks.md)
 - [Logging e monitoramento](operations/logging-monitoring.md)
-- [CI/CD](operations/ci-cd.md)
-- [Deployment](operations/deployment.md)
 - [Troubleshooting](operations/troubleshooting.md)
 
 ## Governança
 
 - [Como contribuir](../CONTRIBUTING.md)
 - [Changelog](../CHANGELOG.md)
-- [Pendências consolidadas](backlog.md)
 - [Padrões de documentação](development/documentation-standards.md)
 
 Ao encontrar divergência entre texto e uma fonte dinâmica, corrija o documento

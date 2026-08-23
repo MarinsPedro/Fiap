@@ -5,12 +5,8 @@
 | Item | Versão/configuração | Obrigatório |
 |---|---|---:|
 | .NET SDK | política definida em `global.json`; confirme com `dotnet --version` | sim |
-| PostgreSQL | Compose usa 17-alpine | sim para operações com dados |
-| Docker Compose | versão não fixada | não se PostgreSQL externo estiver disponível |
+| PostgreSQL | instância acessível pela connection string | sim para operações com dados |
 | HTTPS dev certificate | usado pelo perfil `https` | apenas para HTTPS local |
-
-Sistemas operacionais e versões mínimas de Docker/Compose ainda dependem de
-[DOC-008](../backlog.md).
 
 ## Certificado HTTPS
 
@@ -29,17 +25,9 @@ dotnet run --project src/Api/FiapCloudGames.Api --launch-profile http
 
 URL: `http://localhost:5080`.
 
-## Banco isolado
+## Banco local
 
-Defina a senha e suba somente PostgreSQL:
-
-```powershell
-$env:POSTGRES_PASSWORD = "change-me"
-docker compose up database -d
-docker compose ps database
-```
-
-Connection string correspondente:
+Disponibilize uma instância PostgreSQL e configure a connection string:
 
 ```powershell
 $env:ConnectionStrings__Database = "Host=localhost;Port=5432;Database=fiap_cloud_games;Username=fiap_cloud_games;Password=change-me"
@@ -96,9 +84,7 @@ A Swagger UI fica em `https://localhost:7080/swagger/index.html`.
 
 A mensagem de validação sugere variável de ambiente ou user-secrets, mas o `.csproj` da API não possui `UserSecretsId`.
 
-A API não possui `UserSecretsId` versionado. Use variáveis de ambiente ou
-`.env` com Compose; a evolução da gestão de segredos está em
-[DOC-005](../backlog.md).
+Use variáveis de ambiente para configurar a API.
 
 ## IDE e extensões
 
@@ -108,19 +94,14 @@ Recomendações:
 
 - suporte C#/.NET;
 - cliente HTTP;
-- visualizador Mermaid;
-- integração Docker;
 - visualizador de Mermaid para os diagramas mantidos em Markdown.
 
 ## Diagnóstico rápido
 
 ```powershell
 dotnet --list-sdks
-docker compose config
-docker compose ps
-docker compose logs database
-docker compose logs migrator
-docker compose logs api
+dotnet tool restore
+dotnet build FiapCloudGames.sln
 ```
 
 Consulte [Troubleshooting](../operations/troubleshooting.md) se algum passo falhar.

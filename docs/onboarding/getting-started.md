@@ -4,8 +4,7 @@ Objetivo: obter build, testes, banco, migration, API, health check, OpenAPI e lo
 
 ## 1. Acesso e clone
 
-O processo de concessão de acesso depende de [DOC-001](../backlog.md). Para
-clonar o repositório público configurado atualmente:
+Para clonar o repositório público:
 
 ```powershell
 git clone https://github.com/MarinsPedro/Fiap.git
@@ -19,21 +18,15 @@ Confirme que `FiapCloudGames.sln` está na pasta atual.
 Obrigatórias:
 
 - SDK .NET compatível com a política definida em `global.json`;
-- Docker com Compose, para o fluxo recomendado;
+- uma instância PostgreSQL acessível para migrations e API;
 - Git.
 
 Verifique:
 
 ```powershell
 dotnet --info
-docker version
-docker compose version
 git --version
 ```
-
-O repositório não define IDE ou sistema operacional oficial. Visual Studio,
-Rider ou VS Code são opções possíveis, não requisitos. Consulte
-[DOC-008](../backlog.md).
 
 ## 3. Restaurar, compilar e testar
 
@@ -54,46 +47,32 @@ Veja [Testes](../testing/overview.md) para comandos por categoria.
 ## 4. Configurar segredos locais
 
 ```powershell
-Copy-Item .env.example .env
+$env:ConnectionStrings__Database = "Host=localhost;Port=5432;Database=fiap_cloud_games;Username=postgres;Password=<senha-local>"
+$env:Jwt__Key = "change-me-with-at-least-32-characters"
+$env:Jwt__Issuer = "FiapCloudGames"
+$env:Jwt__Audience = "FiapCloudGames.Client"
+$env:Admin__Name = "Administrador local"
+$env:Admin__Email = "admin@example.com"
+$env:Admin__Password = "change-me-now-1!"
 ```
 
-Edite `.env` e altere todos os valores. O arquivo é ignorado pelo Git.
+Substitua os valores ilustrativos e nunca reutilize credenciais de ambientes
+compartilhados.
 
-| Variável | Regra |
-|---|---|
-| `POSTGRES_PASSWORD` | senha do usuário PostgreSQL do Compose |
-| `JWT_KEY` | pelo menos 32 caracteres |
-| `ADMIN_NAME` | nome do administrador inicial |
-| `ADMIN_EMAIL` | e-mail válido |
-| `ADMIN_PASSWORD` | pelo menos 8 caracteres, com letra, número e caractere especial |
-
-Nunca reutilize credenciais de produção.
-
-## 5. Executar pelo Compose
+## 5. Aplicar migrations
 
 ```powershell
-docker compose up --build -d
-docker compose ps
-docker compose logs migrator
+dotnet run --project src/Database/FiapCloudGames.Database.Migrations
 ```
 
-O fluxo é:
-
-1. database fica healthy;
-2. migrator cria schemas/tabelas e termina;
-3. API inicia na porta 8080.
-
-Valide:
-
-```powershell
-Invoke-WebRequest http://localhost:8080/health
-```
-
-O corpo esperado é `Healthy`.
+O migrador cria os schemas e tabelas e executa o seed do administrador quando as
+variáveis `Admin__Email` e `Admin__Password` são fornecidas juntas.
 
 ## 6. Executar API em Development
 
-O Compose configura Production e não expõe OpenAPI. Para Development, mantenha o banco do Compose e rode migrador/API localmente conforme [Ambiente local](local-environment.md).
+```powershell
+dotnet run --project src/Api/FiapCloudGames.Api --launch-profile https
+```
 
 Com o perfil `https`:
 
@@ -103,7 +82,8 @@ https://localhost:7080/swagger/index.html
 https://localhost:7080/health
 ```
 
-O primeiro endereço é o JSON OpenAPI; o segundo é a Swagger UI.
+O primeiro endereço é o JSON OpenAPI; o segundo é a Swagger UI. O health check
+deve retornar `Healthy`.
 
 ## 7. Fazer login
 
@@ -134,14 +114,6 @@ Invoke-RestMethod `
   -ContentType "application/json" `
   -Body '{"title":"Cloud Quest","description":"Aventura","category":"RPG","basePrice":99.90}'
 ```
-
-## 8. Encerrar
-
-```powershell
-docker compose down
-```
-
-Isso preserva o volume do banco. Para exclusão do volume, leia o alerta em [Docker](../operations/docker.md).
 
 ## Próximas leituras
 

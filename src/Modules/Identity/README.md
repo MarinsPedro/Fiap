@@ -41,6 +41,3 @@ e cenários existentes devem ser consultados no código e executados com:
 ```powershell
 dotnet test tests/Unit/FiapCloudGames.Identity.UnitTests
 ```
-
-Pendências de credenciais e segurança estão em
-[DOC-005](../../../docs/backlog.md).

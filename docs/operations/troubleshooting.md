@@ -15,33 +15,22 @@ registrada no README raiz.
 **Correção:** valide acesso ao feed, proxy/certificado e o `NuGet.Config`; não
 remova versões sem verificar compatibilidade.
 
-## Porta 5432 ou 8080 ocupada
-
-**Sintoma:** o container não publica a porta.  
-**Diagnóstico:** use `docker compose ps` e verifique processos locais que já usam
-a porta.  
-**Correção:** pare o processo conflitante ou altere explicitamente o mapeamento no
-`docker-compose.yml`.
-
-## PostgreSQL não fica saudável
-
-**Sintoma:** `migrator` não inicia.  
-**Diagnóstico:** `docker compose logs database`.  
-**Correção:** confira `POSTGRES_PASSWORD`, espaço em disco e permissões do volume.
-Se decidir apagar o banco local, `docker compose down --volumes` é destrutivo.
-
 ## Conexão com banco recusada
 
 **Sintoma:** endpoints de negócio falham, embora `/health` responda.  
 **Diagnóstico:** confira `ConnectionStrings__Database`, host e porta a partir do
 mesmo ambiente da API.  
-**Correção:** fora do Compose use `localhost`; dentro do Compose o host é
-`database`.
+**Correção:** valide se o PostgreSQL aceita conexões no host e na porta
+configurados e se a credencial possui acesso ao banco informado.
 
 ## Migrator falha
 
-**Sintoma:** o serviço `migrator` termina com código diferente de zero.  
-**Diagnóstico:** `docker compose logs migrator`.  
+**Sintoma:** o executável do migrador termina com código diferente de zero.
+
+**Diagnóstico:** execute
+`dotnet run --project src/Database/FiapCloudGames.Database.Migrations` e
+inspecione a saída.
+
 **Correção:** valide connection string, permissões, ordem/estado das migrations e
 as três variáveis `ADMIN_*`. Não edite manualmente a tabela de versionamento.
 
@@ -88,7 +77,7 @@ ativos.
 cadastrado e tentativa de adquirir novamente um jogo da mesma biblioteca. Leia
 `detail` e atualize a operação ou o estado consultado. Uma violação de unicidade
 que ocorrer diretamente no banco, por exemplo em uma corrida entre requests,
-ainda não recebe tratamento específico e pode resultar em 500.
+não recebe tratamento específico e pode resultar em 500.
 
 ## 422 Unprocessable Entity
 
@@ -113,9 +102,9 @@ sem revisão de segurança.
 
 ## OpenAPI não aparece
 
-O JSON OpenAPI só é habilitado em `Development`. O Compose usa `Production`.
-Execute a API localmente com `ASPNETCORE_ENVIRONMENT=Development` e consulte a
-rota `/swagger/v1/swagger.json`; a interface fica em `/swagger/index.html`.
+O JSON OpenAPI só é habilitado em `Development`. Execute a API localmente com
+`ASPNETCORE_ENVIRONMENT=Development` e consulte a rota
+`/swagger/v1/swagger.json`; a interface fica em `/swagger/index.html`.
 
 ## `/health` responde, mas a API de negócio falha
 
