@@ -40,7 +40,7 @@ flowchart LR
 - SDK .NET fixado e cache de NuGet;
 - execução em pull request e branch protegida;
 - credenciais em secret store, nunca em YAML versionado;
-- PostgreSQL efêmero para integração;
+- execução dos testes transversais sem dependências externas;
 - análise de dependências/imagens;
 - artefatos e imagens imutáveis;
 - aprovação para migrations e produção;

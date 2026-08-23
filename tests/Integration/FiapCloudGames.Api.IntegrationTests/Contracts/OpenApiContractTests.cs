@@ -1,14 +1,16 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 
-namespace FiapCloudGames.Api.IntegrationTests;
+using FiapCloudGames.Api.IntegrationTests;
 
-public sealed class SwaggerProblemDetailsTests :
+namespace FiapCloudGames.Api.IntegrationTests.Contracts;
+
+public sealed class OpenApiContractTests :
     IClassFixture<FiapCloudGamesApiFactory>
 {
     private readonly FiapCloudGamesApiFactory _factory;
 
-    public SwaggerProblemDetailsTests(FiapCloudGamesApiFactory factory) =>
+    public OpenApiContractTests(FiapCloudGamesApiFactory factory) =>
         _factory = factory;
 
     [Fact]
@@ -54,9 +56,12 @@ public sealed class SwaggerProblemDetailsTests :
         {
             foreach (var operation in path.Value.EnumerateObject())
             {
-                foreach (var response in operation.Value
-                             .GetProperty("responses")
-                             .EnumerateObject()
+                var responses = operation.Value.GetProperty("responses");
+                Assert.True(
+                    responses.TryGetProperty("500", out _),
+                    $"{operation.Name.ToUpperInvariant()} {path.Name} não declara 500.");
+
+                foreach (var response in responses.EnumerateObject()
                              .Where(item =>
                                  int.TryParse(item.Name, out var status) &&
                                  status >= 400))

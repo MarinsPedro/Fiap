@@ -1,4 +1,6 @@
-namespace FiapCloudGames.Api.IntegrationTests;
+using FiapCloudGames.Api.IntegrationTests;
+
+namespace FiapCloudGames.Api.IntegrationTests.Host;
 
 public sealed class HealthCheckTests : IClassFixture<FiapCloudGamesApiFactory>
 {

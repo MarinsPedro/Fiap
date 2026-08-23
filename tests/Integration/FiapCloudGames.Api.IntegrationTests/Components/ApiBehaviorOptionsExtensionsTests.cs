@@ -1,6 +1,6 @@
 using FiapCloudGames.Api.Configuration;
 
-namespace FiapCloudGames.Api.IntegrationTests;
+namespace FiapCloudGames.Api.IntegrationTests.Components;
 
 public sealed class ApiBehaviorOptionsExtensionsTests
 {

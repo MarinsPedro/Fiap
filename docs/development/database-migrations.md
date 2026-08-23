@@ -142,9 +142,10 @@ Faça backup e obtenha aprovação antes de rollback em ambiente compartilhado.
 
 ## Testes
 
-Os testes confirmam que os quatro contexts descobrem suas migrations
-centralizadas sem abrir conexão. Ainda não existe teste que aplique as migrations
-em PostgreSQL real.
+Os testes descobrem automaticamente os contexts e validam migrations,
+snapshots, assembly, histórico e convenções de mapping por metadados, sem abrir
+conexão.
 
-`TODO: adicionar PostgreSQL efêmero que aplique e reverta as migrations dos quatro
-contextos.`
+PostgreSQL real não faz parte do padrão transversal. Adicionar aplicação ou
+reversão de migrations em banco exige uma decisão explícita de estratégia,
+isolamento e ciclo de vida para essa nova categoria de teste.

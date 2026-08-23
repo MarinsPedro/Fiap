@@ -1,55 +1,54 @@
 # Estratégia de testes
 
-## Estado atual
+## Objetivo
 
-A solução possui sete projetos de teste e 74 casos executados:
+A suíte separa regras específicas de negócio de proteções transversais. Essa
+divisão reduz acoplamento, mantém os testes rápidos e permite evoluir uma feature
+sem alterar projetos que protegem apenas contratos globais.
 
-| Categoria | Projetos | Casos atuais | Escopo |
-|---|---:|---:|---|
-| Unitário | 4 | 17 | agregados, invariantes e objetos de valor |
-| Integração | 2 | 21 | host, validação/erros HTTP, metadados EF e migrations |
-| Arquitetura | 1 | 36 execuções | dependências, domínio e contratos por fronteira |
-
-Casos parametrizados são contabilizados por assembly.
-
-## Executar
-
-```powershell
-dotnet test FiapCloudGames.sln
+```text
+Feature
+  |
+  +-- Domain Tests              invariantes e comportamento do domínio
+  +-- Application Tests         decisões e orquestração do caso de uso
+  +-- ArchitectureTests         fronteiras e dependências globais
+  +-- Api.IntegrationTests      contrato HTTP transversal
+  +-- Database.IntegrationTests metadados e convenções do EF Core
 ```
 
-Quando restore e build já foram concluídos:
+## Distribuição de responsabilidades
 
-```powershell
-dotnet test FiapCloudGames.sln --no-build --no-restore
-```
+| Projeto | Responsabilidade principal | Nova feature altera? |
+|---|---|---|
+| `*.UnitTests` | Domain e Application | Normalmente |
+| `ArchitectureTests` | Regras estruturais | Somente se a arquitetura mudar |
+| `Api.IntegrationTests` | Pipeline e contrato HTTP global | Somente se o contrato transversal mudar |
+| `Database.IntegrationTests` | Mappings, migrations e convenções | Somente se a convenção de persistência mudar |
 
-Um projeto isolado:
+## Princípios
 
-```powershell
-dotnet test tests/Unit/FiapCloudGames.Catalog.UnitTests
-```
+- Testar comportamento observável e decisões relevantes.
+- Preferir descoberta automática a listas de módulos, entidades ou endpoints.
+- Não duplicar na API uma regra já protegida em Domain ou Application.
+- Não acoplar Application a EF Core, HTTP ou repositories concretos.
+- Alterações internas que preservam contrato não devem exigir mudanças nos testes.
+- Testes transversais devem proteger várias features ao mesmo tempo.
+- Quantidade de testes não é meta arquitetural nem faz parte da documentação.
 
-Um caso pelo nome:
+## Quando criar um teste transversal
 
-```powershell
-dotnet test FiapCloudGames.sln --filter "FullyQualifiedName~HealthEndpointShouldReturnSuccess"
-```
+Crie ou altere um teste transversal quando houver nova regra arquitetural,
+convenção global, comportamento compartilhado do pipeline, contrato HTTP ou
+estratégia de mapping/migrations.
 
-## Pirâmide pretendida
+Uma nova feature que siga as convenções existentes deve ser coberta
+automaticamente pelos testes transversais e receber seus cenários específicos em
+Domain e Application.
 
-O repositório tem uma base inicial de testes unitários e cobre o pipeline HTTP
-para validação, challenge 401, 404 e tratamento de exceções. Ainda não cobre
-services de Application, autenticação com token válido, persistência real ou
-fluxos de negócio entre módulos. Os testes de integração atuais não abrem
-conexão com o PostgreSQL.
-
-`TODO: definir metas de cobertura e ampliar a suíte com testes de serviço, HTTP
-autenticado e PostgreSQL efêmero.`
-
-## Guias
+## Guias relacionados
 
 - [Testes unitários](unit-tests.md)
-- [Testes de integração](integration-tests.md)
+- [Testes transversais](transversal-tests.md)
+- [Integração transversal](integration-tests.md)
 - [Testes de arquitetura](architecture-tests.md)
 - [Dados de teste](test-data.md)

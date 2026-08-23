@@ -4,9 +4,10 @@ using FiapCloudGames.Application.Common.Exceptions;
 using FiapCloudGames.Domain.Common;
 using FiapCloudGames.Presentation.Common.Errors;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace FiapCloudGames.Api.IntegrationTests;
+namespace FiapCloudGames.Api.IntegrationTests.Components;
 
 public sealed class ExceptionHandlingMiddlewareTests
 {
@@ -160,6 +161,21 @@ public sealed class ExceptionHandlingMiddlewareTests
         Assert.Equal(0, context.Response.Body.Length);
     }
 
+    [Fact]
+    public async Task UnexpectedServerErrors_ShouldBeLoggedWithRequestContext()
+    {
+        var logger = new TestLogger<ExceptionHandlingMiddleware>();
+        var exception = new InvalidOperationException(
+            "Falha técnica simulada.");
+
+        await InvokeAsync(exception, logger);
+
+        var entry = Assert.Single(logger.Entries);
+        Assert.Equal(LogLevel.Error, entry.Level);
+        Assert.Same(exception, entry.Exception);
+        Assert.Contains("GET /tests/errors", entry.Message, StringComparison.Ordinal);
+    }
+
     private static AppException CreateSemanticException(string kind) =>
         kind switch
         {
@@ -193,7 +209,8 @@ public sealed class ExceptionHandlingMiddlewareTests
         };
 
     private static async Task<MiddlewareResult> InvokeAsync(
-        Exception exception)
+        Exception exception,
+        ILogger<ExceptionHandlingMiddleware>? logger = null)
     {
         var context = new DefaultHttpContext();
         context.Request.Method = HttpMethods.Get;
@@ -202,7 +219,7 @@ public sealed class ExceptionHandlingMiddlewareTests
 
         var middleware = new ExceptionHandlingMiddleware(
             _ => Task.FromException(exception),
-            NullLogger<ExceptionHandlingMiddleware>.Instance);
+            logger ?? NullLogger<ExceptionHandlingMiddleware>.Instance);
 
         await middleware.InvokeAsync(context);
 

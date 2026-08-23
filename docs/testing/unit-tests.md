@@ -1,91 +1,87 @@
 # Testes unitários
 
-## Localização
+## Escopo
 
-Cada domínio possui um projeto xUnit:
+Cada módulo possui um projeto `*.UnitTests` dividido em:
 
-- `FiapCloudGames.Identity.UnitTests`;
-- `FiapCloudGames.Catalog.UnitTests`;
-- `FiapCloudGames.Promotions.UnitTests`;
-- `FiapCloudGames.Library.UnitTests`.
-
-Os 17 casos atuais verificam normalização de e-mail, nomes e dinheiro, limites
-persistidos, mudança de estado, rejeição de preço/período inválido, cálculo de
-desconto, prevenção de duplicidade e snapshot de aquisição.
-
-## Padrão atual
-
-Os testes constroem entidades diretamente e seguem arrange/act/assert sem
-dependência externa:
-
-```csharp
-[Fact]
-public void CreateShouldRejectNegativePrice()
-{
-    var createdAtUtc = new DateTimeOffset(
-        2026, 1, 10, 12, 0, 0, TimeSpan.Zero);
-
-    Assert.Throws<DomainRuleViolationException>(() =>
-        Game.Create(
-            "Cloud Quest",
-            "Aventura",
-            "RPG",
-            -0.01m,
-            createdAtUtc));
-}
+```text
+Domain/
+Application/
 ```
 
-## Serviços e dependências
+Não são criados UnitTests para Infrastructure, Contracts ou Presentation.
+Contracts podem ser usados apenas quando forem necessários para exercer uma
+porta consumida pela Application.
 
-Não existe biblioteca de mocks instalada e os projetos unitários atuais
-referenciam somente seus respectivos domínios. Portanto, o repositório ainda não
-possui exemplo executável de mock para serviços de aplicação.
+## Domain
 
-Ao adicionar esses testes:
+Testes de Domain validam:
 
-1. referencie o projeto Application correspondente;
-2. prefira fakes pequenos para repositórios e unidades de trabalho;
-3. ou adote uma biblioteca de mocks por decisão explícita;
-4. valide retorno, erro e quantidade/argumentos das chamadas.
+- invariantes;
+- limites e valores de fronteira;
+- objetos de valor;
+- transições de estado;
+- cálculos;
+- proteção do agregado;
+- comportamento temporal com instante controlado.
 
-Modelo conceitual:
+Eles usam objetos reais e não conhecem repositories, HTTP, EF Core ou mocks de
+infraestrutura.
 
-```csharp
-// Exemplo futuro: adapte aos contratos reais antes de adicionar ao projeto.
-var createdAtUtc = new DateTimeOffset(
-    2026, 1, 10, 12, 0, 0, TimeSpan.Zero);
-var repository = new FakeGameRepository(existingGame: null);
-var unitOfWork = new SpyCatalogUnitOfWork();
-var clock = new FixedTimeProvider(createdAtUtc);
-var service = new CreateGameService(repository, unitOfWork, clock);
+## Application
 
-var created = await service.ExecuteAsync(
-    new CreateGameInput(
-        "Cloud Quest",
-        "Aventura",
-        "RPG",
-        99.90m),
-    CancellationToken.None);
+Testes de Application validam:
 
-Assert.Equal("Cloud Quest", created.Title);
-Assert.Equal(1, repository.AddCalls);
-Assert.Equal(1, unitOfWork.SaveChangesCalls);
-```
+- decisões do caso de uso;
+- autenticação e autorização da aplicação;
+- coordenação entre portas;
+- retorno e erros semânticos;
+- efeitos relevantes;
+- ausência de persistência quando o fluxo falha.
 
-Para a falha, configure o fake com um registro existente, confira a exceção
-esperada e confirme que `AddCalls` e `SaveChangesCalls` continuam em zero. O
-snippet é deliberadamente ilustrativo: `FakeGameRepository`,
-`SpyCatalogUnitOfWork` e `FixedTimeProvider` não existem hoje. Os nomes
-`CreateGameService`, `CreateGameInput` e `ExecuteAsync` correspondem à API atual
-da Application.
+Repositories e integrações são tratados como portas externas e substituídos por
+fakes, stubs ou spies pequenos. Interações só são verificadas quando representam
+um efeito relevante do caso de uso.
 
-## Boas práticas
+Alterações internas de persistência não devem exigir mudanças nesses testes.
 
+## Dependências permitidas
+
+Projetos unitários podem referenciar:
+
+- Domain do módulo;
+- Application do módulo;
+- Contracts necessários;
+- BuildingBlocks necessários;
+- bibliotecas de teste.
+
+Eles não podem referenciar:
+
+- Infrastructure;
+- Presentation;
+- API;
+- Database.Migrations;
+- EF Core ou `DbContext`;
+- `WebApplicationFactory`.
+
+Essas restrições são fiscalizadas por `ArchitectureTests`.
+
+## Padrão de escrita
+
+- Nome: `Metodo_Cenario_ResultadoEsperado`.
+- Arrange, Act e Assert visíveis.
 - Um comportamento relevante por teste.
-- Nomes que expressem cenário e resultado.
-- Datas controladas quando a regra depende do tempo.
-- Valores de fronteira e falhas junto ao caminho feliz.
-- Nenhuma conexão, rede ou variável global em teste unitário.
+- Datas fixas ou `TimeProvider` controlado.
+- Caminho feliz, fronteiras e falhas significativas.
+- Sem rede, banco, filesystem ou variável global.
+- Sem assertions sobre detalhes privados, logger ou implementação do repository.
 
-`TODO: adicionar testes unitários para serviços Application e token/senha, com
-fakes ou estratégia de mocks aprovada.`
+## Fakes e spies
+
+Um fake deve implementar somente o comportamento necessário para o cenário. Um
+spy registra apenas efeitos que façam parte do contrato do caso de uso, como
+adicionar um agregado ou confirmar a unidade de trabalho.
+
+Evite criar uma infraestrutura de testes genérica prematuramente. Compartilhe um
+test double apenas quando a repetição trouxer custo real e a abstração continuar
+simples.

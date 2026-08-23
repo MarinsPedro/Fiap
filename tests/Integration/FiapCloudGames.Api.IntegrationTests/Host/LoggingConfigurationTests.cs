@@ -2,7 +2,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace FiapCloudGames.Api.IntegrationTests;
+using FiapCloudGames.Api.IntegrationTests;
+
+namespace FiapCloudGames.Api.IntegrationTests.Host;
 
 public sealed class LoggingConfigurationTests
     : IClassFixture<FiapCloudGamesApiFactory>

@@ -4,14 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Using Include="Xunit" />
-    <ProjectReference Include="..\..\..\src\Modules\Identity\FiapCloudGames.Identity.Infrastructure\FiapCloudGames.Identity.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Identity\FiapCloudGames.Identity.Domain\FiapCloudGames.Identity.Domain.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Catalog\FiapCloudGames.Catalog.Infrastructure\FiapCloudGames.Catalog.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Catalog\FiapCloudGames.Catalog.Domain\FiapCloudGames.Catalog.Domain.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Library\FiapCloudGames.Library.Infrastructure\FiapCloudGames.Library.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Library\FiapCloudGames.Library.Domain\FiapCloudGames.Library.Domain.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Promotions\FiapCloudGames.Promotions.Infrastructure\FiapCloudGames.Promotions.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\..\src\Modules\Promotions\FiapCloudGames.Promotions.Domain\FiapCloudGames.Promotions.Domain.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\**\*.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Database\FiapCloudGames.Database.Migrations\FiapCloudGames.Database.Migrations.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />

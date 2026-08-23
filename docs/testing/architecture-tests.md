@@ -1,37 +1,69 @@
 # Testes de arquitetura
 
-O projeto `FiapCloudGames.ArchitectureTests` usa NetArchTest para tornar algumas
-fronteiras executáveis.
+## Objetivo
 
-## Regras atuais
+`FiapCloudGames.ArchitectureTests` funciona como barreira automática contra
+dependências e estruturas que violam a arquitetura modular.
 
-1. Domain não depende de frameworks nem das camadas externas.
-2. Application não depende de Infrastructure ou Presentation.
-3. Services da Application não devolvem tipos de Contracts.
-4. Infrastructure não depende de Presentation.
-5. Presentation não referencia Contracts diretamente.
-6. Actions não devolvem tipos de Application ou Contracts.
-7. Contracts não depende de implementações, Domain ou frameworks.
-8. Tipos de Contracts são `Query`, `Snapshot` ou interfaces `I*Module`.
-9. As quatro raízes não têm construtores públicos.
-10. Entidades de domínio não expõem setters públicos.
-11. Library.Application usa apenas Contracts dos demais módulos.
-12. Migrations pode referenciar Infrastructure, mas não Presentation.
+## Descoberta
 
-```powershell
-dotnet test tests/Architecture/FiapCloudGames.ArchitectureTests
+Projetos e assemblies são descobertos por convenções como:
+
+```text
+FiapCloudGames.*.Domain
+FiapCloudGames.*.Application
+FiapCloudGames.*.Infrastructure
+FiapCloudGames.*.Presentation
+FiapCloudGames.*.Contracts
 ```
 
-## Ao evoluir a arquitetura
+Aggregate roots são inferidos a partir das entidades expostas pelas interfaces
+de repository do Domain. Entidades, controllers, services e projetos unitários
+também são encontrados automaticamente.
 
-- Adicione um teste para uma regra estrutural objetiva.
-- Evite testes frágeis baseados apenas em nomes quando uma relação de dependência
-  puder ser inspecionada.
-- Atualize [dependências](../architecture/dependencies.md).
-- Registre um [ADR](../adr/README.md) se a mudança alterar uma decisão durável.
+Um novo módulo que segue a estrutura entra nas regras por padrão.
 
-## Lacunas
+## Fronteiras protegidas
 
-- não há regra estrutural para nomes de repositories;
-- a matriz de referências de projeto ainda pode ser complementada por análise
-  direta dos `.csproj`.
+- Domain permanece independente de camadas externas e frameworks proibidos.
+- Um Domain não acessa o Domain de outro módulo.
+- Application não depende de Infrastructure, Presentation ou API.
+- Comunicação entre módulos ocorre por Contracts.
+- Infrastructure permanece dentro do próprio módulo.
+- Presentation não depende de Domain, Infrastructure ou Contracts.
+- Controllers não expõem retornos internos de Application/Contracts.
+- Contracts permanecem independentes de implementações e frameworks web/dados.
+- Entidades não possuem setters públicos.
+- Aggregate roots não possuem construtores públicos.
+- Migrations não dependem de Presentation.
+- `ProjectReference` de produção segue a matriz arquitetural.
+
+## Proteção dos UnitTests
+
+Os projetos `*.UnitTests` são descobertos na pasta `tests/Unit`. Regras
+estruturais impedem referências ou usos de:
+
+- Infrastructure;
+- Presentation;
+- API e `WebApplicationFactory`;
+- Database.Migrations;
+- EF Core e `DbContext`.
+
+Assim, uma mudança na persistência ou no host não pode acoplar os testes de
+Application a detalhes externos.
+
+## Convenções e limitações
+
+As regras dependem da convenção de nomes dos projetos e assemblies. Alterar a
+estrutura `FiapCloudGames.<Modulo>.<Camada>` exige atualizar a decisão
+arquitetural e os testes que a fiscalizam.
+
+Testes baseados em nomes de `Service`, `Controller`, `Contracts` ou namespaces
+devem ser mantidos apenas quando o nome representar uma convenção oficial da
+solução.
+
+## Evolução
+
+Adicione uma regra somente para uma restrição estrutural objetiva. Mudanças
+duráveis na matriz de dependências devem ser refletidas na documentação de
+arquitetura e, quando necessário, em um ADR.

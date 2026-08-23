@@ -482,16 +482,14 @@ public sealed class FiapCloudGamesApiFactory
     : WebApplicationFactory<Program>
 ```
 
-Ela cobre `/health`, validação MVC, respostas 401/404 e o middleware de exceções,
-mas não substitui os `DbContext`. Uma chamada válida que alcance persistência
-tentará usar a connection string de teste em `localhost`.
+Ela protege o pipeline, autenticação, autorização, Problem Details, OpenAPI,
+logging e health check. Os testes específicos da feature permanecem em Domain e
+Application; um endpoint que segue as convenções existentes não exige teste HTTP
+próprio.
 
-```text
-TODO: definir infraestrutura de PostgreSQL real/Testcontainers e limpeza de dados antes de adicionar testes de endpoint com persistência.
-```
-
-Não documente um fluxo autenticado com persistência como executável até essa
-infraestrutura existir.
+Persistência real não faz parte do padrão transversal da API. Caso um endpoint
+introduza comportamento HTTP excepcional, adicione um teste de host direcionado
+ao contrato novo, sem repetir as regras de negócio da feature.
 
 ## 18. OpenAPI
 
