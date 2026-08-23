@@ -1,573 +1,185 @@
-# Criar um endpoint do zero
+# Criar uma feature HTTP
 
-Este guia usa dois endpoints existentes do Catalog como referência:
+Este guia descreve o fluxo arquitetural esperado. Ele não fornece uma
+implementação completa para copiar, porque nomes de classes, dependências e
+operações evoluem com o código.
 
-- consulta: `GET /api/games/{id}`;
-- alteração: `POST /api/games`.
+Use uma feature semelhante no módulo escolhido como referência concreta.
 
-Eles representam o padrão real do repositório: Controller → Application Service → Domain/Repository → `DbContext`. Não há MediatR, Command/Query Handler ou FluentValidation.
+## Fluxo
+
+```text
+Request HTTP
+    ↓
+Presentation
+Controller + Request/Response + mapping
+    ↓
+Application
+Service da feature + Input/Result
+    ↓
+Domain e portas de persistência/integração
+    ↓
+Infrastructure
+Repository, query e DbContext
+```
+
+O resultado percorre o caminho inverso. Entidades não são devolvidas diretamente
+pela API.
 
 ## 1. Escolher o módulo
 
-Pergunte qual domínio possui a regra e o dado.
-
-| Assunto | Módulo |
-|---|---|
-| usuário, login, role | Identity |
-| jogo e preço base | Catalog |
-| desconto e vigência | Promotions |
-| aquisição e biblioteca | Library |
-
-Se a funcionalidade consulta outro módulo, referencie somente `Contracts`. Não referencie Application, Domain ou Infrastructure externos.
-
-## 2. Identificar as camadas
-
-Para Catalog:
-
-```text
-src/Modules/Catalog/
-├── FiapCloudGames.Catalog.Domain
-├── FiapCloudGames.Catalog.Contracts
-├── FiapCloudGames.Catalog.Application/
-│   └── Games/
-├── FiapCloudGames.Catalog.Infrastructure
-└── FiapCloudGames.Catalog.Presentation/
-    └── Features/Games/
-```
-
-Mantenha um tipo principal por arquivo. No fluxo atual, `CreateGameInput`,
-`CreateGameService`, `GameResult` e `GameApplicationMappings` ficam em
-Application/Games; Request, Response, mapping HTTP e Controller ficam em
-Presentation/Features/Games.
-
-## 3. Criar ou alterar a entidade
-
-O endpoint de criação usa `Game.Create`, e a atualização usa
-`Game.ChangeDetails`.
-
-```csharp
-public static Game Create(
-    string title,
-    string description,
-    string category,
-    decimal basePrice,
-    DateTimeOffset createdAtUtc) =>
-    new(
-        Guid.NewGuid(),
-        title,
-        description,
-        category,
-        basePrice,
-        createdAtUtc);
-
-public void ChangeDetails(
-    string title,
-    string description,
-    string category,
-    decimal basePrice)
-{
-    Title = NormalizeTitle(title);
-    Description = NormalizeDescription(description);
-    Category = NormalizeCategory(category);
-    BasePrice = GamePrice.Create(basePrice);
-}
-
-private static string NormalizeTitle(string? title)
-{
-    if (string.IsNullOrWhiteSpace(title))
-    {
-        throw new DomainRuleViolationException(
-            "O título é obrigatório.");
-    }
-
-    var normalized = title.Trim();
-    if (normalized.Length is
-        < MinimumTitleLength or > MaximumTitleLength)
-    {
-        throw new DomainRuleViolationException(
-            "O tamanho do título é inválido.");
-    }
-
-    return normalized;
-}
-```
-
-Regra: mantenha invariantes dentro da entidade quando definem estado válido.
-
-## 4. Criar Request e Response HTTP
-
-Requests pertencem a Presentation. O record existente é:
-
-```csharp
-using System.ComponentModel.DataAnnotations;
-
-public sealed record CreateGameRequest(
-    [Required, StringLength(160, MinimumLength = 2)]
-    string Title,
-
-    [StringLength(4000)]
-    string Description,
-
-    [Required, StringLength(80)]
-    string Category,
-
-    [Range(0, double.MaxValue)]
-    decimal BasePrice);
-```
-
-As anotações antecipam erros simples como resposta `400`. Não reutilize entidade
-de Domain como body HTTP e mantenha no domínio as invariantes necessárias para
-impedir a criação de estado inválido fora do endpoint.
-
-Responses também pertencem a Presentation:
-
-```csharp
-public sealed record GameResponse(
-    Guid Id,
-    string Title,
-    string Description,
-    string Category,
-    decimal BasePrice,
-    bool IsActive);
-```
-
-## 5. Criar Input e Result da Application
-
-O input existente:
-
-```csharp
-public sealed record CreateGameInput(
-    string Title,
-    string Description,
-    string Category,
-    decimal BasePrice);
-```
-
-O Result representa a saída do caso de uso sem semântica HTTP:
-
-```csharp
-public sealed record GameResult(
-    Guid Id,
-    string Title,
-    string Description,
-    string Category,
-    decimal BasePrice,
-    bool IsActive);
-```
-
-Não devolva `GameResponse` ou `GameSnapshot` pelo service. Presentation converte
-o Result para Response; a fachada do módulo converte o Result para Snapshot.
-
-## 6. Command, Query, Handler ou Service
-
-Estado atual:
-
-- não existem Commands;
-- não existem Queries/Handlers de CQRS na Application;
-- não existem Handlers;
-- casos de uso são classes `*Service` com `ExecuteAsync`.
-
-Portanto, não introduza um Handler isolado em apenas uma funcionalidade sem decisão arquitetural.
-
-Consulta existente:
-
-```csharp
-public sealed class GetGameService(IGameRepository games)
-{
-    public async Task<GameResult?> ExecuteAsync(
-        Guid id,
-        CancellationToken cancellationToken)
-    {
-        var game = await games.GetAsync(id, cancellationToken);
-        return game is null
-            ? null
-            : GameApplicationMappings.ToResult(game);
-    }
-}
-```
-
-Alteração existente:
-
-```csharp
-public sealed class CreateGameService(
-    IGameRepository games,
-    ICatalogUnitOfWork unitOfWork,
-    TimeProvider clock)
-{
-    public async Task<GameResult> ExecuteAsync(
-        CreateGameInput input,
-        CancellationToken cancellationToken)
-    {
-        var game = Game.Create(
-            input.Title,
-            input.Description,
-            input.Category,
-            input.BasePrice,
-            clock.GetUtcNow());
-
-        await games.AddAsync(game, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return GameApplicationMappings.ToResult(game);
-    }
-}
-```
-
-## 7. Implementar validação
-
-Estado atual:
-
-- `[ApiController]` executa validação/model binding do ASP.NET Core;
-- alguns checks de entrada ficam no service;
-- invariantes ficam no Domain;
-- limites persistidos também são invariantes do Domain;
-- não há classes `*Validator` nem pacote FluentValidation.
-
-Para `Game`, título, descrição, categoria e preço são protegidos no Domain. A
-Presentation antecipa limites simples por Data Annotations e pode retornar todos
-os erros de `ModelState`. A Application valida somente regras próprias do caso
-de uso, como a política de senha no cadastro; uma violação que alcançar o Domain
-é traduzida para 422.
-
-```text
-TODO: confirmar com a equipe se validators dedicados serão adotados.
-```
-
-Enquanto o padrão não mudar, valide estado da entidade no Domain e coordenação no service. Não coloque regra no Controller.
-
-## 8. Criar a interface do repository
-
-Interfaces de persistência pertencem ao Domain:
-
-```csharp
-public interface IGameRepository
-{
-    Task AddAsync(
-        Game game,
-        CancellationToken cancellationToken);
-
-    Task<Game?> GetAsync(
-        Guid id,
-        CancellationToken cancellationToken);
-
-    Task<IReadOnlyList<Game>> ListAsync(
-        bool onlyActive,
-        CancellationToken cancellationToken);
-}
-```
-
-Adicione somente operações necessárias ao caso de uso. Não exponha `IQueryable`.
-
-## 9. Implementar o repository
-
-Infrastructure implementa EF Core:
-
-```csharp
-internal sealed class GameRepository(
-    CatalogDbContext dbContext) : IGameRepository
-{
-    public async Task AddAsync(
-        Game game,
-        CancellationToken cancellationToken) =>
-        await dbContext.Games.AddAsync(game, cancellationToken);
-
-    public Task<Game?> GetAsync(
-        Guid id,
-        CancellationToken cancellationToken) =>
-        dbContext.Games.SingleOrDefaultAsync(
-            game => game.Id == id,
-            cancellationToken);
-}
-```
-
-Consultas somente leitura devem usar `AsNoTracking()`, como `ListAsync`.
-
-## 10. Configurar persistência
-
-O mapping fica em `CatalogDbContext.OnModelCreating`:
-
-```csharp
-modelBuilder.HasDefaultSchema("catalog");
-modelBuilder.Entity<Game>(builder =>
-{
-    builder.ToTable("games");
-    builder.HasKey(game => game.Id);
-    builder.Property(game => game.Title)
-        .HasColumnName("title")
-        .HasMaxLength(160)
-        .IsRequired();
-    builder.Property(game => game.BasePrice)
-        .HasColumnName("base_price")
-        .HasConversion(priceConverter)
-        .HasPrecision(12, 2)
-        .IsRequired();
-});
-```
-
-Se a mudança não altera schema, nenhuma migration é necessária.
-
-## 11. Criar migration
-
-Migrations são geradas pelo EF Core no projeto central:
-
-```text
-src/Database/FiapCloudGames.Database.Migrations/Migrations/
-```
-
-Restaure a ferramenta local:
+A regra e o dado devem pertencer ao mesmo bounded context:
+
+- identidade e credenciais: Identity;
+- jogo e preço base: Catalog;
+- desconto e vigência: Promotions;
+- aquisição e biblioteca: Library.
+
+Se a feature precisar de outro módulo, consuma somente Contracts do fornecedor.
+
+## 2. Definir comportamento e invariantes
+
+Antes do contrato HTTP, descreva:
+
+- resultado esperado;
+- estados válidos e inválidos;
+- autorização necessária;
+- efeitos persistentes;
+- conflitos e falhas;
+- dependências entre módulos;
+- comportamento em repetição e concorrência.
+
+Invariantes que mantêm uma entidade válida pertencem ao Domain. Coordenação,
+existência de recursos e políticas do caso de uso pertencem à Application.
+
+## 3. Implementar a Application
+
+Uma feature normalmente:
+
+1. recebe Input ou argumentos sem semântica HTTP;
+2. consulta repositories ou portas por abstrações;
+3. coordena Domain e Contracts externos;
+4. confirma a unidade de trabalho do próprio módulo;
+5. devolve Result sem tipos de Presentation;
+6. propaga `CancellationToken`.
+
+Application não depende de `DbContext`, `HttpContext`, Controller, Request ou
+Response. A identidade atual é obtida por `ICurrentUserContext`.
+
+Siga a convenção vigente encontrada no código. Não introduza outro padrão de
+Command/Handler apenas em uma feature isolada.
+
+## 4. Adaptar HTTP em Presentation
+
+Presentation:
+
+- declara Request e Response;
+- aplica validações simples do contrato;
+- converte Request para Input;
+- chama o serviço da feature;
+- converte Result para Response;
+- declara rota, status e autorização;
+- mantém regra de negócio fora do Controller.
+
+Criações devem produzir um `Location` resolvível quando existir leitura do
+recurso. Erros usam o contrato global Problem Details.
+
+A lista atual de rotas e schemas não é mantida neste guia: ela pertence ao
+OpenAPI.
+
+## 5. Implementar persistência quando necessária
+
+Interfaces de repository pertencem ao Domain quando representam acesso ao
+agregado. Portas de leitura específicas podem pertencer à Application.
+
+Infrastructure implementa essas abstrações, aplica tracking apenas na escrita e
+não expõe `IQueryable` para outras camadas.
+
+Se o mapping mudar, gere uma migration EF Core no contexto correto, revise
+`Up`, `Down` e snapshot e considere compatibilidade de implantação. Consulte
+[database-migrations.md](database-migrations.md).
+
+## 6. Registrar dependências
+
+Registre services da Application no módulo e implementações técnicas em
+Infrastructure. Um novo módulo Presentation também precisa ser descoberto pelo
+host.
+
+O container deve conseguir construir a aplicação sem criar dependência de
+Application para Infrastructure.
+
+## 7. Erros e validação
+
+Use as categorias existentes de `AppException`. Não crie uma exceção ou código
+HTTP para cada regra.
+
+- contrato/model binding inválido: 400;
+- autenticação ausente ou recusada: 401;
+- autorização insuficiente: 403;
+- recurso ausente: 404;
+- conflito: 409;
+- regra não processável: 422;
+- falha inesperada: 500 sanitizado.
+
+Consulte [validação](validation.md), [tratamento de erros](error-handling.md) e
+[contrato público](../api/errors.md).
+
+## 8. Logging
+
+Use `ILogger<T>` com templates estruturados. Registre identificadores e efeitos
+úteis, nunca senha, token, e-mail sem necessidade, connection string ou body de
+autenticação.
+
+Preserve a correlação da requisição e deixe o middleware registrar respostas 4xx
+e falhas inesperadas. Consulte
+[logging e monitoramento](../operations/logging-monitoring.md).
+
+## 9. Testes
+
+Cubra comportamento específico em Domain e Application:
+
+- caminho feliz;
+- fronteiras;
+- falhas semânticas;
+- efeitos e ausência de persistência quando o fluxo falha.
+
+Testes transversais só mudam quando a feature altera uma regra global, o
+pipeline, o contrato de erros, a arquitetura ou a convenção de persistência.
+
+Execute:
 
 ```powershell
-dotnet tool restore
-$env:ConnectionStrings__Database = "Host=localhost;Port=5432;Database=fiap_cloud_games;Username=postgres;Password=<senha-local>"
-```
-
-Depois de alterar o mapping de Catalog, gere a migration:
-
-```powershell
-dotnet tool run dotnet-ef migrations add AddGamePublisher `
-  --context CatalogDbContext `
-  --project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
-  --startup-project src/Database/FiapCloudGames.Database.Migrations/FiapCloudGames.Database.Migrations.csproj `
-  --output-dir Migrations/Catalog
-```
-
-Revise os arquivos `Up`, `Down` e o snapshot gerados. Para aplicar todos os
-contextos:
-
-```powershell
-dotnet run --project src/Database/FiapCloudGames.Database.Migrations
-```
-
-Use a pasta `Migrations/Identity`, `Migrations/Promotions` ou
-`Migrations/Library` quando a alteração pertencer a outro contexto. Veja
-[EF Core Migrations](database-migrations.md).
-
-## 12. Criar o Controller e a rota
-
-Consulta:
-
-```csharp
-[AllowAnonymous]
-[HttpGet("{id:guid}")]
-public async Task<ActionResult<GameResponse>> Get(
-    Guid id,
-    [FromServices] GetGameService service,
-    CancellationToken cancellationToken)
-{
-    var result = await service.ExecuteAsync(
-        id,
-        cancellationToken);
-
-    return result is null
-        ? NotFound()
-        : Ok(result.ToResponse());
-}
-```
-
-Alteração:
-
-```csharp
-[Authorize(Roles = "Administrator")]
-[HttpPost]
-public async Task<ActionResult<GameResponse>> Create(
-    CreateGameRequest request,
-    [FromServices] CreateGameService service,
-    CancellationToken cancellationToken)
-{
-    var result = await service.ExecuteAsync(
-        request.ToInput(),
-        cancellationToken);
-
-    var response = result.ToResponse();
-
-    return CreatedAtAction(
-        nameof(Get),
-        new { id = response.Id },
-        response);
-}
-```
-
-Convenções observadas:
-
-- base route `api/<recurso>`;
-- constraint `:guid`;
-- consulta pública com `[AllowAnonymous]`;
-- escrita administrativa com `[Authorize(Roles = "Administrator")]`;
-- `CancellationToken` propagado;
-- 201 com `Location` para criação;
-- 200 para consulta;
-- 404 quando `Get` retorna nulo.
-
-## 13. Registrar na injeção de dependência
-
-Em `FiapCloudGames.Catalog.Application/DependencyInjection.cs`:
-
-```csharp
-services.AddScoped<CreateGameService>();
-services.AddScoped<GetGameService>();
-```
-
-Repository e Unit of Work são registrados em Infrastructure:
-
-```csharp
-services.AddScoped<IGameRepository, GameRepository>();
-services.AddScoped<ICatalogUnitOfWork>(
-    provider => provider.GetRequiredService<CatalogDbContext>());
-```
-
-Um novo módulo Presentation também exige `AddApplicationPart` na API.
-
-## 14. Códigos HTTP e erros
-
-| Cenário | Resultado atual |
-|---|---|
-| criação válida | 201 |
-| consulta válida | 200 |
-| jogo não encontrado na consulta | 404 direto do MVC |
-| ID inexistente na atualização | 404 Problem Details |
-| campo/formato inválido | 400 Problem Details |
-| regra de negócio não processável | 422 Problem Details |
-| conflito de estado/duplicidade | 409 Problem Details |
-| sem token em rota admin | 401 |
-| role incorreta | 403 |
-| erro inesperado | 500 |
-
-Não use 409 na documentação de uma action sem implementar exceção/mapeamento correspondente.
-
-## 15. Logs
-
-O padrão atual não injeta `ILogger` nos services/Controllers. O middleware
-registra falhas funcionais em `Information` e falhas 500 em `Error`. A
-configuração base eleva a categoria do middleware para `Warning`, portanto os
-eventos funcionais ficam suprimidos por padrão.
-
-```text
-TODO: política de logs de negócio não identificada.
-```
-
-Se logging de caso de uso for necessário, defina primeiro eventos, nível e dados proibidos; nunca registre senha, JWT ou connection string.
-
-## 16. Testes unitários
-
-Teste real de regra:
-
-```csharp
-[Fact]
-public void CreateShouldRejectNegativePrice()
-{
-    var createdAtUtc = new DateTimeOffset(
-        2026, 1, 10, 12, 0, 0, TimeSpan.Zero);
-
-    var exception = Assert.Throws<DomainRuleViolationException>(() =>
-        Game.Create(
-            "Cloud Quest",
-            "Aventura",
-            "RPG",
-            -0.01m,
-            createdAtUtc));
-
-    Assert.Equal(
-        "O preço base não pode ser negativo.",
-        exception.Message);
-}
-```
-
-O repositório não contém biblioteca de mocks. Services não possuem testes unitários atuais; ao adicioná-los, um fake manual de `IGameRepository` é compatível sem novo pacote.
-
-## 17. Teste de integração
-
-A infraestrutura existente usa:
-
-```csharp
-public sealed class FiapCloudGamesApiFactory
-    : WebApplicationFactory<Program>
-```
-
-Ela protege o pipeline, autenticação, autorização, Problem Details, OpenAPI,
-logging e health check. Os testes específicos da feature permanecem em Domain e
-Application; um endpoint que segue as convenções existentes não exige teste HTTP
-próprio.
-
-Persistência real não faz parte do padrão transversal da API. Caso um endpoint
-introduza comportamento HTTP excepcional, adicione um teste de host direcionado
-ao contrato novo, sem repetir as regras de negócio da feature.
-
-## 18. OpenAPI
-
-Controllers e seus contratos são descobertos pelo MVC/Application Parts. Depois
-da alteração:
-
-```powershell
-dotnet run --project src/Api/FiapCloudGames.Api --launch-profile https
-Invoke-WebRequest https://localhost:7080/swagger/v1/swagger.json
-```
-
-Procure a rota e confirme método, request, response e requisito de autorização.
-O Swagger UI é exposto em `Development`.
-
-## 19. Chamada manual
-
-Criar:
-
-```http
-POST /api/games
-Authorization: Bearer {admin-token}
-Content-Type: application/json
-
-{
-  "title": "Cloud Quest",
-  "description": "Aventura cooperativa",
-  "category": "RPG",
-  "basePrice": 99.90
-}
-```
-
-Resposta 201:
-
-```json
-{
-  "id": "00000000-0000-0000-0000-000000000000",
-  "title": "Cloud Quest",
-  "description": "Aventura cooperativa",
-  "category": "RPG",
-  "basePrice": 99.90,
-  "isActive": true
-}
-```
-
-O UUID acima é ilustrativo; a aplicação gera um valor novo.
-
-Consultar:
-
-```http
-GET /api/games/{id}
-```
-
-## 20. Validar
-
-```powershell
-dotnet restore FiapCloudGames.sln
-dotnet build FiapCloudGames.sln --no-restore
+dotnet build FiapCloudGames.sln
 dotnet test FiapCloudGames.sln --no-build --no-restore
 dotnet format FiapCloudGames.sln --verify-no-changes --no-restore
 ```
 
-## Checklist final
+O relatório do comando é a fonte do estado atual da suíte.
 
-- [ ] O endpoint está no módulo correto.
-- [ ] A regra não está no Controller.
+## 10. Validar OpenAPI
+
+Inicie a API em Development e confirme no OpenAPI:
+
+- rota e método;
+- parâmetros e body;
+- respostas declaradas;
+- content types;
+- requisito de segurança.
+
+Não atualize uma lista manual de endpoints.
+
+## Checklist
+
+- [ ] A feature pertence ao bounded context correto.
 - [ ] Domain preserva estado válido.
-- [ ] Input/output não expõem entidade.
-- [ ] Dependências externas usam Contracts.
-- [ ] Repository não expõe `IQueryable`.
-- [ ] Mapping e migration estão sincronizados.
-- [ ] Service e repository foram registrados.
-- [ ] Status HTTP corresponde à implementação.
-- [ ] Autenticação/autorização foram revisadas.
-- [ ] `CancellationToken` foi propagado.
-- [ ] Testes unitários foram criados.
-- [ ] Infraestrutura de integração foi considerada.
-- [ ] Migration foi validada em PostgreSQL, quando aplicável.
-- [ ] OpenAPI foi verificado em Development.
-- [ ] README do módulo e documentação central foram atualizados.
-- [ ] Logs não contêm dados sensíveis.
-- [ ] Links Markdown funcionam.
+- [ ] Application depende de abstrações.
+- [ ] Integrações usam Contracts.
+- [ ] Presentation apenas adapta HTTP.
+- [ ] Entidades não atravessam fronteiras.
+- [ ] Persistência e migration estão sincronizadas.
+- [ ] Autenticação e autorização foram revisadas.
+- [ ] Erros seguem Problem Details.
+- [ ] Logging não expõe dados sensíveis.
+- [ ] Testes específicos cobrem o comportamento.
+- [ ] OpenAPI representa o contrato resultante.
+- [ ] Documentação manual mudou apenas se uma regra ou procedimento mudou.

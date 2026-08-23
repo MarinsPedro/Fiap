@@ -1,31 +1,45 @@
 # Documentação do FIAP Cloud Games
 
-Este é o índice central. Os documentos descrevem somente o estado comprovado pelo repositório; recomendações e informações ausentes são identificadas explicitamente.
+Esta documentação registra decisões de desenho, contratos, regras e formas de
+trabalhar no projeto. Ela não mantém manualmente inventários que o código e as
+ferramentas já conseguem produzir.
 
-## Para quem acabou de chegar
+## Fontes de verdade dinâmicas
 
-- [Inventário do repositório](repository-inventory.md)
+| Assunto | Fonte de verdade |
+|---|---|
+| API HTTP | OpenAPI em `/swagger/v1/swagger.json` durante Development |
+| SDK | política em `global.json`; seleção local em `dotnet --version` |
+| dependências | `Directory.Packages.props` e `*.csproj` |
+| projetos | `dotnet sln FiapCloudGames.sln list` |
+| testes | `dotnet test FiapCloudGames.sln` |
+| migrations | assembly e diretórios do projeto de migrations |
+
+Os documentos manuais explicam como interpretar e preservar essas fontes, sem
+copiar suas listas completas.
+
+## Onboarding
+
 - [Primeiros passos](onboarding/getting-started.md)
 - [Ambiente local](onboarding/local-environment.md)
-- [Primeira tarefa](onboarding/first-task.md)
+- [Primeira contribuição](onboarding/first-task.md)
 - [Checklist de onboarding](onboarding/onboarding-checklist.md)
 
-## Para entender o sistema
+## Arquitetura
 
-- [Visão geral da arquitetura](architecture/overview.md)
-- [Modelo de domínio](architecture/domain-model.md)
-- [Objetos e contratos por fronteira](architecture/data-contracts.md)
+- [Visão geral](architecture/overview.md)
 - [Módulos](architecture/modules.md)
 - [Camadas](architecture/layers.md)
 - [Dependências](architecture/dependencies.md)
+- [Comunicação e contratos](architecture/data-contracts.md)
+- [Modelo de domínio](architecture/domain-model.md)
 - [Fluxo de requisição](architecture/request-flow.md)
-- [Decisões e riscos](architecture/decisions.md)
+- [Restrições e riscos](architecture/decisions.md)
 - [Diagramas](architecture/diagrams.md)
-- [Índice de ADRs](adr/README.md)
 
-## Para desenvolver funcionalidades
+## Desenvolvimento
 
-- [Criar um endpoint do zero](development/creating-an-endpoint.md)
+- [Criar uma feature HTTP](development/creating-an-endpoint.md)
 - [Regras de negócio](development/business-rules.md)
 - [Persistência](development/persistence.md)
 - [Migrations](development/database-migrations.md)
@@ -36,46 +50,38 @@ Este é o índice central. Os documentos descrevem somente o estado comprovado p
 - [Padrões de código](development/coding-standards.md)
 - [Padrões de documentação](development/documentation-standards.md)
 
-## Para testar
+## API
 
-- [Visão geral dos testes](testing/overview.md)
-- [Testes unitários](testing/unit-tests.md)
-- [Testes de integração](testing/integration-tests.md)
-- [Testes de arquitetura](testing/architecture-tests.md)
-- [Dados de teste](testing/test-data.md)
-
-## Para consumir a API
-
-- [Visão geral](api/overview.md)
+- [Visão geral e OpenAPI](api/overview.md)
 - [Convenções](api/conventions.md)
 - [Autenticação](api/authentication.md)
 - [Erros](api/errors.md)
-- [Endpoints](api/endpoints.md)
 
-## Para operar e publicar
+## Testes
+
+- [Estratégia](testing/overview.md)
+- [Testes unitários](testing/unit-tests.md)
+- [Testes transversais](testing/transversal-tests.md)
+- [Integração](testing/integration-tests.md)
+- [Arquitetura](testing/architecture-tests.md)
+- [Dados de teste](testing/test-data.md)
+
+## Operações
 
 - [Índice de operações](operations/README.md)
 - [Docker](operations/docker.md)
 - [Health checks](operations/health-checks.md)
-- [Logs e monitoramento](operations/logging-monitoring.md)
+- [Logging e monitoramento](operations/logging-monitoring.md)
 - [CI/CD](operations/ci-cd.md)
-- [Deploy](operations/deployment.md)
+- [Deployment](operations/deployment.md)
 - [Troubleshooting](operations/troubleshooting.md)
-
-## Documentação junto ao código
-
-- [API](../src/Api/FiapCloudGames.Api/README.md)
-- [Migrador](../src/Database/FiapCloudGames.Database.Migrations/README.md)
-- [Identity](../src/Modules/Identity/README.md)
-- [Catalog](../src/Modules/Catalog/README.md)
-- [Library](../src/Modules/Library/README.md)
-- [Promotions](../src/Modules/Promotions/README.md)
-- [Testes](../tests/README.md)
 
 ## Governança
 
 - [Como contribuir](../CONTRIBUTING.md)
 - [Changelog](../CHANGELOG.md)
-- [Definition of Done da documentação](development/documentation-standards.md#definition-of-done-da-documentação)
+- [Pendências consolidadas](backlog.md)
+- [Padrões de documentação](development/documentation-standards.md)
 
-Ao encontrar divergência entre documentação e código, trate o código/configuração versionados como evidência do estado atual, abra uma correção documental e registre a decisão em ADR quando for arquitetural.
+Ao encontrar divergência entre texto e uma fonte dinâmica, corrija o documento
+que explica a regra, mas não crie outro inventário manual do estado do código.

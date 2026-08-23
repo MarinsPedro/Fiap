@@ -1,77 +1,55 @@
 # Autenticação da API
 
-## Cadastro
+## Contrato
+
+A API usa Bearer JWT. Identity valida a credencial, emite o token e o host aplica
+autenticação e autorização antes dos controllers.
+
+O OpenAPI é a fonte de verdade para descobrir quais operações são públicas,
+autenticadas ou restritas a Administrator.
+
+## Fluxo
+
+```text
+credencial
+→ Identity valida e-mail, senha e estado do usuário
+→ token JWT assinado é emitido
+→ cliente envia Authorization: Bearer <token>
+→ host valida assinatura, issuer, audience e expiração
+→ autorização avalia autenticação e role
+```
+
+O token contém identificador do usuário, e-mail, papel, instante de emissão e
+identificador do token. A validade implementada é de duas horas e a tolerância de
+relógio na validação é de um minuto.
+
+## Papéis
+
+- `User`: identidade autenticada e operações da própria conta;
+- `Administrator`: operações administrativas.
+
+Novos cadastros recebem `User`. O administrador inicial é criado pelo migrador;
+não há operação pública para elevar privilégios.
+
+## Identidade atual
+
+Application não acessa `HttpContext` diretamente. O host adapta claims para
+`ICurrentUserContext`, e os serviços obtêm o identificador autenticado por essa
+abstração.
+
+## Uso
+
+Após obter um token pela operação de login indicada no OpenAPI:
 
 ```http
-POST /api/users
-Content-Type: application/json
-
-{
-  "name": "Aluno FIAP",
-  "email": "aluno@example.com",
-  "password": "<senha-forte-com-8-ou-mais-caracteres>"
-}
+Authorization: Bearer <token>
 ```
 
-Resposta `201 Created`:
-
-```json
-{
-  "id": "11111111-1111-1111-1111-111111111111",
-  "name": "Aluno FIAP",
-  "email": "aluno@example.com",
-  "role": "User",
-  "isActive": true
-}
-```
-
-## Login
-
-```http
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "aluno@example.com",
-  "password": "<senha-local>"
-}
-```
-
-Resposta `200 OK`:
-
-```json
-{
-  "accessToken": "<jwt>",
-  "expiresAtUtc": "2026-07-23T14:00:00+00:00",
-  "user": {
-    "id": "11111111-1111-1111-1111-111111111111",
-    "name": "Aluno FIAP",
-    "email": "aluno@example.com",
-    "role": "User",
-    "isActive": true
-  }
-}
-```
-
-## Chamada autenticada
-
-```powershell
-$token = "<jwt-retornado-pelo-login>"
-Invoke-RestMethod `
-  -Uri "http://localhost:5080/api/users/me" `
-  -Headers @{ Authorization = "Bearer $token" }
-```
-
-## Autorização
-
-- `[Authorize]`: qualquer usuário autenticado.
-- `[Authorize(Roles = "Administrator")]`: somente administrador.
-
-O administrador inicial é criado pelo migrador, não pela API pública. Veja
-[autenticação e autorização no desenvolvimento](../development/authentication-authorization.md).
+Respostas sem credencial válida usam 401. Um token válido sem a role necessária
+usa 403. Ambas seguem o contrato descrito em [erros](errors.md).
 
 ## Limitações
 
-O access token dura duas horas. Não há refresh token, revogação, MFA,
-recuperação de senha ou troca de papel por endpoint.
-
+Não há refresh token, revogação, MFA, recuperação de senha ou confirmação de
+e-mail. O ciclo de vida de credenciais é acompanhado em
+[DOC-005](../backlog.md).

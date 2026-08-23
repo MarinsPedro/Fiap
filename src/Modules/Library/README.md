@@ -1,67 +1,42 @@
 # Módulo Library
 
-## Propósito e responsabilidades
+## Responsabilidade
 
-Library representa a coleção adquirida por um usuário e registra o identificador
-do jogo e um snapshot do preço, promoção e instante da aquisição. O título não é
-persistido: ele é consultado no Catalog ao montar a resposta.
+Library representa a coleção adquirida por um usuário e preserva o snapshot
+necessário para explicar cada aquisição.
 
-## Camadas
+## Fronteira
 
-| Projeto | Responsabilidade |
-|---|---|
-| `FiapCloudGames.Library.Domain` | agregado `GameLibrary`, `LibraryGame` e `AcquisitionPrice` |
-| `FiapCloudGames.Library.Application` | `UserLibrary/` com aquisição/consulta e `Abstractions/` com `ILibraryQueries` e `LibraryGameReadModel` |
-| `FiapCloudGames.Library.Contracts` | arquivos separados para `GetUserLibraryQuery`, snapshots e `ILibraryModule` |
-| `FiapCloudGames.Library.Infrastructure` | EF Core, repositório, query e unidade de trabalho |
-| `FiapCloudGames.Library.Presentation` | `Features/UserLibrary/` com Responses, mapping e `LibraryController` |
+Library mantém seu agregado e persistência internamente. Usuário, jogo e promoção
+são referências lógicas; não existem entidades ou foreign keys atravessando os
+bounded contexts.
 
-Casos de uso atuais: `AcquireGameService` e `GetLibraryService`, ambos com
-`ExecuteAsync`. `LibraryModule` adapta o resultado da Application para os
-Snapshots públicos internos.
+## Regras duráveis
 
-## Endpoints
-
-- `GET /api/library` — usuário autenticado;
-- `POST /api/library/games/{gameId}` — usuário autenticado.
-
-## Persistência
-
-`LibraryDbContext` é dono de `library.game_libraries` e
-`library.library_games`. IDs de usuário, jogo e promoção são referências lógicas;
-não há chaves estrangeiras para outros schemas.
+- o usuário atual é obtido por `ICurrentUserContext`;
+- usuário e jogo precisam estar disponíveis na aquisição;
+- o mesmo jogo não pode ser adquirido duas vezes pela mesma biblioteca;
+- preço, promoção e instante são preservados como snapshot;
+- o título continua sendo dado mestre de Catalog;
+- aquisição não executa pagamento;
+- leitura usa projeção sem tracking antes de produzir o resultado.
 
 ## Integrações
 
-Application depende de:
+Library consulta Identity, Catalog e Promotions somente pelas interfaces de
+Contracts. Cada módulo confirma sua própria unidade de trabalho; não há transação
+distribuída.
 
-- `IIdentityModule` para conferir usuário;
-- `ICatalogModule` para conferir jogo/preço;
-- `IPromotionsModule` para cotar desconto.
+## API e testes
 
-Essas dependências usam exclusivamente projetos Contracts, regra protegida por
-teste de arquitetura. Não há evento de integração implementado.
-
-## Regras principais
-
-- usuário e jogo ativos;
-- uma biblioteca por usuário;
-- jogo sem duplicidade;
-- snapshot de preço/promoção;
-- aquisição sem processamento de pagamento.
-
-Veja [regras de negócio](../../../docs/development/business-rules.md) e
-[fluxo de requisição](../../../docs/architecture/request-flow.md).
-
-## Testar
+O OpenAPI é a fonte de verdade para as operações HTTP. A suíte do módulo pode ser
+executada com:
 
 ```powershell
 dotnet test tests/Unit/FiapCloudGames.Library.UnitTests
 ```
 
-## Evolução
-
-- `TODO: definir pagamento, idempotência e compensação.`
-- `TODO: definir concorrência para aquisições simultâneas.`
-- `TODO: definir se a aquisição precisa de integração assíncrona e outbox.`
-- `TODO: adicionar GET do item ou corrigir o Location da criação.`
+Consulte [fluxo de requisição](../../../docs/architecture/request-flow.md) e
+[regras de negócio](../../../docs/development/business-rules.md). Pagamento e
+concorrência são acompanhados em
+[DOC-003 e DOC-004](../../../docs/backlog.md).

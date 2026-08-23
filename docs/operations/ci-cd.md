@@ -46,6 +46,6 @@ flowchart LR
 - aprovação para migrations e produção;
 - smoke test e rollback testado.
 
-`TODO: escolher a plataforma de CI/CD, política de branches, registry, ambientes e
-responsáveis por aprovação.`
+Plataforma de CI/CD, branches, registry, ambientes e aprovações são acompanhados
+em [DOC-001](../backlog.md) e [DOC-007](../backlog.md).
 

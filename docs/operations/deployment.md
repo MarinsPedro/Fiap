@@ -48,8 +48,8 @@ contexto com `dotnet tool run dotnet-ef database update <migration> --context
 <DbContext>`, mas o repositório ainda não possui automação ou estratégia
 operacional aprovada para isso.
 
-`TODO: definir versionamento, backup/restore, matriz de compatibilidade e
-procedimento testado de rollback.`
+Versionamento, backup/restore, compatibilidade e rollback são acompanhados em
+[DOC-007](../backlog.md).
 
 ## Requisitos antes de produção
 

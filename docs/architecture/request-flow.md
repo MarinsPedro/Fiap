@@ -6,6 +6,7 @@
 Cliente
 → ClientErrorLoggingMiddleware
 → ExceptionHandlingMiddleware
+→ StatusCodePages
 → CORS
 → Authentication
 → Authorization
@@ -21,6 +22,9 @@ Cliente
 O middleware de logging envolve o tratamento de exceções e registra a resposta
 4xx já normalizada. O middleware de exceções captura falhas enquanto a resposta
 não tiver começado e preserva a exceção completa somente no log de 500.
+
+`StatusCodePages` completa respostas vazias do framework, como challenge, forbid
+e rota inexistente, usando o mesmo contrato Problem Details.
 
 ## Exemplo: adquirir um jogo
 
@@ -64,6 +68,7 @@ sequenceDiagram
 | Unit of Work | chama `DbContext.SaveChangesAsync` |
 | Middleware de logs 4xx | registra status, tipo, rota, duração e `traceId` sem dados do corpo |
 | Middleware de exceções | converte exceções conhecidas em Problem Details |
+| StatusCodePages | normaliza respostas vazias produzidas pelo framework |
 
 ## Origens das respostas de erro
 

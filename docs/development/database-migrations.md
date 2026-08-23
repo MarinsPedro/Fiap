@@ -13,9 +13,8 @@ e snapshots separados para:
 | `PromotionsDbContext` | `Migrations/Promotions` | `infra.__EFMigrationsHistory_Promotions` |
 | `LibraryDbContext` | `Migrations/Library` | `infra.__EFMigrationsHistory_Library` |
 
-As tabelas de histórico ficam no schema técnico `infra`, fora do `public` exposto
-pelo Supabase/PostgREST. As tabelas de domínio continuam nos schemas `identity`,
-`catalog`, `promotions` e `library`.
+As tabelas de histórico ficam no schema técnico `infra`, separadas dos schemas
+de domínio `identity`, `catalog`, `promotions` e `library`.
 
 ## Aplicar todas as migrations
 

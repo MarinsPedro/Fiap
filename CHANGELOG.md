@@ -14,8 +14,8 @@ O repositório não informa uma estratégia de versionamento nem contém tags ou
 - documentação técnica central em português do Brasil;
 - guias de onboarding, arquitetura, desenvolvimento, testes, API e operações;
 - READMEs dos módulos, API, migrador e testes;
-- índice e template para Architecture Decision Records (ADRs);
 - política de contribuição e Definition of Done da documentação.
+- backlog documental consolidado para decisões pendentes.
 
 ### Estado funcional documentado
 
@@ -50,10 +50,17 @@ O repositório não informa uma estratégia de versionamento nem contém tags ou
   `Infrastructure`, mas continua proibindo `Presentation`.
 - a connection string deixou de ser armazenada no `appsettings.json` do
   migrador.
+- a documentação passou a tratar OpenAPI, `global.json`, projetos, migrations e
+  testes como fontes dinâmicas, evitando inventários manuais duplicados;
+- READMEs e guias passaram a priorizar responsabilidades, regras, contratos e
+  procedimentos duráveis;
+- pendências antes dispersas foram consolidadas em `docs/backlog.md`.
+
+### Removido
+
+- referência manual de endpoints duplicada pelo OpenAPI;
+- arquivos de ADR e diagrama draw.io, por decisão de escopo documental.
 
 ### Pendências conhecidas
 
-- TODO: definir versão inicial e processo de release;
-- TODO: implementar e documentar CI/CD;
-- TODO: definir alvo de deploy e rollback operacional;
-- TODO: adicionar observabilidade e health check de banco se exigidos pela operação.
+As decisões abertas estão consolidadas em `docs/backlog.md`.

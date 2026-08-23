@@ -1,53 +1,77 @@
 # Padrões de documentação
 
-## Objetivo
+## Princípio central
 
-A documentação deve permitir que uma pessoa configure, execute, altere, teste e
-opere o projeto sem depender de conhecimento oral. Ela descreve o estado real do
-repositório; propostas devem ser identificadas como recomendação ou `TODO`.
+A documentação manual explica por que o sistema foi desenhado de determinada
+forma, quais contratos e regras devem permanecer verdadeiros e como trabalhar no
+projeto.
+
+Se uma informação pode ser obtida de modo confiável pelo código, OpenAPI, build
+ou testes, não a duplique em Markdown.
+
+## Tipos de documentação
+
+### Manual e estável
+
+Use para:
+
+- arquitetura e fronteiras;
+- regras de negócio;
+- contratos transversais;
+- procedimentos de desenvolvimento e operação;
+- riscos, trade-offs e critérios de decisão.
+
+### Dinâmica
+
+Consulte diretamente a fonte para:
+
+- rotas, requests, responses e autorização por endpoint: OpenAPI;
+- SDK selecionado: `global.json` e `dotnet --version`;
+- projetos e dependências: solution e arquivos de projeto;
+- testes existentes e seu resultado: `dotnet test`;
+- migrations existentes: projeto de migrations.
+
+Não registre contagens ou listas completas desses itens em documentos manuais.
+
+### Gerada
+
+Quando uma visualização dinâmica for necessária em Markdown, produza-a por
+automação e marque o arquivo como gerado e não editável. O repositório ainda não
+possui esse fluxo; a decisão está em [DOC-011](../backlog.md).
+
+## Uma informação, um documento autoritativo
+
+Escolha um documento para explicar cada regra. Os demais devem criar links em
+vez de copiar o mesmo conteúdo. Exemplos:
+
+- pipeline HTTP: `architecture/request-flow.md`;
+- contrato de erros: `api/errors.md`;
+- migrations: `development/database-migrations.md`;
+- logging: `operations/logging-monitoring.md`.
 
 ## Convenções
 
 - Escreva em português do Brasil.
-- Use nomes exatos de projetos, namespaces, rotas e configurações.
-- Prefira links relativos entre documentos do repositório.
-- Marque exemplos não executáveis como ilustrativos.
+- Use nomes exatos quando eles forem necessários para localizar a fonte.
+- Prefira links relativos dentro do repositório.
+- Marque exemplos ilustrativos como tal.
 - Nunca inclua credenciais, tokens ou connection strings reais.
-- Use `TODO: descrição objetiva` quando a informação ou implementação não existir.
-- Registre decisões arquiteturais duráveis em `docs/adr/`.
-- Atualize `CHANGELOG.md` para mudanças relevantes.
+- Concentre pendências em [docs/backlog.md](../backlog.md).
+- Atualize `CHANGELOG.md` quando houver mudança relevante de comportamento.
 
-## Estrutura mínima de um guia
+## Definition of Done
 
-1. objetivo e escopo;
-2. estado atual;
-3. procedimento ou fluxo;
-4. exemplos;
-5. validação;
-6. riscos, limitações e TODOs;
-7. links relacionados.
-
-## Diagramas
-
-Use Mermaid quando o diagrama for melhor mantido como texto. Preserve rótulos
-curtos e nomes reais. O arquivo editável de Event Storming permanece em
-[`docs/EventStorming.drawio`](../EventStorming.drawio).
-
-## Definition of Done da documentação
-
-- [ ] README raiz ainda representa a execução real.
-- [ ] Índice em `docs/README.md` aponta para os documentos novos.
-- [ ] README do módulo foi atualizado quando seus contratos ou regras mudaram.
-- [ ] Endpoints, status, autorização e exemplos estão coerentes com controllers.
-- [ ] Configurações novas informam obrigatoriedade e forma segura de fornecimento.
-- [ ] Migration e estratégia de implantação estão documentadas.
-- [ ] Testes e comandos foram executados.
-- [ ] Links Markdown locais foram verificados.
-- [ ] Decisão arquitetural recebeu ADR, quando aplicável.
+- [ ] A documentação explica uma regra, decisão, contrato ou procedimento útil.
+- [ ] Informações dinâmicas apontam para sua fonte de verdade.
+- [ ] Não foi criada outra lista manual de endpoints, testes, services ou migrations.
+- [ ] O documento autoritativo foi atualizado sem copiar conteúdo para vários lugares.
+- [ ] Exemplos ainda representam o padrão arquitetural vigente.
+- [ ] Links locais foram verificados.
 - [ ] Nenhum segredo real foi adicionado.
+- [ ] Pendências novas foram consolidadas no backlog.
 
-## Revisão periódica
+## Automação desejada
 
-Não há responsável nem periodicidade formal definidos.
-
-`TODO: definir owners, frequência de revisão e automação de links/Markdown no CI.`
+Lint de Markdown, validação de links, line endings e geração/validação do OpenAPI
+devem ser incorporados ao fluxo de CI quando ele existir. Consulte
+[DOC-011](../backlog.md).

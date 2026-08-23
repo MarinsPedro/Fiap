@@ -61,5 +61,5 @@ Consulte [Camadas](../architecture/layers.md) e
 ## Mudanças estruturais
 
 Uma mudança nas fronteiras de módulo, comunicação, autenticação, persistência ou
-tratamento global de erros deve atualizar a documentação de arquitetura e, quando
-for uma decisão durável, receber um [ADR](../adr/README.md).
+tratamento global de erros deve atualizar o documento arquitetural autoritativo e
+o teste executável correspondente, quando a regra puder ser automatizada.

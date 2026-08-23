@@ -5,15 +5,23 @@
 Toda falha funcional da camada Application usa uma única exceção:
 
 ```text
-FiapCloudGames.Application.Common
-└── Exceptions
-    ├── AppErrorCategory.cs
-    └── AppException.cs
+Application.Common
+└── AppError + AppErrorCategory + AppException
+
+Presentation.Common
+└── ApiError + ApiProblemDetails + tipos/content types
+
+API
+└── catálogo, factory, middleware e configuração do pipeline
 ```
 
 `AppErrorCategory` contém somente categorias HTTP estáveis. Uma nova regra de
 negócio utiliza uma categoria existente e não exige outra exceção, código ou
 alteração no middleware.
+
+`Application.Common` preserva a semântica da falha sem depender de HTTP.
+`Presentation.Common` define o contrato serializável compartilhado pelas
+camadas Presentation. A API realiza a tradução e o logging.
 
 | Categoria | Status | Tipo |
 |---|---:|---|

@@ -4,15 +4,12 @@ Objetivo: obter build, testes, banco, migration, API, health check, OpenAPI e lo
 
 ## 1. Acesso e clone
 
-```text
-TODO: URL e processo de concessão de acesso ao repositório não identificados.
-```
-
-Depois de receber a URL:
+O processo de concessão de acesso depende de [DOC-001](../backlog.md). Para
+clonar o repositório público configurado atualmente:
 
 ```powershell
-git clone <URL_DO_REPOSITORIO>
-Set-Location <PASTA_CLONADA>
+git clone https://github.com/MarinsPedro/Fiap.git
+Set-Location Fiap
 ```
 
 Confirme que `FiapCloudGames.sln` está na pasta atual.
@@ -21,7 +18,7 @@ Confirme que `FiapCloudGames.sln` está na pasta atual.
 
 Obrigatórias:
 
-- .NET SDK 10.0.302 ou patch compatível;
+- SDK .NET compatível com a política definida em `global.json`;
 - Docker com Compose, para o fluxo recomendado;
 - Git.
 
@@ -34,13 +31,9 @@ docker compose version
 git --version
 ```
 
-O repositório não define IDE oficial.
-
-```text
-TODO: confirmar IDEs e sistemas operacionais oficialmente suportados.
-```
-
-Visual Studio, Rider ou VS Code são opções compatíveis com projetos .NET, mas constituem recomendação, não regra do repositório.
+O repositório não define IDE ou sistema operacional oficial. Visual Studio,
+Rider ou VS Code são opções possíveis, não requisitos. Consulte
+[DOC-008](../backlog.md).
 
 ## 3. Restaurar, compilar e testar
 
@@ -154,5 +147,5 @@ Isso preserva o volume do banco. Para exclusão do volume, leia o alerta em [Doc
 
 1. [Visão arquitetural](../architecture/overview.md);
 2. [Módulos](../architecture/modules.md);
-3. [Endpoints](../api/endpoints.md);
+3. [API e OpenAPI](../api/overview.md);
 4. [Primeira tarefa](first-task.md).

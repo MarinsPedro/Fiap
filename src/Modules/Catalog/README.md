@@ -1,59 +1,40 @@
 # Módulo Catalog
 
-## Propósito e responsabilidades
+## Responsabilidade
 
-Catalog mantém os jogos disponíveis, seus dados descritivos, categoria, preço
-base e estado ativo.
+Catalog é responsável pelo cadastro consultável de jogos, dados descritivos,
+categoria, preço base e disponibilidade.
 
-## Camadas
+## Fronteira
 
-| Projeto | Responsabilidade |
-|---|---|
-| `FiapCloudGames.Catalog.Domain` | agregado `Game`, `GamePrice` e repositório |
-| `FiapCloudGames.Catalog.Application` | `Games/` com create, update, get, list, mappings e `CatalogModule` |
-| `FiapCloudGames.Catalog.Contracts` | consultas individual/em lote, `GameSnapshot` e `ICatalogModule` |
-| `FiapCloudGames.Catalog.Infrastructure` | EF Core, repositório e unidade de trabalho |
-| `FiapCloudGames.Catalog.Presentation` | `Features/Games/` com Request, Response, mapping e `GamesController` |
+Catalog é a fonte de dados mestre do jogo. Outros módulos consultam snapshots por
+Contracts e não acessam sua entidade, repository ou persistência.
 
-Casos de uso atuais: `CreateGameService`, `UpdateGameService`,
-`GetGameService` e `ListGamesService`, todos com `ExecuteAsync`.
+## Regras duráveis
 
-## Endpoints
-
-- `GET /api/games` — público, somente ativos;
-- `GET /api/games/{id}` — público;
-- `POST /api/games` — Administrator;
-- `PUT /api/games/{id}` — Administrator.
-
-## Persistência
-
-`CatalogDbContext` é dono de `catalog.games`.
+- título e categoria são normalizados e validados;
+- descrição respeita o limite do domínio;
+- preço base não pode ser negativo;
+- jogos novos iniciam disponíveis;
+- operações públicas de catálogo respeitam o estado do jogo;
+- resultados de leitura não expõem entidades rastreadas;
+- alterações persistentes permanecem no schema de Catalog.
 
 ## Integrações
 
-Expõe `ICatalogModule`. Promotions usa a consulta em lote para validar jogos;
-Library usa a consulta individual na aquisição e a consulta em lote ao listar a
-biblioteca. Consumidores recebem `GameSnapshot`, nunca `Game` ou `GameResult`.
-Não há evento de integração implementado.
+Promotions consulta jogos para validar a abrangência de promoções. Library
+consulta jogos durante aquisição e leitura. Ambas dependem apenas de
+Catalog.Contracts.
 
-## Regras principais
+## API e testes
 
-- título entre 2 e 160 caracteres;
-- categoria obrigatória com até 80 caracteres;
-- descrição com até 4.000 caracteres;
-- preço não negativo e arredondado em duas casas;
-- novo jogo ativo;
-- listagem pública de ativos ordenada por título.
-
-Veja [regras de negócio](../../../docs/development/business-rules.md).
-
-## Testar
+O OpenAPI é a fonte de verdade para operações e contratos HTTP. A suíte de Domain
+e Application pode ser executada com:
 
 ```powershell
 dotnet test tests/Unit/FiapCloudGames.Catalog.UnitTests
 ```
 
-## Evolução
-
-- `TODO: definir moeda, paginação e busca.`
-- `TODO: definir se a desativação precisa de integração assíncrona e outbox.`
+Consulte [regras de negócio](../../../docs/development/business-rules.md).
+Pendências de escala e ciclo de vida estão em
+[DOC-002 e DOC-010](../../../docs/backlog.md).

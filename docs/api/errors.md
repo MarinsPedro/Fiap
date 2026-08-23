@@ -33,7 +33,7 @@ log. Validações com vários campos acrescentam `errors`.
   "traceId": "18904cfedc6a6bcb08f53c175daec39d",
   "errors": [
     {
-      "message": "O nome deve possuir entre 3 e 150 caracteres.",
+      "message": "O nome deve possuir entre 2 e 120 caracteres.",
       "field": "name"
     },
     {

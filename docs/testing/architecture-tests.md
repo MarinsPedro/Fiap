@@ -65,5 +65,5 @@ solução.
 ## Evolução
 
 Adicione uma regra somente para uma restrição estrutural objetiva. Mudanças
-duráveis na matriz de dependências devem ser refletidas na documentação de
-arquitetura e, quando necessário, em um ADR.
+duráveis na matriz de dependências devem ser refletidas no documento
+arquitetural autoritativo e nos testes que fiscalizam a nova direção.

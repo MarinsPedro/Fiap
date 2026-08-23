@@ -64,4 +64,4 @@ $env:Admin__Name = "Administrador local"
 - Não há rotação automatizada da chave JWT.
 - Não há recuperação de senha, MFA, confirmação de e-mail ou provedor externo.
 - Não há policies além da verificação de papéis.
-- `TODO: definir ciclo de vida de credenciais e rotação de segredos para produção.`
+- Ciclo de vida de credenciais e rotação de segredos: [DOC-005](../backlog.md).

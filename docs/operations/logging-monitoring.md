@@ -210,11 +210,11 @@ controlado.
 ## Validação automatizada
 
 Os testes
-[`LoggingConfigurationTests.cs`](../../tests/Integration/FiapCloudGames.Api.IntegrationTests/LoggingConfigurationTests.cs)
+[`LoggingConfigurationTests.cs`](../../tests/Integration/FiapCloudGames.Api.IntegrationTests/Host/LoggingConfigurationTests.cs)
 resolve `LoggerFactoryOptions` da aplicação e confirma que as opções
 `ActivityTrackingOptions.TraceId` e `ActivityTrackingOptions.SpanId` estão
 ativas. Já
-[`ClientErrorLoggingMiddlewareTests.cs`](../../tests/Integration/FiapCloudGames.Api.IntegrationTests/ClientErrorLoggingMiddlewareTests.cs)
+[`ClientErrorLoggingMiddlewareTests.cs`](../../tests/Integration/FiapCloudGames.Api.IntegrationTests/Components/ClientErrorLoggingMiddlewareTests.cs)
 verifica os níveis por status, os campos estruturados e a ausência de mensagens
 de validação nos logs.
 
@@ -255,5 +255,5 @@ A adoção de `ILogger<T>`, propriedades estruturadas e correlação com a
 `Activity` atual permite adicionar essas capacidades posteriormente sem alterar
 o contrato de logging dos serviços.
 
-`TODO: definir plataforma de observabilidade, retenção, alertas, política de
-dados e estratégia de exportação OTLP.`
+Plataforma de observabilidade, retenção, alertas, política de dados e exportação
+OTLP são acompanhadas em [DOC-006](../backlog.md).

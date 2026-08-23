@@ -2,71 +2,61 @@
 
 ## Propósito
 
-Host ASP.NET Core da solução. Ele compõe os quatro módulos, configura middleware,
-autenticação, autorização, CORS, OpenAPI e health checks.
+Host ASP.NET Core e composition root da solução. Ele compõe os módulos, adapta
+dependências externas e configura o pipeline HTTP.
 
-## Composição
+Regra central: o host não contém regras de negócio. Controllers pertencem a
+Presentation dos módulos e são carregados por Application Parts.
 
-O projeto referencia Presentation e Infrastructure de Identity, Catalog,
-Promotions e Library. Os controllers são carregados com `AddApplicationPart`; não
-ficam neste diretório.
+## Responsabilidades
 
-Pipeline:
+- registrar Presentation e Infrastructure dos módulos;
+- adaptar claims para `ICurrentUserContext`;
+- configurar JSON, CORS, autenticação e autorização;
+- normalizar erros com Problem Details;
+- configurar logging e correlação;
+- publicar OpenAPI em Development;
+- expor health checks.
 
-1. tratamento global de exceções;
-2. CORS;
-3. autenticação;
-4. autorização;
-5. OpenAPI somente em Development;
-6. health checks e controllers.
+O pipeline autoritativo está em
+[fluxo de requisição](../../../docs/architecture/request-flow.md).
+
+## Contrato HTTP
+
+O OpenAPI gerado é a fonte de verdade para operações, parâmetros, schemas,
+respostas e requisitos de segurança:
+
+```text
+/swagger/v1/swagger.json
+/swagger
+```
+
+Essas rotas existem somente em Development. Não mantenha uma lista manual de
+endpoints neste README.
 
 ## Executar
 
-Defina no mínimo:
+Forneça `ConnectionStrings__Database`, `Jwt__Key`, `Jwt__Issuer` e
+`Jwt__Audience`, depois execute:
 
 ```powershell
-$env:ConnectionStrings__Database = "Host=localhost;Port=5432;Database=fiap_cloud_games;Username=postgres;Password=<senha-local>"
-$env:Jwt__Key = "<chave-local-com-pelo-menos-32-caracteres>"
-dotnet run --project src/Api/FiapCloudGames.Api
+dotnet run --project src/Api/FiapCloudGames.Api --launch-profile https
 ```
 
-Perfis locais:
+A política de configuração e segredos está em
+[configuração](../../../docs/development/configuration.md).
 
-- `http://localhost:5080`;
-- `https://localhost:7080`;
-- OpenAPI em `/swagger/v1/swagger.json` somente em Development;
-- Swagger UI em `/swagger/index.html` somente em Development.
-
-## Configurações
-
-Veja [configuração](../../../docs/development/configuration.md). Nunca grave
-segredos reais nos arquivos `appsettings`.
-
-## Testes
+## Testar
 
 ```powershell
 dotnet test tests/Integration/FiapCloudGames.Api.IntegrationTests
 ```
 
-Os testes da API protegem contratos transversais e são separados em:
+A suíte protege o pipeline e contratos transversais. Regras de feature permanecem
+nos testes de Domain e Application.
 
-- `Host`: pipeline real com `WebApplicationFactory` e `HttpClient`;
-- `Components`: middlewares, factories e extensões compartilhadas;
-- `Contracts`: OpenAPI e convenções declaradas pelos controllers;
-- `Support`: infraestrutura exclusiva da suíte.
+## Limites
 
-Regras específicas de negócio permanecem nos testes de Domain e Application.
-Um endpoint que segue os contratos globais não precisa de um novo teste HTTP por
-padrão.
-
-Consulte o [padrão de integração
-transversal](../../../docs/testing/integration-tests.md).
-
-## Limitações
-
-- health check não verifica o banco;
-- não há versionamento ou rate limiting;
-- não há observabilidade além de logs/health;
-
-Documentação da API: [visão geral](../../../docs/api/overview.md) e
-[endpoints](../../../docs/api/endpoints.md).
+O health check não valida o banco. OpenAPI não é publicado em Production. A API
+ainda não possui versionamento, rate limiting ou probes de prontidão de
+dependências.

@@ -1,64 +1,46 @@
 # Módulo Identity
 
-## Propósito e responsabilidades
+## Responsabilidade
 
-Identity gerencia cadastro, consulta e inativação de usuários, validação de
-credenciais, hash de senha, emissão de JWT e papéis.
+Identity é responsável por identidade, credenciais, autenticação, papéis e ciclo
+de vida do usuário.
 
-## Camadas
+## Fronteira
 
-| Projeto | Responsabilidade |
-|---|---|
-| `FiapCloudGames.Identity.Domain` | `User`, `Email`, papel e repositório de domínio |
-| `FiapCloudGames.Identity.Application` | `Authentication/`, `Users/` e `Abstractions/` com tipos separados por responsabilidade |
-| `FiapCloudGames.Identity.Contracts` | arquivos separados para `GetUserQuery`, `UserSnapshot` e `IIdentityModule` |
-| `FiapCloudGames.Identity.Infrastructure` | EF Core, repositório, PBKDF2 e JWT |
-| `FiapCloudGames.Identity.Presentation` | `Features/Authentication/` e `Features/Users/` com contratos HTTP, mappings e controllers |
+O módulo preserva suas regras e persistência internamente. Outros módulos podem
+consultar dados mínimos de identidade apenas por Contracts; não recebem a
+entidade de usuário, hash de senha, repository ou `DbContext`.
 
-Casos de uso atuais: `CreateUserService`, `LoginService`, `GetUserService` e
-`DeactivateUserService`, todos com `ExecuteAsync`.
+Identity não depende das camadas internas de outros módulos.
 
-## Endpoints
+## Regras duráveis
 
-- `POST /api/users` — público;
-- `POST /api/auth/login` — público;
-- `GET /api/users/me` — autenticado;
-- `GET /api/users/{id}` — Administrator;
-- `DELETE /api/users/{id}` — Administrator.
-
-Detalhes em [endpoints](../../../docs/api/endpoints.md).
-
-## Persistência
-
-`IdentityDbContext` é dono do schema `identity` e da tabela `users`. O módulo não
-acessa tabelas de outro schema.
-
-## Integrações
-
-Expõe `IIdentityModule` para consulta interna por contrato. Library consome esse
-contrato e recebe somente `UserSnapshot`. Não há evento de integração implementado.
-
-## Regras principais
-
-- e-mail normalizado e único;
-- nome entre 2 e 120 caracteres;
-- senha de cadastro com pelo menos 8 caracteres, incluindo letras, números e
-  caracteres especiais;
-- papel padrão `User`;
+- e-mail é validado e normalizado;
+- senha precisa atender à política do domínio;
+- senha nunca é persistida em texto puro;
+- novos usuários recebem papel sem privilégio administrativo;
 - usuário inativo não autentica;
-- PBKDF2/SHA-256 para armazenamento de senha.
+- o administrador inicial é criado fora da API pública;
+- Application obtém o usuário atual por `ICurrentUserContext`;
+- regras de identidade não dependem de ASP.NET Core.
 
-Veja [regras de negócio](../../../docs/development/business-rules.md) e
-[autenticação](../../../docs/development/authentication-authorization.md).
+## Persistência e segurança
 
-## Testar
+O schema de Identity pertence exclusivamente ao módulo. Hash de senha e emissão
+de JWT são implementações técnicas de Infrastructure, acessadas por abstrações da
+Application.
+
+Consulte [autenticação e autorização](../../../docs/development/authentication-authorization.md)
+e [regras de negócio](../../../docs/development/business-rules.md).
+
+## API e testes
+
+Operações e contratos HTTP atuais devem ser consultados no OpenAPI. Casos de uso
+e cenários existentes devem ser consultados no código e executados com:
 
 ```powershell
 dotnet test tests/Unit/FiapCloudGames.Identity.UnitTests
 ```
 
-## Evolução
-
-- `TODO: definir recuperação de senha, confirmação de e-mail e MFA.`
-- `TODO: definir se a inativação precisa de integração assíncrona e outbox.`
-- `TODO: definir refresh/revogação e rotação de JWT.`
+Pendências de credenciais e segurança estão em
+[DOC-005](../../../docs/backlog.md).

@@ -24,17 +24,13 @@ dotnet test FiapCloudGames.sln --no-build --no-restore
 - migrations pertencem ao projeto central;
 - segredos não devem ser versionados;
 - toda operação assíncrona exposta recebe `CancellationToken`;
-- mudanças de comportamento devem atualizar testes e documentação.
+- mudanças de comportamento devem atualizar testes; documentação manual muda
+  quando houver nova regra, contrato transversal ou procedimento.
 
 ## Branches e commits
 
-Estado atual:
-
-```text
-TODO: estratégia oficial de branches não identificada no repositório.
-TODO: convenção oficial de commits não identificada no repositório.
-TODO: política de merge e número de aprovações não identificados no repositório.
-```
+Estratégia oficial de branches, commits, merge e aprovações depende de
+[DOC-001](docs/backlog.md).
 
 Recomendação até a equipe formalizar:
 
@@ -62,10 +58,10 @@ Verifique também:
 - Domain não ganhou dependência de framework;
 - um mapeamento EF alterado possui migration EF Core e snapshot equivalentes no
   projeto central;
-- requests, responses e status estão documentados;
+- requests, responses, status e autorização aparecem corretamente no OpenAPI;
 - nenhum token, senha, connection string real ou `.env` foi adicionado;
 - os links Markdown alterados resolvem;
-- os READMEs do módulo e a documentação central estão coerentes.
+- o documento autoritativo foi atualizado quando uma regra ou procedimento mudou.
 
 ## Template de pull request
 
@@ -116,26 +112,20 @@ Como desfazer a mudança de código e de banco.
 
 ## Versionamento e release
 
-Estado atual:
-
-```text
-TODO: estratégia de versionamento não identificada no repositório.
-TODO: processo oficial de release não identificado no repositório.
-```
+Versionamento e processo oficial de release dependem de
+[DOC-001](docs/backlog.md) e [DOC-007](docs/backlog.md).
 
 Não crie tag, release ou publique imagem sem uma decisão explícita da equipe.
 
 ## Definition of Done da documentação
 
-Toda mudança que altere comportamento, configuração, arquitetura ou operação deve cumprir:
+Toda mudança que altere regra, configuração, arquitetura ou operação deve cumprir:
 
-- [ ] README do módulo atualizado.
-- [ ] Documentação central atualizada.
-- [ ] Exemplos de request e response atualizados.
-- [ ] Configurações documentadas.
-- [ ] Migration documentada, quando aplicável.
-- [ ] Testes documentados.
-- [ ] Diagrama atualizado, quando aplicável.
-- [ ] Troubleshooting atualizado, quando aplicável.
+- [ ] O documento autoritativo foi atualizado, quando necessário.
+- [ ] Nenhum inventário manual de endpoints, services, testes ou migrations foi criado.
+- [ ] Configurações e procedimentos novos foram documentados.
+- [ ] Migration e estratégia de implantação foram explicadas, quando aplicável.
+- [ ] Diagramas conceituais continuam coerentes, quando afetados.
+- [ ] Troubleshooting foi atualizado para novos modos de falha, quando aplicável.
 - [ ] OpenAPI validado em `Development`.
 - [ ] Links verificados.

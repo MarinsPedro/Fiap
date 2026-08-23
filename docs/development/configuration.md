@@ -52,8 +52,8 @@ docker compose up --build
 - Restrinja acesso aos segredos e defina rotação.
 - O migrador possui `UserSecretsId`; a API não. Não há integração com um cofre.
 
-`TODO: selecionar o gerenciador de segredos e documentar criação, rotação e
-revogação por ambiente.`
+Gerenciador, criação, rotação e revogação de segredos são acompanhados em
+[DOC-005](../backlog.md).
 
 ## Ambientes
 
@@ -69,5 +69,5 @@ fora do Compose devem informar `Jwt__Issuer` e `Jwt__Audience` explicitamente.
 Não existem arquivos ou contratos formais para staging/produção, nem matriz de
 valores por ambiente.
 
-`TODO: definir ambientes suportados, responsáveis por configuração e processo de
-promoção entre ambientes.`
+Ambientes, responsáveis e promoção de configuração são acompanhados em
+[DOC-007](../backlog.md).

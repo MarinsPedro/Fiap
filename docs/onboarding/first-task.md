@@ -1,88 +1,92 @@
-# Primeira tarefa guiada
+# Primeira contribuição
 
-Exercício seguro: documentar com teste o comportamento existente que remove espaços do título e da categoria de um jogo.
+A primeira contribuição deve ser pequena, verificável e vinculada a uma
+necessidade real. Não existe um teste ou arquivo fixo para copiar: esse tipo de
+exercício envelhece quando o código evolui.
 
-Essa tarefa não muda a API nem o banco. Ela ensina localização, Domain, testes, documentação e validação.
+## 1. Selecionar o trabalho
 
-## 1. Localizar o módulo
+Escolha uma issue pequena ou uma pendência aprovada pela equipe, como:
 
-O comportamento pertence a Catalog:
+- cobrir uma fronteira ainda não testada;
+- melhorar uma mensagem ou validação;
+- corrigir um link ou procedimento;
+- realizar refatoração local que preserve contratos.
 
-```text
-src/Modules/Catalog/FiapCloudGames.Catalog.Domain/Entities/Game.cs
-tests/Unit/FiapCloudGames.Catalog.UnitTests/GameTests.cs
-src/Modules/Catalog/README.md
-```
+Regras de branch, revisão e seleção de tarefas dependem de
+[DOC-001](../backlog.md).
 
-Leia `Game.ChangeDetails`: a normalização e os limites já são invariantes do
-agregado.
+## 2. Localizar a fonte
 
-## 2. Criar o teste
-
-Adicione a `GameTests`:
-
-```csharp
-[Fact]
-public void CreateShouldTrimTitleAndCategory()
-{
-    // Arrange e Act
-    var createdAtUtc = new DateTimeOffset(
-        2026, 1, 10, 12, 0, 0, TimeSpan.Zero);
-    var game = Game.Create(
-        "  Cloud Quest  ",
-        "Aventura",
-        "  RPG  ",
-        99.90m,
-        createdAtUtc);
-
-    // Assert
-    Assert.Equal("Cloud Quest", game.Title);
-    Assert.Equal("RPG", game.Category);
-}
-```
-
-O teste usa o padrão atual: xUnit, sem biblioteca de mocks e teste direto de entidade.
-
-## 3. Executar o projeto de teste
+Use busca e as fontes dinâmicas:
 
 ```powershell
-dotnet test tests/Unit/FiapCloudGames.Catalog.UnitTests/FiapCloudGames.Catalog.UnitTests.csproj
+rg --files src tests docs
+rg -n "<termo-da-feature>" src tests docs
+dotnet sln FiapCloudGames.sln list
 ```
 
-Resultado esperado: todos os testes do projeto aprovados.
+Para uma operação HTTP, consulte também o OpenAPI em Development.
 
-## 4. Atualizar documentação
+Identifique o módulo, a camada, o teste mais próximo e o documento autoritativo
+da regra antes de alterar qualquer arquivo.
 
-Confirme que `src/Modules/Catalog/README.md` menciona a normalização. Se não mencionar, adicione a regra sem copiar todo o guia central.
-
-## 5. Validar a solution
+## 3. Validar o estado inicial
 
 ```powershell
 dotnet build FiapCloudGames.sln
-dotnet test FiapCloudGames.sln --no-build
-dotnet format FiapCloudGames.sln --verify-no-changes --no-restore
+dotnet test FiapCloudGames.sln --no-build --no-restore
 ```
 
-## 6. Preparar o pull request
+Registre o resultado real. Não copie uma quantidade de testes para a
+documentação.
 
-Siga [CONTRIBUTING.md](../../CONTRIBUTING.md). No PR, descreva:
+## 4. Fazer a menor mudança coerente
 
-- comportamento documentado pelo teste;
-- arquivo alterado;
-- comando e resultado;
-- ausência de impacto em API/banco.
+Preserve as fronteiras:
 
-```text
-TODO: branch base, convenção de nome e aprovadores devem ser confirmados com a equipe.
-```
+- invariantes em Domain;
+- coordenação em Application;
+- implementação técnica em Infrastructure;
+- adaptação HTTP em Presentation;
+- comunicação externa somente por Contracts.
+
+Evite refatorações sem relação com a tarefa.
+
+## 5. Testar
+
+Crie ou ajuste o cenário no projeto de teste do módulo. O teste deve falhar sem a
+mudança e passar com ela.
+
+Depois execute novamente build, suíte completa e formatação.
+
+## 6. Atualizar documentação somente quando necessário
+
+Não atualize Markdown apenas porque nasceu uma classe, service, controller ou
+teste.
+
+Atualize documentação quando a mudança alterar:
+
+- regra de negócio;
+- fronteira arquitetural;
+- contrato transversal;
+- configuração;
+- procedimento de desenvolvimento ou operação.
+
+O OpenAPI deve refletir automaticamente mudanças do contrato HTTP.
+
+## 7. Preparar a revisão
+
+No pull request, informe objetivo, comportamento, riscos, comandos executados e
+resultados. Siga [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## Checklist
 
-- [ ] Localizei Domain, teste e README do Catalog.
-- [ ] Li a implementação antes de escrever o teste.
-- [ ] O teste falha se a normalização for removida.
-- [ ] O projeto de teste passou.
-- [ ] A solution compilou e todos os testes passaram.
-- [ ] A documentação do módulo está coerente.
-- [ ] Nenhum arquivo gerado, segredo ou alteração sem relação foi incluído.
-- [ ] O PR informa resultados reais.
+- [ ] A tarefa foi aprovada e tem escopo pequeno.
+- [ ] Localizei a fonte de verdade antes de editar.
+- [ ] Build e testes iniciais passaram.
+- [ ] A mudança respeita módulo e camada.
+- [ ] O cenário automatizado protege o comportamento.
+- [ ] Build, testes e formatação finais passaram.
+- [ ] A documentação não ganhou inventário duplicado.
+- [ ] Nenhum segredo ou arquivo gerado indevido foi incluído.

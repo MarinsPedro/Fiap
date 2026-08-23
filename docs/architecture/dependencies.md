@@ -1,11 +1,12 @@
 # Dependências
 
-## Direção por camada
+## Regra de direção
 
 ```mermaid
 flowchart TD
-    Domain --> DomainCommon[\"Domain.Common\"]
-    Application --> ApplicationCommon[\"Application.Common\"]
+    Domain --> DomainCommon["Domain.Common"]
+    Application --> ApplicationCommon["Application.Common"]
+    Presentation --> PresentationCommon["Presentation.Common"]
     Presentation --> Application
     Application --> Domain
     Application --> Contracts
@@ -15,7 +16,11 @@ flowchart TD
     Api --> Infrastructure
 ```
 
-## Dependências entre módulos
+Uma seta indica dependência permitida, não obrigatória.
+
+## Entre módulos
+
+O consumidor conhece apenas Contracts do módulo fornecedor:
 
 ```mermaid
 flowchart LR
@@ -25,34 +30,34 @@ flowchart LR
     PromotionsApp["Promotions.Application"] --> CatalogContracts
 ```
 
-Não existem outras referências entre módulos nos `.csproj`.
+As regras são:
 
-| Consumidor | Domain próprio | Contracts próprio | Identity.Contracts | Catalog.Contracts | Promotions.Contracts |
-|---|---:|---:|---:|---:|---:|
-| Identity.Application | sim | sim | — | não | não |
-| Catalog.Application | sim | sim | não | — | não |
-| Promotions.Application | sim | sim | não | sim | — |
-| Library.Application | sim | sim | sim | sim | sim |
+- Domain não referencia outro módulo;
+- Application não referencia Application ou Infrastructure externos;
+- Presentation não é uma API interna entre módulos;
+- entidades e `DbContext` nunca atravessam a fronteira;
+- Queries e Snapshots de Contracts formam o contrato síncrono.
 
-## Composition root
+A matriz efetiva deve ser consultada nos `ProjectReference` dos `*.csproj`.
+Não mantenha uma segunda lista manual de todas as referências.
 
-`FiapCloudGames.Api.csproj` referencia os quatro Presentation e os quatro Infrastructure. Não referencia Domain, Application ou Contracts diretamente.
+## Composition root e migrations
 
-## Migrations
+A API pode referenciar Presentation e Infrastructure para compor o processo. Isso
+não autoriza a colocação de regra de negócio no host.
 
-`FiapCloudGames.Database.Migrations` referencia os projetos Infrastructure de
-Identity, Catalog, Promotions e Library para reutilizar os quatro `DbContext`.
-Ele não referencia Presentation. O teste
-`MigrationsShouldNotReferenceModulePresentation` protege essa fronteira.
+O migrador pode referenciar Infrastructure para reutilizar mappings e
+`DbContext`, mas não depende de Presentation.
 
-## Regras automatizadas e lacunas
+## Proteção executável
 
-Testes atuais verificam:
+ArchitectureTests fiscaliza as direções de projeto, isolamento entre módulos,
+tipos expostos e convenções estruturais. A lista e o resultado atuais pertencem
+ao código e a:
 
-- Domain sem ASP.NET Core, EF Core ou Infrastructure;
-- Library.Application sem Application/Infrastructure de outros módulos;
-- migrador sem dependência de Presentation dos módulos.
+```powershell
+dotnet test tests/Architecture/FiapCloudGames.ArchitectureTests
+```
 
-Não há teste específico para todas as combinações, como Presentation → Infrastructure ou Application → Infrastructure em cada módulo.
-
-Recomendação: ampliar `ArchitectureRulesTests` quando novas camadas ou módulos forem adicionados.
+Ao alterar uma fronteira, atualize primeiro a regra arquitetural e seu teste; não
+adapte o teste apenas para aceitar uma dependência acidental.

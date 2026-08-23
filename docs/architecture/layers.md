@@ -4,9 +4,9 @@
 |---|---|---|---|
 | Domain | agregados, entidades, value objects, invariantes e contratos de repository | biblioteca padrão do .NET e `Domain.Common` | Contracts, Application, ASP.NET Core, EF Core, Infrastructure, Presentation |
 | Contracts | Queries, Snapshots e fachadas públicas síncronas | biblioteca padrão do .NET | Domain, Application, EF Core, Controllers, implementações |
-| Application | casos de uso, Inputs, Results e orquestração | Domain, Contracts, DI abstractions | Infrastructure, Presentation, HTTP, `DbContext` |
+| Application | casos de uso, Inputs, Results e orquestração | Domain, Contracts, `Application.Common` e abstrações técnicas mínimas | Infrastructure, Presentation, HTTP, `DbContext` |
 | Infrastructure | persistência e recursos técnicos | Application e Domain do próprio módulo | Presentation de qualquer módulo |
-| Presentation | entrada HTTP | Application do próprio módulo e ASP.NET Core | Infrastructure e `DbContext` |
+| Presentation | entrada HTTP | Application do próprio módulo, `Presentation.Common` e ASP.NET Core | Infrastructure e `DbContext` |
 | API | composition root e pipeline | Presentation e Infrastructure | regra de negócio |
 | Database.Migrations | EF migrations, snapshots e seed | Infrastructure dos módulos, EF Core, Npgsql, Hosting | Presentation dos módulos |
 | Testes | validação automatizada | projetos sob teste e bibliotecas de teste | código de produção não depende de testes |
@@ -49,6 +49,9 @@ usam `AsNoTracking`; Identity também implementa PBKDF2 e JWT.
 Controllers recebem o service por `[FromServices]`, convertem request em input e
 definem status. Requests, Responses, mappings HTTP e Controllers ficam em
 `Features/<Feature>`. Regra de domínio não pertence ao Controller.
+
+Contratos transversais de transporte, como Problem Details, pertencem a
+`Presentation.Common`. Esse Building Block não contém regras dos módulos.
 
 ## API
 

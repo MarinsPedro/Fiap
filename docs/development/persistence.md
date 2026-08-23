@@ -52,8 +52,8 @@ O modelo atual não possui:
 - interceptadores de persistência;
 - retry policy explicitamente configurada.
 
-`TODO: definir requisitos de concorrência, auditoria e resiliência do banco antes
-de operar com múltiplas réplicas da API.`
+Concorrência e consistência são acompanhadas em [DOC-004](../backlog.md);
+resiliência e operação com múltiplas réplicas, em [DOC-007](../backlog.md).
 
 ## Boas práticas ao alterar o modelo
 

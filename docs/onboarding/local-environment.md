@@ -4,15 +4,13 @@
 
 | Item | Versão/configuração | Obrigatório |
 |---|---|---:|
-| .NET SDK | 10.0.302, roll-forward `latestPatch` | sim |
+| .NET SDK | política definida em `global.json`; confirme com `dotnet --version` | sim |
 | PostgreSQL | Compose usa 17-alpine | sim para operações com dados |
 | Docker Compose | versão não fixada | não se PostgreSQL externo estiver disponível |
 | HTTPS dev certificate | usado pelo perfil `https` | apenas para HTTPS local |
 
-```text
-TODO: sistemas operacionais oficialmente suportados não identificados.
-TODO: versões mínimas de Docker e Compose não identificadas.
-```
+Sistemas operacionais e versões mínimas de Docker/Compose ainda dependem de
+[DOC-008](../backlog.md).
 
 ## Certificado HTTPS
 
@@ -98,13 +96,9 @@ A Swagger UI fica em `https://localhost:7080/swagger/index.html`.
 
 A mensagem de validação sugere variável de ambiente ou user-secrets, mas o `.csproj` da API não possui `UserSecretsId`.
 
-Estado atual:
-
-```text
-TODO: suporte versionado a dotnet user-secrets não configurado no projeto.
-```
-
-Use variáveis de ambiente ou `.env` com Compose até existir decisão e configuração próprias.
+A API não possui `UserSecretsId` versionado. Use variáveis de ambiente ou
+`.env` com Compose; a evolução da gestão de segredos está em
+[DOC-005](../backlog.md).
 
 ## IDE e extensões
 
@@ -116,7 +110,7 @@ Recomendações:
 - cliente HTTP;
 - visualizador Mermaid;
 - integração Docker;
-- editor draw.io para `docs/EventStorming.drawio`.
+- visualizador de Mermaid para os diagramas mantidos em Markdown.
 
 ## Diagnóstico rápido
 

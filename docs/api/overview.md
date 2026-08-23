@@ -1,49 +1,49 @@
-# Visão geral da API
+# API e OpenAPI
 
-`FiapCloudGames.Api` é a única entrada HTTP. Controllers dos módulos são
-descobertos por `ApplicationPart` e executados no mesmo processo.
+`FiapCloudGames.Api` é a entrada HTTP do sistema. Controllers pertencem aos
+módulos e são carregados no mesmo host através de Application Parts.
 
-## URLs locais
+## Fonte de verdade do contrato HTTP
 
-| Perfil | Base URL |
-|---|---|
-| `dotnet run` HTTP | `http://localhost:5080` |
-| `dotnet run` HTTPS | `https://localhost:7080` |
-| Docker Compose | `http://localhost:8080` |
+A especificação OpenAPI gerada pela aplicação é a referência atual para:
 
-As portas dos perfis vêm de `Properties/launchSettings.json`. Elas podem ser
-sobrescritas por `ASPNETCORE_URLS`.
+- rotas e métodos;
+- parâmetros de rota e query;
+- request e response bodies;
+- códigos HTTP declarados;
+- content types;
+- requisitos de autenticação e autorização.
 
-## OpenAPI
+Não existe uma lista manual paralela de endpoints.
 
-Em `Development`:
+Em Development, consulte:
 
 ```text
 GET /swagger/v1/swagger.json
-GET /swagger/index.html
+GET /swagger
 ```
 
-O primeiro endereço retorna o documento OpenAPI; o segundo abre a Swagger UI.
-O Compose usa `Production`, então não publica nenhum dos dois.
+Nos perfis locais padrão:
 
-## Recursos
+- HTTP: `http://localhost:5080`;
+- HTTPS: `https://localhost:7080`.
 
-- usuários e autenticação;
-- jogos;
-- promoções;
-- biblioteca do usuário;
-- health check.
+O Compose executa em Production e não publica o documento ou a interface.
 
-Consulte a [lista completa de endpoints](endpoints.md).
+## O que permanece documentado manualmente
 
-## Características
+Os documentos desta pasta registram contratos e regras transversais que não
+devem depender da quantidade atual de controllers:
 
-- JSON com nomes camelCase;
-- enums serializados como string;
-- autenticação Bearer JWT;
-- controllers com `[ApiController]`;
-- erros globais em Problem Details;
-- CORS configurável por `Cors:AllowedOrigins`.
+- [convenções HTTP e JSON](conventions.md);
+- [autenticação e autorização](authentication.md);
+- [Problem Details e diagnóstico](errors.md).
 
-Não há versionamento, paginação, rate limiting, idempotency key ou mecanismo
-global de filtros/ordenação.
+## Validação
+
+Depois de alterar um contrato HTTP, inicie a API em Development, abra o OpenAPI e
+confirme a operação afetada. Os testes de integração também validam convenções
+globais do documento gerado.
+
+A ausência de uma operação no OpenAPI indica problema de controller,
+Application Part ou configuração; não deve ser compensada com uma lista manual.

@@ -4,7 +4,7 @@
 
 - [ ] Recebi acesso ao repositório.
 - [ ] Clonei o projeto e localizei `FiapCloudGames.sln`.
-- [ ] Instalei o SDK 10.0.302 ou patch compatível.
+- [ ] Instalei um SDK compatível com `global.json` e confirmei `dotnet --version`.
 - [ ] Validei Docker e Docker Compose, se usados.
 - [ ] Criei `.env` a partir de `.env.example` sem versioná-lo.
 - [ ] Executei `dotnet restore`.
@@ -39,9 +39,6 @@
 
 ## Acessos e políticas pendentes
 
-```text
-TODO: confirmar responsável técnico e canal de suporte.
-TODO: confirmar branch principal e política de revisão.
-TODO: confirmar ambientes, credenciais e processo de deploy.
-TODO: confirmar ferramenta de gestão de tarefas.
-```
+Governança, suporte e ferramenta de gestão estão em
+[DOC-001](../backlog.md). Ambientes e processo de deploy estão em
+[DOC-007](../backlog.md).

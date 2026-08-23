@@ -1,171 +1,91 @@
-# Objetos e contratos por fronteira
+# Comunicação e contratos entre módulos
 
-## Fluxo de dados
+## Objetivo
 
-Cada representação pertence à fronteira em que é utilizada:
+Contracts define a API interna oferecida por um bounded context. Eles permitem
+que outro módulo consulte dados sem acessar entidades, services internos,
+repositories ou Infrastructure.
+
+## Fluxo dentro de uma feature
 
 ```text
 HTTP
   ↓
-Request (Presentation)
+Request da Presentation
   ↓
-Input (Application)
+Input da Application
   ↓
-Entity / Value Object (Domain)
+Domain e portas
   ↓
-Result (Application)
+Result da Application
   ↓
-Response (Presentation)
+Response da Presentation
   ↓
 HTTP
 ```
 
-Entre módulos:
+Cada representação pertence à sua fronteira. Entidades não são contratos de
+transporte.
+
+## Fluxo entre módulos
 
 ```text
 Application consumidora
   ↓
-Query do módulo fornecedor
+Query de Contracts do fornecedor
   ↓
-I<Module>Module
+Interface pública do módulo
   ↓
 Snapshot imutável
 ```
 
-A entidade de domínio nunca é devolvida diretamente pela API nem enviada para
-outro módulo.
+O consumidor referencia apenas o projeto Contracts do fornecedor.
 
-## Convenções
+## Responsabilidades por tipo
 
-| Fronteira | Entrada | Saída | Exemplos |
-|---|---|---|---|
-| Presentation | `Request` | `Response` | `CreateGameRequest`, `GameResponse` |
-| Application | `Input` ou argumentos simples | `Result` | `CreateGameInput`, `GameResult` |
-| Porta de leitura da Application | argumentos simples | `ReadModel` | `LibraryGameReadModel` |
-| Domain | Entity / Value Object | Entity / Value Object | `Game`, `GamePrice` |
-| Contracts | `Query` | `Snapshot` | `GetGameQuery`, `GameSnapshot` |
-| Integração externa futura | DTO específico | DTO específico | `PaymentRequestDto` |
-
-Não são criados Requests ou Inputs vazios apenas para obedecer à convenção. Um
-resultado pode ser compartilhado entre casos de uso quando representa a mesma
-visão de forma coerente.
-
-## Presentation
-
-Requests e Responses representam o contrato HTTP. Controllers convertem o
-Request para Input antes de chamar a Application e convertem o Result para
-Response antes de responder.
-
-Exemplo do Catalog:
-
-```csharp
-var result = await service.ExecuteAsync(
-    request.ToInput(),
-    cancellationToken);
-
-var response = result.ToResponse();
-return CreatedAtAction(nameof(Get), new { id = response.Id }, response);
-```
-
-O service não recebe um Request e não devolve um Response. Assim, pode ser
-acionado por HTTP, testes, jobs ou outro adapter sem depender do ASP.NET Core.
-
-## Application
-
-Inputs representam os dados necessários para executar um caso de uso. Results
-representam sua saída sem semântica de transporte HTTP.
-
-Os casos de uso permanecem como classes `*Service` com `ExecuteAsync`; esta
-separação não exige MediatR, Commands ou Handlers.
-
-Mapeamentos de entidade para Result ficam na Application:
-
-```csharp
-internal static class GameApplicationMappings
-{
-    public static GameResult ToResult(Game game) => new(
-        game.Id,
-        game.Title,
-        game.Description,
-        game.Category,
-        game.BasePrice.Amount,
-        game.IsActive);
-}
-```
-
-Uma projeção técnica devolvida por uma porta de leitura usa `ReadModel`, não
-`Result`. Atualmente `ILibraryQueries.ListGamesAsync` devolve
-`LibraryGameReadModel`; a Infrastructure cria essa projeção sem tracking e
-`GetLibraryService` a enriquece com o título do Catalog antes de produzir
-`UserLibraryResult`.
-
-## Contracts entre módulos
-
-Contracts formam a API pública interna do bounded context. O consumidor conhece
-somente o projeto Contracts do fornecedor.
-
-Consultas usam uma Query explícita e devolvem um Snapshot mínimo e imutável:
-
-```csharp
-public sealed record GetGameQuery(Guid GameId);
-
-public sealed record GetGamesQuery(
-    IReadOnlyCollection<Guid> GameIds);
-
-public sealed record GameSnapshot(
-    Guid Id,
-    string Title,
-    decimal BasePrice,
-    bool IsActive);
-
-public interface ICatalogModule
-{
-    Task<GameSnapshot?> GetGameAsync(
-        GetGameQuery query,
-        CancellationToken cancellationToken);
-
-    Task<IReadOnlyList<GameSnapshot>> GetGamesAsync(
-        GetGamesQuery query,
-        CancellationToken cancellationToken);
-}
-```
-
-`Snapshot` deixa explícito que o objeto não é a entidade, não permite mudança de
-estado e representa os dados observados naquele instante. Ele contém apenas os
-campos necessários pelos consumidores.
-
-A consulta individual devolve `null` quando o jogo não existe. A consulta em
-lote devolve somente os jogos encontrados; o consumidor compara os IDs para
-identificar ausências. Library e Promotions usam a operação em lote para evitar
-uma consulta ao banco para cada jogo.
-
-Os contratos síncronos implementados são:
-
-| Módulo | Query | Snapshot |
-|---|---|---|
-| Identity | `GetUserQuery` | `UserSnapshot` |
-| Catalog | `GetGameQuery`, `GetGamesQuery` | `GameSnapshot` |
-| Promotions | `GetPriceQuoteQuery` | `PriceQuoteSnapshot` |
-| Library | `GetUserLibraryQuery` | `UserLibrarySnapshot` |
-
-## Validação
-
-| Local | Responsabilidade |
+| Tipo | Responsabilidade |
 |---|---|
-| Presentation / model binding | JSON, tipos e formato do contrato HTTP |
-| Application | coordenação, existência, permissão, conflito e dependências entre módulos |
-| Domain | invariantes válidas em qualquer entrada ou adapter |
+| Request | formato recebido por HTTP |
+| Response | formato devolvido por HTTP |
+| Input | dados necessários ao caso de uso |
+| Result | saída da Application sem semântica HTTP |
+| Query | intenção de consulta entre módulos |
+| Snapshot | visão mínima e imutável devolvida a outro módulo |
+| ReadModel | projeção de leitura interna à Application |
+| Entity/Value Object | estado e invariantes do Domain |
 
-A validação de entrada na Application pode antecipar uma resposta 400 com todos
-os campos, mas não substitui as invariantes do Domain.
+Não crie um tipo vazio apenas para satisfazer a nomenclatura. Crie uma fronteira
+quando ela protege responsabilidade ou acoplamento real.
 
-## Proteções automatizadas
+## Regras
 
-Os testes arquiteturais verificam que:
+- Entity nunca é devolvida por Controller ou fachada de módulo.
+- Request e Response não entram na Application.
+- Result não é devolvido diretamente como contrato entre módulos.
+- Contracts não dependem de Domain, Application, Infrastructure ou ASP.NET Core.
+- Snapshots contêm somente os dados necessários aos consumidores.
+- Consultas em lote devem ser preferidas quando evitarem N+1 entre módulos.
+- Ausência e resultados parciais precisam ter semântica explícita.
+- Contratos assíncronos propagam `CancellationToken`.
 
-- services da Application não retornam tipos de Contracts;
-- ações de Controller não retornam tipos de Application ou Contracts;
-- Presentation não referencia Contracts diretamente;
-- tipos públicos de Contracts terminam em `Query` ou `Snapshot`, exceto as
-  interfaces `I*Module`;
-- dependências entre módulos continuam restritas aos Contracts.
+## Evolução
+
+Uma mudança em Contracts afeta consumidores internos e deve ser tratada como
+evolução de API, mesmo dentro do monólito. Prefira alterações compatíveis e
+remova campos somente depois de revisar todos os consumidores.
+
+Eventos só devem ser introduzidos quando existirem produtor, consumidor,
+transporte, entrega e política de idempotência definidos. Até lá, não crie tipos
+de evento especulativos.
+
+A lista atual de Queries, Snapshots e métodos deve ser consultada nos projetos
+Contracts e nos `ProjectReference`, não duplicada aqui.
+
+## Proteção
+
+ArchitectureTests verifica que os tipos e referências respeitam as fronteiras.
+Execute:
+
+```powershell
+dotnet test tests/Architecture/FiapCloudGames.ArchitectureTests
+```

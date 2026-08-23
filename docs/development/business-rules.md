@@ -62,13 +62,11 @@ Os módulos consultam fachadas e DTOs de `Contracts`. Como cada
 um módulo não possui transação distribuída. Não há eventos de integração
 implementados.
 
-`TODO: definir estratégia de consistência, publicação de eventos e compensação para
-operações que atravessem módulos.`
+Consistência, publicação de eventos e compensação são acompanhadas em
+[DOC-004](../backlog.md).
 
 ## Pontos ainda não definidos
 
-- `TODO: definir moeda e política de impostos para preços.`
-- `TODO: definir política de reativação de usuário e jogo.`
-- `TODO: definir política de concorrência para aquisições simultâneas.`
-- `TODO: definir regras de cancelamento, reembolso e pagamento.`
-- `TODO: definir se promoções futuras podem ser alteradas ou removidas.`
+- moeda, impostos, pagamento, cancelamento e reembolso: [DOC-003](../backlog.md);
+- concorrência de aquisição: [DOC-004](../backlog.md);
+- reativação e ciclo de vida de promoções: [DOC-010](../backlog.md).

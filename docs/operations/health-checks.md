@@ -32,6 +32,6 @@ com sucesso.
 
 O repositório não diferencia readiness, liveness e startup probes.
 
-`TODO: adicionar checks nomeados para banco e prontidão das migrations, definir
-timeouts e documentar probes da plataforma escolhida.`
+Checks nomeados, prontidão das migrations, timeouts e probes são acompanhados em
+[DOC-006](../backlog.md).
 
