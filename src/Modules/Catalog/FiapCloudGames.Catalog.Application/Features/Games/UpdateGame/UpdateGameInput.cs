@@ -4,5 +4,4 @@ public sealed record UpdateGameInput(
     string Title,
     string Description,
     string Category,
-    decimal BasePrice,
-    bool IsActive);
+    decimal BasePrice);
