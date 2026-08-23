@@ -31,15 +31,21 @@ public sealed class CreatePromotionService(
             input.GameIds,
             clock.GetUtcNow());
 
-        foreach (var gameId in promotion.Games.Select(item => item.GameId))
+        var gameIds = promotion.Games
+            .Select(item => item.GameId)
+            .ToArray();
+
+        logger.LogDebug(
+            "Validando {GameCount} jogos no módulo de catálogo para criação da promoção.",
+            gameIds.Length);
+        var catalogGames = await catalog.GetGamesAsync(
+            new GetGamesQuery(gameIds),
+            cancellationToken);
+        var catalogGamesById = catalogGames.ToDictionary(game => game.Id);
+
+        foreach (var gameId in gameIds)
         {
-            logger.LogDebug(
-                "Validando jogo {GameId} no módulo de catálogo para criação da promoção.",
-                gameId);
-            var game = await catalog.GetGameAsync(
-                new GetGameQuery(gameId),
-                cancellationToken);
-            if (game is null)
+            if (!catalogGamesById.TryGetValue(gameId, out var game))
             {
                 logger.LogInformation(
                     "Falha ao criar promoção: jogo {GameId} não encontrado.",

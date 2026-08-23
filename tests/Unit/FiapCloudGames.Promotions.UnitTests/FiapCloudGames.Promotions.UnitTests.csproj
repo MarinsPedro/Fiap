@@ -4,7 +4,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Using Include="Xunit" />
+    <ProjectReference Include="..\..\..\src\BuildingBlocks\FiapCloudGames.Application.Common\FiapCloudGames.Application.Common.csproj" />
     <ProjectReference Include="..\..\..\src\BuildingBlocks\FiapCloudGames.Domain.Common\FiapCloudGames.Domain.Common.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Catalog\FiapCloudGames.Catalog.Contracts\FiapCloudGames.Catalog.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\src\Modules\Promotions\FiapCloudGames.Promotions.Application\FiapCloudGames.Promotions.Application.csproj" />
     <ProjectReference Include="..\..\..\src\Modules\Promotions\FiapCloudGames.Promotions.Domain\FiapCloudGames.Promotions.Domain.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />

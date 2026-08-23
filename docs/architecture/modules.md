@@ -36,7 +36,7 @@ Objetivo: manter o cadastro consultável de jogos.
 |---|---|
 | Entidade | `Game` |
 | Casos de uso | `CreateGameService`, `UpdateGameService`, `GetGameService`, `ListGamesService` |
-| Fachada pública | `GetGameQuery` → `ICatalogModule` → `GameSnapshot` |
+| Fachada pública | `GetGameQuery`/`GetGamesQuery` → `ICatalogModule` → `GameSnapshot` |
 | Endpoints | listagem/detalhe públicos; criação/atualização administrativas |
 | Persistência | `CatalogDbContext`, schema `catalog`, tabela `games` |
 | Dependências externas | EF Core e Npgsql |

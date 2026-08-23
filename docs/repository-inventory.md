@@ -1,104 +1,80 @@
-# Inventário do repositório
+# Mapa do repositório
 
-Inventário atualizado em 10 de agosto de 2026 a partir dos arquivos da solution,
-projetos, código, testes, configurações e Docker.
+## Organização da solução
 
-## Solution
+```text
+src/
+├── Api/             composição do host ASP.NET Core
+├── BuildingBlocks/  contratos técnicos compartilhados
+├── Database/        executável e assembly central de migrations
+└── Modules/         módulos de negócio
 
-`FiapCloudGames.sln` contém 31 projetos:
+tests/
+├── Unit/            Domain e Application por módulo
+├── Integration/     contratos transversais de API e metadados EF
+└── Architecture/    fronteiras e convenções estruturais
+```
 
-| Grupo | Quantidade | Projetos |
-|---|---:|---|
-| API | 1 | `FiapCloudGames.Api` |
-| Building Blocks | 2 | `Domain.Common` e `Application.Common` |
-| Identity | 5 | Domain, Contracts, Application, Infrastructure, Presentation |
-| Catalog | 5 | Domain, Contracts, Application, Infrastructure, Presentation |
-| Library | 5 | Domain, Contracts, Application, Infrastructure, Presentation |
-| Promotions | 5 | Domain, Contracts, Application, Infrastructure, Presentation |
-| Banco | 1 | `FiapCloudGames.Database.Migrations` |
-| Testes unitários | 4 | um por módulo |
-| Testes de integração | 2 | API e compatibilidade de mappings |
-| Testes de arquitetura | 1 | regras com NetArchTest |
+Cada módulo segue a estrutura:
 
-Não foi encontrado frontend, worker, message consumer ou segunda API. Os
-Building Blocks não compartilham entidades de negócio.
+```text
+Domain
+Contracts
+Application
+Infrastructure
+Presentation
+```
+
+Domain e Application concentram regras específicas. Infrastructure implementa
+persistência e integrações técnicas. Presentation adapta os casos de uso para
+HTTP. Contracts estabelece a comunicação permitida entre módulos.
 
 ## Pontos de entrada
 
 - API: `src/Api/FiapCloudGames.Api/Program.cs`;
 - migrador: `src/Database/FiapCloudGames.Database.Migrations/Program.cs`;
-- Docker: `docker-compose.yml` e dois Dockerfiles.
+- ambiente local: `docker-compose.yml` e Dockerfiles da API/migrador.
 
 ## Banco e persistência
 
-- PostgreSQL 17-alpine no Compose;
-- quatro `DbContext`: `IdentityDbContext`, `CatalogDbContext`, `LibraryDbContext` e `PromotionsDbContext`;
-- schemas `identity`, `catalog`, `library` e `promotions`;
-- seis tabelas de domínio;
-- quatro migrations EF Core iniciais e quatro snapshots, um conjunto por
-  `DbContext`;
-- quatro tabelas independentes de histórico EF;
-- o migrador referencia os quatro projetos Infrastructure;
-- seed opcional/idempotente de administrador via `AdminSeeder`;
-- repositories internos e interfaces no Domain;
-- Unit of Work representada pelo próprio `DbContext`.
+O PostgreSQL é separado por schemas de módulo. Cada Infrastructure possui seu
+próprio `DbContext`, repositories internos e implementação de Unit of Work. As
+migrations permanecem em uma assembly central, com histórico separado por
+contexto no schema técnico.
+
+O seed administrativo é opcional e idempotente. Os módulos não compartilham
+entidades nem acessam diretamente o `DbContext` de outro módulo.
 
 ## API e segurança
 
-- Controllers carregados com MVC Application Parts;
-- Application e Presentation organizadas por feature, com um tipo principal por
-  arquivo para services, contratos e mappings;
-- 14 endpoints de controllers e um health check;
-- JWT HS256 com validade de duas horas;
-- roles `User` e `Administrator`;
-- PBKDF2-SHA256, 100.000 iterações, salt de 16 bytes e hash de 32 bytes;
-- OpenAPI e Swagger UI somente em `Development`;
-- CORS baseado em `Cors:AllowedOrigins`;
-- middleware global para exceções e `ProblemDetails`.
+Controllers são carregados por MVC Application Parts. O host configura JWT,
+roles, CORS, OpenAPI, health check, autenticação, autorização e os middlewares
+globais de logging e tratamento de erros.
 
-## Testes encontrados
+O contrato de erro público é `ApiProblemDetails`. Falhas internas são
+sanitizadas antes da resposta e recebem identificador de rastreamento.
 
-- 17 casos unitários de Domain;
-- 18 casos de integração da API/middleware/host;
-- três testes de banco sem conexão real: mappings, descoberta e sincronismo das migrations;
-- 36 execuções de regras arquiteturais;
-- total atual: 74 casos.
+## Comunicação entre módulos
 
-Não foram encontrados mocks, builders, snapshots, cobertura configurada, Testcontainers ou PostgreSQL real nos testes.
+Chamadas entre módulos são síncronas e passam por interfaces em Contracts.
+Application não referencia a implementação de outro módulo. Não há eventos de
+integração, outbox ou transação única atravessando módulos.
 
-## Integrações
+## Estratégia de testes
 
-Integração externa confirmada: PostgreSQL por Npgsql.
+Testes de feature ficam em Domain/Application. Os demais projetos protegem
+regras transversais:
 
-As chamadas Identity/Catalog/Promotions feitas por Library são integrações
-internas e síncronas em memória por `Contracts`. Não há eventos de integração.
+- ArchitectureTests fiscaliza dependências e convenções;
+- Api.IntegrationTests protege pipeline e contrato HTTP global;
+- Database.IntegrationTests inspeciona metadados e migrations sem banco real.
 
-## Documentação anterior consolidada
+Consulte a [estratégia de testes](testing/overview.md).
 
-Os antigos documentos Architecture.md, Dependencies.md, Database.md e a pasta
-Decisions foram substituídos pela árvore navegável atual para evitar duplicação.
-O arquivo draw.io de Event Storming foi preservado em
-`docs/EventStorming.drawio`.
+## Limitações arquiteturais registradas
 
-## Lacunas confirmadas
-
-```text
-TODO: URL e política de acesso ao repositório não identificadas.
-TODO: sistemas operacionais oficialmente suportados não identificados.
-TODO: estratégia oficial de branches, commits, revisão e merge não identificada.
-TODO: pipeline CI/CD não identificado.
-TODO: registro de imagens e ambiente de deploy não identificados.
-TODO: processo automatizado de rollback de migration não identificado.
-TODO: estratégia de métricas, tracing, alertas e retenção de logs não identificada.
-TODO: meta e ferramenta de cobertura de testes não identificadas.
-TODO: política de versionamento e release não identificada.
-```
-
-## Riscos técnicos observáveis
-
-- health check não consulta banco;
-- não há concorrência otimista nem tratamento específico de violação de unicidade;
-- erros de persistência inesperados resultam em HTTP 500;
-- `Location` de criação de promoção aponta para uma rota sem GET correspondente;
-- não há transação única entre módulos nem outbox;
-- testes de integração não validam migrations contra PostgreSQL real.
+- health check é somente liveness;
+- não existe transação distribuída ou outbox entre módulos;
+- persistência real não faz parte da estratégia transversal de testes;
+- alterações na matriz de dependências devem ser registradas antes de mudar as
+  regras arquiteturais.

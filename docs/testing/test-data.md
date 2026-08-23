@@ -1,51 +1,40 @@
 # Dados de teste
 
-## Estado atual
-
-Os testes unitários criam seus dados dentro do próprio caso com valores
-determinísticos ou `Guid.NewGuid()`. O teste de API define variáveis de ambiente
-de teste no `WebApplicationFactory`. O teste de mapeamento usa uma connection
-string fictícia e não abre conexão.
-
-Não existem fixtures compartilhadas de domínio, builders, snapshots, dumps de
-banco ou massa versionada.
-
 ## Princípios
 
-- Dados mínimos para expressar o cenário.
-- Identificadores únicos quando houver persistência.
-- Datas fixas ou relógio controlável para regras temporais.
-- Sem e-mails pessoais, tokens ou credenciais reais.
-- Senhas de exemplo identificadas explicitamente como teste/local.
-- Limpeza previsível para testes que criarem recursos externos.
+- Usar apenas os dados necessários para expressar o cenário.
+- Fixar datas quando o tempo fizer parte do comportamento esperado.
+- Usar `TimeProvider` controlado nos serviços de Application.
+- Gerar identificadores únicos apenas quando a identidade não fizer parte da regra.
+- Nunca usar e-mails pessoais, tokens, chaves ou credenciais reais.
+- Manter placeholders de configuração claramente identificados como teste.
+- Evitar fixtures compartilhadas quando elas escondem a intenção do cenário.
 
-## Exemplo de cenário
+## UnitTests
 
-```csharp
-var now = new DateTimeOffset(2026, 7, 23, 12, 0, 0, TimeSpan.Zero);
-var gameId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-var promotion = Promotion.Create(
-    "Promoção de teste",
-    25m,
-    now.AddHours(-1),
-    now.AddHours(1),
-    [gameId],
-    now.AddHours(-2));
-```
+Domain e Application constroem seus dados em memória. Builders e fixtures só
+devem ser introduzidos quando removem repetição relevante sem esconder valores
+importantes para a regra.
 
-Datas fixas tornam o caso repetível. Evite usar `UtcNow` quando o instante fizer
-parte do resultado esperado.
+Fakes devem começar vazios e receber explicitamente o estado necessário. Spies
+devem registrar apenas efeitos observáveis usados pelas assertions.
 
-## Futuro banco efêmero
+## API
 
-Quando houver teste PostgreSQL:
+`FiapCloudGamesApiFactory` fornece configurações isoladas ao host por
+`UseSetting`, sem modificar variáveis de ambiente do processo. Tokens de teste
+usam chave, issuer e audience exclusivos da suíte.
 
-1. inicie uma instância isolada;
-2. aplique migrations;
-3. gere dados por API ou builders oficiais;
-4. execute o cenário;
-5. limpe banco/volume;
-6. nunca reutilize o banco de desenvolvimento.
+Endpoints auxiliares da própria suíte podem provocar comportamentos
+transversais, como uma exceção inesperada, sem depender de uma feature ou
+repository específico. Eles devem ficar fora do OpenAPI público.
 
-`TODO: criar builders somente quando a repetição justificar a abstração e usar
-um TimeProvider controlado nos futuros testes de Application.`
+## Metadados do banco
+
+Os testes de Database usam uma connection string fictícia apenas para configurar
+o provedor Npgsql. Nenhuma conexão é aberta, nenhum dado é persistido e não há
+necessidade de limpeza de banco.
+
+Se futuramente testes com PostgreSQL real forem aprovados, essa será uma mudança
+de estratégia. O isolamento, ciclo de vida e destino desses testes deverão ser
+definidos antes da implementação.

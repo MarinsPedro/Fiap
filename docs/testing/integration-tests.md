@@ -1,72 +1,73 @@
-# Testes de integração
+# Testes de integração transversal
 
 ## API
 
-`FiapCloudGames.Api.IntegrationTests` usa
-`FiapCloudGamesApiFactory`, derivada de `WebApplicationFactory<Program>`, e
-configura o ambiente `Testing`. A factory fornece connection string, issuer,
-audience e chave JWT de teste apenas para satisfazer a inicialização.
+`FiapCloudGames.Api.IntegrationTests` protege o contrato HTTP global e é
+organizado conceitualmente em:
 
-Os casos atuais cobrem:
-
-- `GET /health`;
-- JSON inválido e Data Annotations convertidos em
-  `ApiProblemDetails` com `errors`;
-- normalização de caminhos simples, aninhados e indexados em `camelCase`;
-- respostas vazias 401 e 404 completadas por `UseStatusCodePages`;
-- todas as categorias de `AppException`;
-- `DomainRuleViolationException` como 422;
-- exceções técnicas como 500 sanitizado;
-- validação estruturada e cancelamento iniciado pelo cliente.
-- níveis de logging dos status 4xx e proteção contra vazamento de mensagens de
-  validação.
-
-O health check atual não consulta o banco, portanto essa suíte passa mesmo sem
-PostgreSQL. Os requests exercitados não alcançam persistência com dados válidos.
-
-```powershell
-dotnet test tests/Integration/FiapCloudGames.Api.IntegrationTests
+```text
+Host/        WebApplicationFactory, HttpClient e pipeline ASP.NET Core
+Components/  middlewares, factories e extensões transversais
+Contracts/   OpenAPI e convenções declaradas pelos controllers
+Support/     infraestrutura exclusiva da suíte
 ```
 
-## Banco
+### Responsabilidades
 
-`FiapCloudGames.Database.IntegrationTests` cria os quatro `DbContext` com o
-provedor Npgsql e inspeciona o modelo EF. Ele confirma o mapeamento:
+- serialização de `ApiProblemDetails`;
+- validação MVC e JSON inválido;
+- mapeamento global de erros;
+- respostas de autenticação e autorização;
+- sanitização de falhas inesperadas;
+- logging transversal e rastreabilidade;
+- health check de liveness;
+- contrato OpenAPI;
+- declaração consistente de respostas pelos controllers.
 
-- `identity.users`;
-- `catalog.games`;
-- `library.game_libraries` e `library.library_games`;
-- `promotions.promotions` e `promotions.promotion_games`.
+O mapeamento de Validation, Authentication, Forbidden, NotFound, Conflict,
+BusinessRule e falhas inesperadas é protegido uma vez. Não deve ser repetido em
+cada endpoint.
 
-Outro teste configura os contexts como o executável central e confirma que cada
-um descobre sua migration EF inicial e que o modelo não possui mudanças
-pendentes em relação aos snapshots. Nenhuma conexão é aberta. A suíte ainda não
-valida SQL executado, constraints ou comportamento real do PostgreSQL.
+### Contratos genéricos
 
-```powershell
-dotnet test tests/Integration/FiapCloudGames.Database.IntegrationTests
-```
+O documento OpenAPI é percorrido para assegurar que respostas de erro usam
+`application/problem+json` e o schema fechado de `ApiProblemDetails`. As actions
+dos controllers também são descobertas automaticamente para verificar respostas
+transversais, como erro interno, autenticação e autorização administrativa.
 
-## Lacunas prioritárias
+### Testes específicos de endpoint
 
-- subir PostgreSQL isolado para a suíte;
-- aplicar e reverter todas as migrations EF Core;
-- executar cadastro, login, administração, promoção e aquisição via HTTP com
-  persistência real;
-- cobrir autorização 403, tokens válidos/expirados e conflitos reais de
-  persistência/concorrência;
-- garantir limpeza e isolamento entre casos;
-- comparar o modelo EF com o schema migrado;
-- verificar que dados de um teste não vazam para outro.
+Um endpoint só recebe teste próprio quando introduz comportamento HTTP novo,
+como binding especial, serialização diferente, upload, download, streaming,
+webhook ou autorização excepcional. Regras de negócio comuns continuam em
+Domain/Application.
 
-`TODO: adotar container efêmero ou banco dedicado de CI e implementar os fluxos
-acima.`
+## Database
 
-## Regras para futuros testes com banco
+`FiapCloudGames.Database.IntegrationTests` utiliza o provedor Npgsql somente
+para construir o modelo e inspecionar metadados do EF Core. Nenhuma conexão é
+aberta.
 
-- Nunca aponte para banco compartilhado ou de produção.
-- Gere nome/schema isolado por execução.
-- Execute migrations da mesma forma usada na implantação.
-- Não dependa da ordem dos testes.
-- Remova dados/recursos temporários ao final.
-- Mantenha credenciais de teste fora do repositório quando não forem placeholders.
+Os `DbContext` são descobertos automaticamente pelas assemblies de
+Infrastructure. A suíte protege:
+
+- descoberta das migrations centralizadas;
+- compatibilidade entre modelo e snapshot;
+- assembly de migrations;
+- schema e tabela de histórico;
+- propriedade do schema por módulo;
+- nomes de tabelas e colunas em `lower_snake_case`;
+- presença de chaves primárias;
+- precisão explícita para valores armazenados como decimal;
+- ausência de entidades de outro módulo no context.
+
+### Fora do escopo
+
+Este projeto não valida repositories, CRUD, SQL, constraints em runtime,
+transações, concorrência, performance ou PostgreSQL real. Também não utiliza
+container de banco.
+
+Esse trade-off é intencional: a estratégia prioriza baixo custo de manutenção,
+regras de negócio em Domain/Application e proteção estrutural por metadados. Se
+o risco de persistência mudar, a decisão deve ser revista explicitamente e não
+introduzida como consequência automática de uma feature.

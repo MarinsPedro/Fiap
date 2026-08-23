@@ -48,16 +48,25 @@ segredos reais nos arquivos `appsettings`.
 dotnet test tests/Integration/FiapCloudGames.Api.IntegrationTests
 ```
 
-Os testes cobrem `/health`, validação MVC, respostas vazias 401/404 e o
-mapeamento do middleware de exceções, sem conexão ao PostgreSQL. Fluxos de
-negócio com persistência ainda não são exercitados via HTTP.
+Os testes da API protegem contratos transversais e são separados em:
+
+- `Host`: pipeline real com `WebApplicationFactory` e `HttpClient`;
+- `Components`: middlewares, factories e extensões compartilhadas;
+- `Contracts`: OpenAPI e convenções declaradas pelos controllers;
+- `Support`: infraestrutura exclusiva da suíte.
+
+Regras específicas de negócio permanecem nos testes de Domain e Application.
+Um endpoint que segue os contratos globais não precisa de um novo teste HTTP por
+padrão.
+
+Consulte o [padrão de integração
+transversal](../../../docs/testing/integration-tests.md).
 
 ## Limitações
 
 - health check não verifica o banco;
 - não há versionamento ou rate limiting;
 - não há observabilidade além de logs/health;
-- `TODO: adicionar testes HTTP dos fluxos autenticados e de negócio.`
 
 Documentação da API: [visão geral](../../../docs/api/overview.md) e
 [endpoints](../../../docs/api/endpoints.md).

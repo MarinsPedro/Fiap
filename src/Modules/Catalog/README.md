@@ -11,7 +11,7 @@ base e estado ativo.
 |---|---|
 | `FiapCloudGames.Catalog.Domain` | agregado `Game`, `GamePrice` e repositório |
 | `FiapCloudGames.Catalog.Application` | `Games/` com create, update, get, list, mappings e `CatalogModule` |
-| `FiapCloudGames.Catalog.Contracts` | arquivos separados para `GetGameQuery`, `GameSnapshot` e `ICatalogModule` |
+| `FiapCloudGames.Catalog.Contracts` | consultas individual/em lote, `GameSnapshot` e `ICatalogModule` |
 | `FiapCloudGames.Catalog.Infrastructure` | EF Core, repositório e unidade de trabalho |
 | `FiapCloudGames.Catalog.Presentation` | `Features/Games/` com Request, Response, mapping e `GamesController` |
 
@@ -31,9 +31,10 @@ Casos de uso atuais: `CreateGameService`, `UpdateGameService`,
 
 ## Integrações
 
-Expõe `ICatalogModule`. Promotions usa o contrato para validar jogos e Library o
-usa durante a aquisição. Consumidores recebem `GameSnapshot`, nunca `Game` ou
-`GameResult`. Não há evento de integração implementado.
+Expõe `ICatalogModule`. Promotions usa a consulta em lote para validar jogos;
+Library usa a consulta individual na aquisição e a consulta em lote ao listar a
+biblioteca. Consumidores recebem `GameSnapshot`, nunca `Game` ou `GameResult`.
+Não há evento de integração implementado.
 
 ## Regras principais
 
