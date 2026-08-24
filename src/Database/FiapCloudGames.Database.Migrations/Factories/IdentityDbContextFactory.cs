@@ -10,10 +10,16 @@ public sealed class IdentityDbContextFactory
 {
     public IdentityDbContext CreateDbContext(string[] args)
     {
+        var configuration =
+            DesignTimeConnectionString.BuildConfiguration();
+        var connectionString =
+            DesignTimeConnectionString.Resolve(configuration);
         var options = new DbContextOptionsBuilder<IdentityDbContext>();
-        MigrationDbContextOptions.ConfigureIdentity(
+        MigrationDbContextOptions.ConfigureIdentityWithAdminSeeding(
             options,
-            DesignTimeConnectionString.Resolve());
+            connectionString,
+            configuration,
+            TimeProvider.System);
 
         return new IdentityDbContext(options.Options);
     }

@@ -63,7 +63,10 @@ dotnet run --project src/Database/FiapCloudGames.Database.Migrations
 
 Se `Admin__Email` e `Admin__Password` forem ambos omitidos, migrations rodam sem seed. Se apenas um estiver presente, o migrador falha.
 
-O `ON CONFLICT (email) DO NOTHING` torna o seed repetível.
+O seed está associado somente ao `IdentityDbContext`. Por isso, ele também é
+executado por `Update-Database -Context IdentityDbContext` e pelo comando
+equivalente do `dotnet-ef`, inclusive quando não há migration pendente. O
+`ON CONFLICT (email) DO NOTHING` torna o seed repetível.
 
 ## Executar API
 

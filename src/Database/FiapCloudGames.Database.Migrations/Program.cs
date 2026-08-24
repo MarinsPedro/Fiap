@@ -1,7 +1,6 @@
 using FiapCloudGames.Catalog.Infrastructure.Persistence;
 using FiapCloudGames.Database.Migrations.Configuration;
 using FiapCloudGames.Database.Migrations.Initialization;
-using FiapCloudGames.Database.Migrations.Seeding;
 using FiapCloudGames.Identity.Infrastructure.Persistence;
 using FiapCloudGames.Library.Infrastructure.Persistence;
 using FiapCloudGames.Promotions.Infrastructure.Persistence;
@@ -30,7 +29,11 @@ await MigrationSchemaInitializer.EnsureInfraSchemaAsync(
     CancellationToken.None);
 
 builder.Services.AddDbContext<IdentityDbContext>(options =>
-    MigrationDbContextOptions.ConfigureIdentity(options, connectionString));
+    MigrationDbContextOptions.ConfigureIdentityWithAdminSeeding(
+        options,
+        connectionString,
+        builder.Configuration,
+        TimeProvider.System));
 
 builder.Services.AddDbContext<CatalogDbContext>(options =>
     MigrationDbContextOptions.ConfigureCatalog(options, connectionString));
@@ -40,7 +43,6 @@ builder.Services.AddDbContext<PromotionsDbContext>(options =>
 
 builder.Services.AddDbContext<LibraryDbContext>(options =>
     MigrationDbContextOptions.ConfigureLibrary(options, connectionString));
-builder.Services.AddSingleton(TimeProvider.System);
 
 using var host = builder.Build();
 using var scope = host.Services.CreateScope();
@@ -59,12 +61,6 @@ await MigrateAsync<PromotionsDbContext>(
 
 await MigrateAsync<LibraryDbContext>(
     scope.ServiceProvider,
-    CancellationToken.None);
-
-await AdminSeeder.SeedAsync(
-    connectionString,
-    builder.Configuration,
-    scope.ServiceProvider.GetRequiredService<TimeProvider>(),
     CancellationToken.None);
 
 static async Task MigrateAsync<TContext>(

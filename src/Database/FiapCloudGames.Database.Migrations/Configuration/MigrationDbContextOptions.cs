@@ -1,4 +1,6 @@
+using FiapCloudGames.Database.Migrations.Seeding;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace FiapCloudGames.Database.Migrations.Configuration;
 
@@ -25,6 +27,28 @@ public static class MigrationDbContextOptions
         DbContextOptionsBuilder options,
         string connectionString) =>
         Configure(options, connectionString, IdentityHistoryTable);
+
+    public static void ConfigureIdentityWithAdminSeeding(
+        DbContextOptionsBuilder options,
+        string connectionString,
+        IConfiguration configuration,
+        TimeProvider clock)
+    {
+        ConfigureIdentity(options, connectionString);
+
+        options
+            .UseSeeding((_, _) =>
+                AdminSeeder.Seed(
+                    connectionString,
+                    configuration,
+                    clock))
+            .UseAsyncSeeding((_, _, cancellationToken) =>
+                AdminSeeder.SeedAsync(
+                    connectionString,
+                    configuration,
+                    clock,
+                    cancellationToken));
+    }
 
     public static void ConfigureCatalog(
         DbContextOptionsBuilder options,
