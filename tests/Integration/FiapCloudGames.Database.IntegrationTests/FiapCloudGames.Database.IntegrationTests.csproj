@@ -3,10 +3,15 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
+    <!-- SSH.NET vulnerability in Testcontainers transitive dep; SSH tunneling is not used -->
+    <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-q939-rpr3-3284" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="Xunit" />
     <ProjectReference Include="..\..\..\src\Modules\**\*.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\src\Database\FiapCloudGames.Database.Migrations\FiapCloudGames.Database.Migrations.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
